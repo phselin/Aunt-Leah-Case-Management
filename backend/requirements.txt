@@ -12,5 +12,5 @@ uvicorn[standard]
 
 # dev/test
 pytest
-ruff
+ruff==0.15.1
 

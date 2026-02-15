@@ -19,6 +19,7 @@ router = APIRouter()
 class HtmlPayload(BaseModel):
     html: str
 
+
 class ExampleModel(BaseModel):
     message: str
 

@@ -48,6 +48,9 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
       - outputs_data:/outputs
     depends_on:
       mongo:
@@ -72,6 +75,8 @@ services:
       PANDOC_URL: http://pandoc:3100
       OUTPUT_DIR: /outputs
     volumes:
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
       - outputs_data:/outputs
     depends_on:
       redis:
