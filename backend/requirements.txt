@@ -1,0 +1,16 @@
+celery
+fastapi
+flask
+a2wsgi
+pydantic
+pydantic-settings
+pymongo
+redis
+requests
+httpx
+uvicorn[standard]
+
+# dev/test
+pytest
+ruff
+
