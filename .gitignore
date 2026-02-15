@@ -4,10 +4,11 @@ backend/.ruff_cache/
 backend/.mypy_cache/
 backend/dist/
 backend/build/
+backend/**/__pycache__/
+backend/**/*.py[cod]
 backend/environments.yml
 backend/compose.yaml
 backend/.env
 backend/.env.example
 backend/.gitignore
-backend/.gitignore.example
 backend/.gitignore.example
