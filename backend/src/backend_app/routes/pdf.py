@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
-from backend_app.exports import gotenberg_html_to_pdf_bytes
-from backend_app.config import settings
 from backend_app.celery_app import celery
+from backend_app.config import settings
+from backend_app.exports import gotenberg_html_to_pdf_bytes
 
 pdf_bp = Blueprint("pdf", __name__)
+
 
 @pdf_bp.post("/exports/pdf")
 def export_pdf():
@@ -23,6 +24,7 @@ def export_pdf():
         },
     )
 
+
 @pdf_bp.post("/tasks/pdf")
 def enqueue_pdf():
     payload = request.get_json(silent=True) or {}
@@ -33,5 +35,5 @@ def enqueue_pdf():
     res = celery.send_task("backend_app.tasks.render_pdf_from_html", args=[html])
     return jsonify({"task_id": res.id})
 
-# TODO download exported pdf
 
+# TODO download exported pdf

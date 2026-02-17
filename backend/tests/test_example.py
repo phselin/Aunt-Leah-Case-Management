@@ -1,5 +1,5 @@
-from src.backend_app.db import db
-from src.backend_app.flask_app import create_flask_app
+from backend_app.db import db
+from backend_app.flask_app import create_flask_app
 
 
 def _reset_examples() -> None:
@@ -27,7 +27,6 @@ def test_example_post_route():
     assert resp.json["message"] == "Hello, World!"
     assert "id" in resp.json
     assert db.examples.count_documents({}) == 1
-
 
 
 def test_example_patch_route():

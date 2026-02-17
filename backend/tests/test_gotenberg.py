@@ -1,5 +1,5 @@
-from src.backend_app.config import settings
-from src.backend_app.exports import gotenberg_html_to_pdf_bytes
+from backend_app.config import settings
+from backend_app.exports import gotenberg_html_to_pdf_bytes
 
 
 def test_gotenberg_html_to_pdf_bytes_smoke():

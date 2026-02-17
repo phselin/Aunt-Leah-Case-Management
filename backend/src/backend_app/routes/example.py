@@ -4,8 +4,8 @@ from pymongo.errors import PyMongoError
 
 from backend_app.db import db
 
-
 example_bp = Blueprint("example", __name__)
+
 
 @example_bp.route("/example", methods=["GET", "POST", "PATCH", "DELETE"])
 def example():
