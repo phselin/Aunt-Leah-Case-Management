@@ -85,6 +85,6 @@ text-decoration: none;
 &:hover {
     transition: all 0.2s ease-in-out;
     background: #fff;
-    color: #10606;
+    color: #106060;
 }
 `
