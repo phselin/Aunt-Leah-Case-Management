@@ -1,7 +1,7 @@
 import Navbar from './components/Navbar';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import GlobalStyle from './GlobalStyles';
-import { AppContainer } from './Appelement';
+import { AppContainer } from './AppElement';
 
 //pages
 import Home from './pages/index';
