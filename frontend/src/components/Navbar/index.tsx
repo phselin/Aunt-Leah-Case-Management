@@ -1,4 +1,4 @@
-import {Logo, Nav,NavLink, Bars, NavMenu, NavBtn, NavBtnLink} from './NavBarElement'
+import {Logo, Nav,NavLink, Bars, NavMenu, NavBtn, NavBtnLink} from './NavbarElement'
 
 const Navbar = () => {
   return (
