@@ -76,6 +76,19 @@ services:
       gotenberg:
         condition: service_started
     command: ["celery", "-A", "backend_app.celery_app.celery", "worker", "--loglevel=INFO", "--concurrency=1"]
+  
+  seed:
+    build:
+      context: .
+    restart: "no"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/auntleah
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: ["python", "-m", "backend_app.seed_db"]
 
 volumes:
   mongo_data:
