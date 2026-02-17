@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://redis:6379/0"
 
     gotenberg_url: str = "http://gotenberg:3000"
-    pandoc_url: str = "http://pandoc:3100"
 
     output_dir: str = "/outputs"
 

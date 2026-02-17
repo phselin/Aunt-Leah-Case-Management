@@ -53,7 +53,7 @@ ifeq ($(DOCKER_OK),yes)
 	$(COMPOSE) run --rm api pytest -q
 else
 	$(MAKE) $(VENV_MARK)
-	PYTHONPATH=src $(PYTEST) -q
+	MONGO_URI=mongomock://localhost/auntleah PYTHONPATH=src $(PYTEST) -q
 endif
 
 lint:

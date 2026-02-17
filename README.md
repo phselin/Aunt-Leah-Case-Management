@@ -2,6 +2,14 @@
 Aunt Leah Group A's project repository
 
 ## To run backend
+### Prerequisites
+
+- **Docker**: Docker Desktop (macOS/Windows) or Docker Engine (Linux) must be installed **and running**.
+- **Docker Compose v2**: `docker compose version` should work (Compose plugin).
+- **Make**: `make` installed (macOS: Xcode CLT; Linux: `build-essential` / `make` package).
+- **Free ports** (defaults): `8000` (API), `3000` (Gotenberg), `27017` (MongoDB), `6379` (Redis).
+  - If these are taken, set `API_PORT`, `GOTENBERG_PORT`, `MONGO_PORT`, `REDIS_PORT` in `backend/.env`.
+
 Copy environment defaults (optional):
 
 ```bash
@@ -19,16 +27,13 @@ Open:
 
 - API: `http://localhost:8000`
 - Gotenberg: `http://localhost:3000`
-- Pandoc API: `http://localhost:3100`
 
 Try:
 
 - `GET|POST|PATCH|DELETE /example`
 - `GET /db/ping`
 - `POST /exports/pdf`
-- `POST /exports/docx`
-- `POST /tasks/pdf` (enqueue Celery job)
-- `POST /tasks/docx` (enqueue Celery job)
+- `POST /tasks/pdf`
 
 Run checks:
 

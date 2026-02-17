@@ -24,10 +24,3 @@ def gotenberg_html_to_pdf_bytes(gotenberg_url: str, html: str) -> bytes:
     resp = requests.post(url, files=files, timeout=60)
     resp.raise_for_status()
     return resp.content
-
-
-def pandoc_html_to_docx_bytes(pandoc_url: str, html: str) -> bytes:
-    url = pandoc_url.rstrip("/") + "/convert/docx"
-    resp = requests.post(url, json={"html": html}, timeout=60)
-    resp.raise_for_status()
-    return resp.content
