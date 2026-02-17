@@ -1,7 +1,7 @@
 import redis
 
-from src.backend_app.celery_app import celery
-from src.backend_app.config import settings
+from backend_app.celery_app import celery
+from backend_app.config import settings
 
 
 def test_redis_reachable():

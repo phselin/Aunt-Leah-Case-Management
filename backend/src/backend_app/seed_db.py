@@ -1,5 +1,6 @@
 import random
-from faker import Faker  
+
+from faker import Faker
 
 from backend_app.db import db
 
@@ -11,15 +12,16 @@ GENERAL_MILESTONES = {
     "Housing": ["homeless", "shelter", "transitional"],
     "Education": ["F", "D", "C", "B", "A"],
     "Employment": ["unemployed", "search", "interview", "hired", "stable"],
-    "Drug Rehabilitation": [7, 15, 30, 90, 180, 360]
+    "Drug Rehabilitation": [7, 15, 30, 90, 180, 360],
 }
 NUM_STAFF = 50
 
 faker = Faker()
 
-def fill_db():
 
-    if db.people.count_documents({}) > 0: return
+def fill_db():
+    if db.people.count_documents({}) > 0:
+        return
 
     db.programs.delete_many({})
     db.people.delete_many({})
@@ -32,8 +34,8 @@ def fill_db():
             "name": program_name,
             "goalTypes": {
                 "type": "general",
-                "milestones": GENERAL_MILESTONES.get(program_name, [])
-            }
+                "milestones": GENERAL_MILESTONES.get(program_name, []),
+            },
         }
         db.programs.insert_one(program)
 
@@ -42,7 +44,7 @@ def fill_db():
             "role": "staff",
             "phone": faker.phone_number(),
             "email": faker.free_email(),
-            "programs": random.sample(PROGRAMS, k=random.randint(1, 2))
+            "programs": random.sample(PROGRAMS, k=random.randint(1, 2)),
         }
         db.staff.insert_one(staff_member)
 
@@ -56,7 +58,7 @@ def fill_db():
             "programs": enrolled_programs,
             "phone": faker.phone_number(),
             "address": faker.address(),
-            "email": faker.free_email()
+            "email": faker.free_email(),
         }
 
         res = db.people.insert_one(person)
@@ -70,7 +72,7 @@ def fill_db():
                 "type": "general",
                 "status": random.choice(GENERAL_MILESTONES.get(program_name, [])),
                 "detail": faker.paragraph(nb_sentences=2),
-                "due": faker.date_between(start_date="+30d", end_date="+3y").strftime("%Y-%m-%d")
+                "due": faker.date_between(start_date="+30d", end_date="+3y").strftime("%Y-%m-%d"),
             }
             res = db.goals.insert_one(goal)
             goal_ids.append(res.inserted_id)
