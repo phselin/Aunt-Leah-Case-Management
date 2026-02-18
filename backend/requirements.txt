@@ -1,5 +1,7 @@
 celery
 flask
+flask-bcrypt
+flask-jwt-extended
 a2wsgi
 pydantic
 pydantic-settings
