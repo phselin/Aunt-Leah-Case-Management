@@ -42,6 +42,7 @@ def get_staff():
 
 
 @sections_bp.get("/casenotes")
+
 @jwt_required()
 def get_casenotes():
     person = request.args.get("person")
