@@ -20,7 +20,7 @@ const Navbar = () => {
             </NavLink>
         </NavMenu>
         <NavBtn>
-            <NavBtnLink to = '/login'>Log Out</NavBtnLink>
+            <NavBtnLink to = '/'>Log Out</NavBtnLink>
         </NavBtn>
       </Nav>
     </div>
