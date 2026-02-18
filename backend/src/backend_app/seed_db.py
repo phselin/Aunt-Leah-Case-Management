@@ -1,7 +1,9 @@
 import random
 
 from faker import Faker
+from flask import Flask
 
+from backend_app.auth_init import bcrypt
 from backend_app.db import db
 
 NUM_PEOPLE = 1000
@@ -19,15 +21,21 @@ NUM_STAFF = 50
 faker = Faker()
 
 
-def fill_db():
+def seed_db():
     if db.people.count_documents({}) > 0:
         return
 
+    app = Flask(__name__)
+    bcrypt.init_app(app)
+
+    with app.app_context():
+        admin_hash_pwd = bcrypt.generate_password_hash("password").decode("utf-8")
+
     db.programs.delete_many({})
-    db.people.delete_many({})
-    db.casenotes.delete_many({})
     db.staff.delete_many({})
+    db.people.delete_many({})
     db.goals.delete_many({})
+    db.casenotes.delete_many({})
 
     for program_name in PROGRAMS:
         program = {
@@ -39,8 +47,21 @@ def fill_db():
         }
         db.programs.insert_one(program)
 
+    db.staff.insert_one(
+        {
+            "firstname": faker.first_name(),
+            "lastname": faker.last_name(),
+            "role": "admin",
+            "phone": faker.phone_number(),
+            "email": "admin@auntleah.org",
+            "password_hash": admin_hash_pwd,
+        }
+    )
+
     for _ in range(NUM_STAFF):
         staff_member = {
+            "firstname": faker.first_name(),
+            "lastname": faker.last_name(),
             "role": "staff",
             "phone": faker.phone_number(),
             "email": faker.free_email(),
@@ -91,4 +112,4 @@ def fill_db():
 
 
 if __name__ == "__main__":
-    fill_db()
+    seed_db()

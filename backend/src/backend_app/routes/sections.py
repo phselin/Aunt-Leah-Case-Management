@@ -1,6 +1,7 @@
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
 from backend_app.seed_db import GENERAL_MILESTONES
@@ -14,6 +15,7 @@ sections_bp = Blueprint("sections", __name__)
 # Better regex for comparison if name Melanie then Melania won't give a result
 # TODO handle full name search MelanieBrooks won't return anything although Melanie Brooks exist
 @sections_bp.get("/people")
+@jwt_required()
 def get_people():
     person = request.args.get("person")
     query = {}
@@ -26,18 +28,22 @@ def get_people():
 
 
 @sections_bp.get("/programs")
+@jwt_required()
 def get_programs():
     programs = [{**program, "_id": str(program["_id"])} for program in db.programs.find({})]
     return jsonify(programs)
 
 
 @sections_bp.get("/staff")
+@jwt_required()
 def get_staff():
     staff = [{**staffmem, "_id": str(staffmem["_id"])} for staffmem in db.staff.find({})]
     return jsonify(staff)
 
 
 @sections_bp.get("/casenotes")
+
+@jwt_required()
 def get_casenotes():
     person = request.args.get("person")
     if not person:
@@ -45,8 +51,8 @@ def get_casenotes():
             {
                 **casenote,
                 "_id": str(casenote["_id"]),
-                "personid": str(casenote["personid"]),
-                "goalid": str(casenote["goalid"]),
+                "personid": str(casenote.get("personid", "")),
+                "goalid": str(casenote.get("goalid", "")),
             }
             for casenote in db.casenotes.find({})
         ]
@@ -68,11 +74,12 @@ def get_casenotes():
 
 
 @sections_bp.get("/goals")
+@jwt_required()
 def get_goals():
     person = request.args.get("person")
     if not person:
         goals = [
-            {**goal, "_id": str(goal["_id"]), "personid": str(goal["personid"])}
+            {**goal, "_id": str(goal["_id"]), "personid": str(goal.get("personid", ""))}
             for goal in db.goals.find({})
         ]
         return jsonify(goals)
@@ -88,6 +95,7 @@ def get_goals():
 
 
 @sections_bp.get("/stats")
+@jwt_required()
 def get_stats():
     stats = {}
     for program, milestones in GENERAL_MILESTONES.items():

@@ -12,7 +12,13 @@ class Settings(BaseSettings):
 
     gotenberg_url: str = "http://gotenberg:3000"
 
+    # zitadel_url: str = "http://zitadel:8080"
+
     output_dir: str = "/outputs"
+
+    JWT_SECRET_KEY: str = (
+        "b14f651eee210eb2d15f205c20b9e8fc412815dadd1b3296030769d428a38922"  # maybe in .env?
+    )
 
 
 settings = Settings()

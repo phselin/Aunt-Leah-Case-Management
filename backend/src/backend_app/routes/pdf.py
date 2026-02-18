@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 
 from backend_app.celery_app import celery
 from backend_app.config import settings
@@ -8,6 +9,7 @@ pdf_bp = Blueprint("pdf", __name__)
 
 
 @pdf_bp.post("/exports/pdf")
+@jwt_required()
 def export_pdf():
     payload = request.get_json(silent=True) or {}
     html = payload.get("html")
@@ -26,6 +28,7 @@ def export_pdf():
 
 
 @pdf_bp.post("/tasks/pdf")
+@jwt_required()
 def enqueue_pdf():
     payload = request.get_json(silent=True) or {}
     html = payload.get("html")
