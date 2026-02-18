@@ -30,10 +30,10 @@ def seed_db():
             return
 
         db.programs.delete_many({})
-        db.people.delete_many({})
-        db.casenotes.delete_many({})
         db.staff.delete_many({})
+        db.people.delete_many({})
         db.goals.delete_many({})
+        db.casenotes.delete_many({})
 
         for program_name in PROGRAMS:
             program = {

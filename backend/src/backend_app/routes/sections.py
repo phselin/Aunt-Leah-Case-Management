@@ -50,8 +50,8 @@ def get_casenotes():
             {
                 **casenote,
                 "_id": str(casenote["_id"]),
-                "personid": str(casenote["personid"]),
-                "goalid": str(casenote["goalid"]),
+                "personid": str(casenote.get("personid", "")),
+                "goalid": str(casenote.get("goalid", "")),
             }
             for casenote in db.casenotes.find({})
         ]
@@ -78,7 +78,7 @@ def get_goals():
     person = request.args.get("person")
     if not person:
         goals = [
-            {**goal, "_id": str(goal["_id"]), "personid": str(goal["personid"])}
+            {**goal, "_id": str(goal["_id"]), "personid": str(goal.get("personid", ""))}
             for goal in db.goals.find({})
         ]
         return jsonify(goals)
