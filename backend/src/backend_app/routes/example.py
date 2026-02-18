@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
 from pymongo import ReturnDocument
 from pymongo.errors import PyMongoError
 
@@ -9,7 +8,6 @@ example_bp = Blueprint("example", __name__)
 
 
 @example_bp.route("/example", methods=["GET", "POST", "PATCH", "DELETE"])
-@jwt_required()
 def example():
     payload = request.get_json(silent=True) or {}
     message = payload.get("message")
