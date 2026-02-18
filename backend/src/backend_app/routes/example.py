@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from pymongo import ReturnDocument
 from pymongo.errors import PyMongoError
-from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
 

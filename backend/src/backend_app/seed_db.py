@@ -3,8 +3,8 @@ import random
 from faker import Faker
 from flask import Flask
 
-from backend_app.db import db
 from backend_app.auth_init import bcrypt
+from backend_app.db import db
 
 NUM_PEOPLE = 1000
 NOTES_PER_PERSON = 20
@@ -26,7 +26,6 @@ def seed_db():
     bcrypt.init_app(app)
 
     with app.app_context():
-        
         if db.people.count_documents({}) > 0:
             return
 
@@ -45,15 +44,17 @@ def seed_db():
                 },
             }
             db.programs.insert_one(program)
-        
-        db.staff.insert_one({
-            "firstname": faker.first_name(),
-            "lastname": faker.last_name(),
-            "role": "admin",
-            "phone": faker.phone_number(),
-            "email": "admin@auntleah.org",
-            "password_hash": bcrypt.generate_password_hash("password").decode("utf-8")
-        })
+
+        db.staff.insert_one(
+            {
+                "firstname": faker.first_name(),
+                "lastname": faker.last_name(),
+                "role": "admin",
+                "phone": faker.phone_number(),
+                "email": "admin@auntleah.org",
+                "password_hash": bcrypt.generate_password_hash("password").decode("utf-8"),
+            }
+        )
 
         for _ in range(NUM_STAFF):
             staff_member = {
@@ -90,7 +91,9 @@ def seed_db():
                     "type": "general",
                     "status": random.choice(GENERAL_MILESTONES.get(program_name, [])),
                     "detail": faker.paragraph(nb_sentences=2),
-                    "due": faker.date_between(start_date="+30d", end_date="+3y").strftime("%Y-%m-%d"),
+                    "due": faker.date_between(start_date="+30d", end_date="+3y").strftime(
+                        "%Y-%m-%d"
+                    ),
                 }
                 res = db.goals.insert_one(goal)
                 goal_ids.append(res.inserted_id)
@@ -100,7 +103,9 @@ def seed_db():
                 case_note = {
                     "personid": person_id,
                     "goalid": random.choice(goal_ids),
-                    "date": faker.date_between(start_date="-1y", end_date="now").strftime("%Y-%m-%d"),
+                    "date": faker.date_between(start_date="-1y", end_date="now").strftime(
+                        "%Y-%m-%d"
+                    ),
                     "note": faker.paragraph(nb_sentences=5),
                 }
                 case_notes.append(case_note)

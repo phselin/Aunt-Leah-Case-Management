@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from flask import Flask
 from datetime import timedelta
 
+from flask import Flask
+
+from backend_app.auth import auth_bp
+from backend_app.auth_init import bcrypt, jwt
+from backend_app.config import settings
 from backend_app.routes.example import example_bp
 from backend_app.routes.health import health_bp
 from backend_app.routes.pdf import pdf_bp
 from backend_app.routes.sections import sections_bp
-from backend_app.auth import auth_bp
-from backend_app.auth_init import bcrypt, jwt
-from backend_app.config import settings
 
 
 def create_flask_app() -> Flask:
