@@ -12,3 +12,4 @@ backend/.env
 backend/.env.example
 backend/.gitignore
 backend/.gitignore.example
+.vscode
