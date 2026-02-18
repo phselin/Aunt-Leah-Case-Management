@@ -1,10 +1,13 @@
 import {useRef, useState, useEffect, useContext} from 'react';
 import {useNavigate} from "react-router-dom";
 import AuthContext from "../context/AuthProvider";
+import axios from 'axios';
+
+// TODO change semantics from user to email or vice-versa
 
 const Login = () => {
     // authentication backend
-    // const { setAuth } = useContext(AuthContext);
+    const { setAuth } = useContext(AuthContext);
 
     const navigate = useNavigate();
     
@@ -15,33 +18,36 @@ const Login = () => {
     const [user,setUser] = useState('');
     const [pwd, setPwd] = useState('');
     const [errMsg, setErrMsg] = useState('');
-    const [success,setSuccess] = useState(false);
 
     useEffect(() => {
         userRef.current?.focus();
-    }, [user, pwd])
+    }, [])
 
     useEffect(() => {
         setErrMsg('');
     }, [user, pwd])
 
     const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-        //TODO: try catch the credentials using axios, currently everything is sucessful login
-
         e.preventDefault();
-        console.log(user,pwd);
-        setUser('');
-        setPwd('');
-
-        setSuccess(true);
+        
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/login", 
+                {email: user, password: pwd}, 
+                {withCredentials: true});
+            setAuth({user: response.data.user});
+            navigate('/home')
+        } catch (err) {
+            if (axios.isAxiosError(err) && err.response) {
+                setErrMsg(err.response.data?.detail)
+            } else {
+                setErrMsg("Unable to connect to server")
+            }
+        }
     }
 
   return (
     <>
-        {success ? (
-            navigate('/home')
-        ) : (
-
     <section>
       <p ref={errRef} className =
       {errMsg ? "errmsg" : "offscreen"} aria-live = "assertive">{errMsg}</p>
@@ -66,11 +72,9 @@ const Login = () => {
             value = {pwd}
             required
             />
-            <button>Sign In</button>
+            <button style={{marginLeft: 10, color: 'white'}}>Sign In</button> {/*TODO remove inline style*/}
       </form>
-
     </section>
-    )}
     </>
   )
 }

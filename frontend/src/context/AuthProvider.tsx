@@ -3,8 +3,13 @@ import type { Dispatch, SetStateAction } from "react";
 
 
 interface AuthData {
-    user?: string;
-    token?: string;
+    user?: {
+        id: string;
+        email: string;
+        role: string;
+        firstname: string;
+        lastname: string;
+    }
 }
 
 interface AuthContextType {
