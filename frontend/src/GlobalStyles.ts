@@ -98,7 +98,7 @@ const GlobalStyle = createGlobalStyle`
     filter: brightness(0.98);
   }
 
-  /Search bar/
+  /* Search bar */
   .clientSearchBar{
     max-width: 1050px;
     margin: 0 auto 18px auto;
@@ -124,7 +124,7 @@ const GlobalStyle = createGlobalStyle`
     background: transparent;
   }
 
-  /Table card/
+  /* Table card */
   .clientTableCard{
     max-width: 1050px;
     margin: 0 auto;
@@ -213,7 +213,7 @@ const GlobalStyle = createGlobalStyle`
     font-size: 13px;
   }
 
-  /Responsive/
+  /* Responsive */
   @media (max-width: 900px){
     .clientTableHeader{
       display: none;
