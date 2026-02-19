@@ -24,7 +24,22 @@ def get_people():
             {"firstname": {"$regex": person, "$options": "i"}},
             {"lastname": {"$regex": person, "$options": "i"}},
         ]
-    return jsonify([{**p, "_id": str(p["_id"])} for p in list(db.people.find(query))])
+    return jsonify([{**p, "_id": str(p["_id"])} for p in list(db.people.find(query))]), 200
+
+@sections_bp.get("/people/<id>")
+@jwt_required()
+def get_person(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+        
+    person = db.people.find_one({"_id": oid})
+    
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+    person["_id"] = str(person["_id"])    
+    return jsonify(person), 200
 
 @sections_bp.post("/people")
 @jwt_required()

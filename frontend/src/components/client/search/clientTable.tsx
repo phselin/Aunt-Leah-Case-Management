@@ -1,5 +1,5 @@
-import React from "react";
 import type { Person } from "./person";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   people: Person[];
@@ -8,17 +8,19 @@ type Props = {
 const nameOf = (p: Person) => `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
 const ClientTable = ({ people }: Props) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="clientTableCard">
+    <div className="clientSearchTableCard">
       {people.length === 0 ? (
-        <div className="clientEmpty">
-          <div className="clientEmptyIcon">👤</div>
-          <div className="clientEmptyTitle">No Clients Found</div>
-          <div className="clientEmptySub">Add your first client to get started</div>
+        <div className="clientSearchEmpty">
+          <div className="clientSearchEmptyIcon">👤</div>
+          <div className="clientSearchEmptyTitle">No Clients Found</div>
+          <div className="clientSearchEmptySub">Add your first client to get started</div>
         </div>
       ) : (
         <>
-          <div className="clientTableHeader">
+          <div className="clientSearchTableHeader">
             <div>Name</div>
             <div>Date of Birth</div>
             <div>Email</div>
@@ -28,20 +30,20 @@ const ClientTable = ({ people }: Props) => {
           </div>
 
           {people.map((p, idx) => (
-            <div className="clientTableRow" key={p._id ?? idx}>
-              <div className="clientName">{nameOf(p)}</div>
+            <div className="clientSearchTableRow" key={p._id ?? idx}>
+              <div className="clientSearchName" onClick={() => {if (p._id) navigate(`/client/${p._id}`)}}>{nameOf(p)}</div>
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
               <div>{p.phone ?? ""}</div>
               <div>{p.referraldate ?? ""}</div>
-              <div className="clientActions">
+              <div className="clientSearchActions">
                 <button type="button">✏️</button>
                 <button type="button">🗑️</button>
               </div>
             </div>
           ))}
 
-          <div className="clientTableFooter">
+          <div className="clientSearchTableFooter">
             Showing {people.length} client{people.length === 1 ? "" : "s"}
           </div>
         </>

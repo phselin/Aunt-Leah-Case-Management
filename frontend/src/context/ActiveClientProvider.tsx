@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback, useContext } from 'react';
 
 interface ActiveClientContextType {
   activeClientId: string | null;
@@ -31,4 +31,5 @@ export const ActiveClientProvider = ({ children }: { children:React.ReactNode })
   );
 };
 
+export const useActiveClient = () => useContext(ActiveClientContext);
 export default ActiveClientContext;

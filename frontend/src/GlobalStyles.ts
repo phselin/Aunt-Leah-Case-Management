@@ -61,15 +61,15 @@ const GlobalStyle = createGlobalStyle`
     outline: 4px auto -webkit-focus-ring-color;
   }
 
-    /Client page/
-  .clientPage{
+    /Client Search page/
+  .clientSearchPage{
     min-height: 100vh;
     background: #f6f6f7;
     padding: 24px;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   }
 
-  .clientHeaderRow{
+  .clientSearchHeaderRow{
     max-width: 1050px;
     margin: 0 auto 14px auto;
     display: flex;
@@ -77,7 +77,7 @@ const GlobalStyle = createGlobalStyle`
     justify-content: space-between;
   }
 
-  .clientTitle{
+  .clientSearchTitle{
     margin-top: 20px;
     font-size: 50px;
     font-weight: 700;
@@ -126,7 +126,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   /* Table card */
-  .clientTableCard{
+  .clientSearchTableCard{
     max-width: 1050px;
     margin: 0 auto;
     background: white;
@@ -135,7 +135,7 @@ const GlobalStyle = createGlobalStyle`
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   }
 
-  .clientTableHeader{
+  .clientSearchTableHeader{
     background: #3f1622;
     color: white;
     padding: 14px 16px;
@@ -146,7 +146,7 @@ const GlobalStyle = createGlobalStyle`
     font-weight: 800;
   }
 
-  .clientTableRow{
+  .clientSearchTableRow{
     padding: 14px 16px;
     display: grid;
     grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 0.6fr;
@@ -157,22 +157,22 @@ const GlobalStyle = createGlobalStyle`
     border-bottom: 1px solid #eee;
   }
 
-  .clientTableRow:hover{
+  .clientSearchTableRow:hover{
     background: #fafafa;
   }
 
-  .clientName{
+  .clientSearchName{
     font-weight: 700;
     color: #d45b6f;
   }
 
-  .clientActions{
+  .clientSeachActions{
     display: flex;
     gap: 10px;
   }
 
 
-  .clientActions button{
+  .clientSearchActions button{
     background: transparent;
     border: none;
     padding: 0;
@@ -182,55 +182,55 @@ const GlobalStyle = createGlobalStyle`
     opacity: 0.9;
   }
 
-  .clientActions button:hover{
+  .clientSearchActions button:hover{
     opacity: 1;
     border-color: transparent;
     transform: translateY(-1px);
   }
 
-  .clientTableFooter{
+  .clientSearchTableFooter{
     padding: 10px 16px;
     font-size: 12px;
     color: #666;
     background: #fff;
   }
 
-  .clientEmpty{
+  .clientSeachEmpty{
     padding: 60px 16px;
     text-align: center;
   }
-  .clientEmptyIcon{
+  .clientSearchEmptyIcon{
     font-size: 34px;
     opacity: 0.35;
     margin-bottom: 10px;
   }
-  .clientEmptyTitle{
+  .clientSearchEmptyTitle{
     font-weight: 800;
     color: #555;
     margin-bottom: 6px;
   }
-  .clientEmptySub{
+  .clientSearchEmptySub{
     color: #888;
     font-size: 13px;
   }
 
   /* Responsive */
   @media (max-width: 900px){
-    .clientTableHeader{
+    .clientSearchTableHeader{
       display: none;
     }
 
-    .clientTableRow{
+    .clientSearchTableRow{
       grid-template-columns: 1fr;
       gap: 6px;
     }
 
-    .clientTableRow > div{
+    .clientSearchTableRow > div{
       display: flex;
       justify-content: space-between;
     }
 
-    .clientActions{
+    .clientSearchActions{
       justify-content: flex-end;
     }
   }

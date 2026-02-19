@@ -6,4 +6,5 @@ export type Person = {
   email?: string;
   phone?: string;
   referraldate?: string | null;
+  [key: string]: any;
 };
