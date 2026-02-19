@@ -18,6 +18,7 @@ const Client = () => {
 
   const [query, setQuery] = useState("");
   const [people, setPeople] = useState<Person[]>([]);
+  const [allPeople, setAllPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
 
   useEffect(() => {
@@ -27,7 +28,9 @@ const Client = () => {
           withCredentials: true,
         });
         const data = Array.isArray(res.data) ? res.data : res.data.people;
-        setPeople(data ?? []);
+        const arr = data ?? [];
+        setAllPeople(arr);
+        setPeople(arr.slice(-20).reverse()); // newest 20 
         setErrMsg("");
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
@@ -41,17 +44,17 @@ const Client = () => {
     loadPeople();
   }, []);
 
-    const filtered = people.filter((p) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
+  const q = query.trim().toLowerCase();
 
-    const name = `${p.firstname ?? ""} ${p.lastname ?? ""}`
-      .replace(/\s+/g, " ")
-      .toLowerCase();
+  const visiblePeople = q
+    ? allPeople.filter((p) => {
+        const name = `${p.firstname ?? ""} ${p.lastname ?? ""}`
+          .replace(/\s+/g, " ")
+          .toLowerCase();
 
-    return name.includes(q) || p.email?.includes(q);
-    });
-
+        return name.includes(q);
+      })
+    : people; 
 
 
 
@@ -80,7 +83,7 @@ const Client = () => {
       </div>
 
       <div className="clientTableCard">
-        {filtered.length === 0 ? (
+        {visiblePeople.length === 0 ? (
           <div className="clientEmpty">
             <div className="clientEmptyIcon">👤</div>
             <div className="clientEmptyTitle">No Clients Found</div>
@@ -97,7 +100,7 @@ const Client = () => {
               <div>Actions</div>
             </div>
 
-            {filtered.map((p, idx) => (
+            {visiblePeople.map((p, idx) => (
               <div className="clientTableRow" key={p._id ?? idx}>
                 <div className="clientName">{nameOf(p)}</div>
                 <div>{p.dob ?? ""}</div>
@@ -112,7 +115,7 @@ const Client = () => {
             ))}
 
             <div className="clientTableFooter">
-              Showing {filtered.length} client{filtered.length === 1 ? "" : "s"}
+              Showing {visiblePeople.length} client{visiblePeople.length === 1 ? "" : "s"}
             </div>
           </>
         )}
