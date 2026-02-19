@@ -80,6 +80,7 @@ def seed_db():
             "phone": faker.numerify(text="###-###-####"),
             "address": faker.address(),
             "email": faker.free_email(),
+            "referraldate": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d")
         }
 
         res = db.people.insert_one(person)
@@ -103,7 +104,7 @@ def seed_db():
             case_note = {
                 "personid": person_id,
                 "goalid": random.choice(goal_ids),
-                "date": faker.date_between(start_date="-1y", end_date="now").strftime("%Y-%m-%d"),
+                "date": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d"),
                 "note": faker.paragraph(nb_sentences=5),
             }
             case_notes.append(case_note)

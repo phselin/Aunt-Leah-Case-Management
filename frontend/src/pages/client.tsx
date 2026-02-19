@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 type Person = {
@@ -8,8 +8,7 @@ type Person = {
   dob?: string;
   email?: string;
   phone?: string;
-  province?: string | null;
-  referralDate?: string | null;
+  referraldate?: string | null;
 };
 
 // TODO debouncing query because storing all clients inside array is inefficient
@@ -42,16 +41,16 @@ const Client = () => {
     loadPeople();
   }, []);
 
-  const filtered = people.filter((p) => {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
+    const filtered = people.filter((p) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
 
-  const name = `${p.firstname ?? ""} ${p.lastname ?? ""}`
-    .replace(/\s+/g, " ")
-    .toLowerCase();
+    const name = `${p.firstname ?? ""} ${p.lastname ?? ""}`
+      .replace(/\s+/g, " ")
+      .toLowerCase();
 
-  return name.includes(q) || p.email?.includes(q);
-  });
+    return name.includes(q) || p.email?.includes(q);
+    });
 
 
 
@@ -78,7 +77,6 @@ const Client = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-
       </div>
 
       <div className="clientTableCard">
@@ -95,7 +93,6 @@ const Client = () => {
               <div>Date of Birth</div>
               <div>Email</div>
               <div>Phone</div>
-              <div>Province</div>
               <div>Referral Date</div>
               <div>Actions</div>
             </div>
@@ -106,8 +103,7 @@ const Client = () => {
                 <div>{p.dob ?? ""}</div>
                 <div>{p.email ?? ""}</div>
                 <div>{p.phone ?? ""}</div>
-                <div>{p.province ?? ""}</div>
-                <div>{p.referralDate ?? ""}</div>
+                <div>{p.referraldate ?? ""}</div>
                 <div className="clientActions">
                   <button type="button">✏️</button>
                   <button type="button">🗑️</button>
