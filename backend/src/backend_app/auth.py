@@ -1,13 +1,14 @@
 from bson import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
-    create_refresh_token,
     current_user,
     jwt_required,
     set_access_cookies,
-    set_refresh_cookies,
+    get_jwt_identity,
+    get_jwt,
     unset_jwt_cookies,
 )
 
@@ -54,7 +55,6 @@ def login():
         return jsonify({"detail": "Invalid credentials"}), 401
 
     access_token = create_access_token(identity=str(user["_id"]))
-    refresh_token = create_refresh_token(identity=str(user["_id"]))
 
     resp = jsonify(
         {
@@ -70,7 +70,6 @@ def login():
     )
 
     set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
 
     return resp
 
@@ -99,3 +98,16 @@ def me():
             }
         }
     )
+
+@auth_bp.after_app_request
+def refresh_expiring_jwt(response):
+    try:
+        exp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        
+        if datetime.timestamp(now + timedelta(minutes=10)) > exp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+        return response
+    except Exception:
+        return response
