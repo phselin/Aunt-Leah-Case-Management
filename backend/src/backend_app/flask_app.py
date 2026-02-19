@@ -8,7 +8,6 @@ from flask_cors import CORS
 from backend_app.auth import auth_bp
 from backend_app.auth_init import bcrypt, jwt
 from backend_app.config import settings
-
 from backend_app.routes.example import example_bp
 from backend_app.routes.health import health_bp
 from backend_app.routes.pdf import pdf_bp
@@ -17,7 +16,7 @@ from backend_app.routes.sections import sections_bp
 
 def create_flask_app() -> Flask:
     app = Flask(__name__)
-    
+
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]

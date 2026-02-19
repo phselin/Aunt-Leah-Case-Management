@@ -8,6 +8,7 @@ from flask_jwt_extended import (
     set_refresh_cookies,
     unset_jwt_cookies,
     verify_jwt_in_request,
+    jwt_required
 )
 
 from backend_app.auth_init import bcrypt, jwt
@@ -51,7 +52,7 @@ def login():
 
     resp = jsonify(
         {
-            "message": "Login successful",
+            "detail": "Login successful",
             "user": {
                 "email": user["email"],
                 "role": user["role"],
@@ -70,9 +71,25 @@ def login():
 
 @auth_bp.post("/logout")
 def logout():
-    resp = jsonify({"message": "Logout successful"})
+    resp = jsonify({"detail": "Logout successful"})
     unset_jwt_cookies(resp)
     return resp
+
+@auth_bp.get("/me")
+@jwt_required()
+def me():
+    if not g.user:
+        return jsonify({"detail": "User not found"}), 404
+    
+    return jsonify({
+        "user": {
+            "email": g.user["email"],
+            "role": g.user["role"],
+            "id": str(g.user["_id"]),
+            "firstname": g.user["firstname"],
+            "lastname": g.user["lastname"],
+        }
+    })
 
 
 @auth_bp.before_app_request
