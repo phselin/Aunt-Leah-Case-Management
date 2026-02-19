@@ -18,7 +18,7 @@ def test_get_section(section):
         db[section].insert_one({"test": "pass"})
         response_after = client.get(f"/{section}")
         assert response_after.status_code == 200
-        assert response_after.json[0]["test"] == "pass"
+        assert response_after.json[0]["test"] == "pass"  # type: ignore
 
 
 def test_get_staff():
@@ -28,8 +28,8 @@ def test_get_staff():
     with auth_client() as client:
         response_before = client.get("/staff")
         assert response_before.status_code == 200
-        assert len(response_before.json) == 1
+        assert len(response_before.json) == 1  # type: ignore
         db.staff.insert_one({"test": "pass"})
         response_after = client.get("/staff")
         assert response_after.status_code == 200
-        assert response_after.json[1]["test"] == "pass"
+        assert response_after.json[1]["test"] == "pass"  # type: ignore
