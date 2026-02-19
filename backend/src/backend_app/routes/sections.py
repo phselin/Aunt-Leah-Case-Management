@@ -26,6 +26,34 @@ def get_people():
         ]
     return jsonify([{**p, "_id": str(p["_id"])} for p in list(db.people.find(query))])
 
+@sections_bp.post("/people")
+@jwt_required()
+def create_person():
+    body = request.get_json(silent=True) or {}
+
+    firstname = (body.get("firstname") or "").strip()
+    lastname = (body.get("lastname") or "").strip()
+
+    if not firstname or not lastname:
+        return jsonify({"detail": "firstname or lastname are required"}), 400
+
+    person = {
+        "firstname": firstname,
+        "lastname": lastname,
+        "dob": body.get("dob"),
+        "gender": body.get("gender"),
+        "email": body.get("email"),
+        "phone": body.get("phone"),
+        "address": body.get("address"),
+        "programs": body.get("programs") or [],
+        "province": body.get("province"),
+        "referralDate": body.get("referralDate"),
+    }
+
+    res = db.people.insert_one(person)
+    person["_id"] = str(res.inserted_id)
+    return jsonify(person), 201
+
 
 @sections_bp.get("/programs")
 @jwt_required()
