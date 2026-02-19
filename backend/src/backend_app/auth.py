@@ -1,20 +1,22 @@
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
+    current_user,
     jwt_required,
     set_access_cookies,
     set_refresh_cookies,
     unset_jwt_cookies,
-    verify_jwt_in_request,
 )
 
 from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.db import db
 
 auth_bp = Blueprint("auth", __name__)
+
+# TODO replace direct field access [] with .get()
 
 
 @jwt.user_lookup_loader
@@ -83,30 +85,17 @@ def logout():
 @auth_bp.get("/me")
 @jwt_required()
 def me():
-    if not g.user:
+    if not current_user:
         return jsonify({"detail": "User not found"}), 404
 
     return jsonify(
         {
             "user": {
-                "email": g.user["email"],
-                "role": g.user["role"],
-                "id": str(g.user["_id"]),
-                "firstname": g.user["firstname"],
-                "lastname": g.user["lastname"],
+                "email": current_user["email"],
+                "role": current_user["role"],
+                "id": str(current_user["_id"]),
+                "firstname": current_user["firstname"],
+                "lastname": current_user["lastname"],
             }
         }
     )
-
-
-@auth_bp.before_app_request
-def set_global_user():
-    g.user = None
-    try:
-        verify_jwt_in_request(optional=True)
-        from flask_jwt_extended import current_user
-
-        if current_user:
-            g.user = current_user
-    except Exception:
-        pass
