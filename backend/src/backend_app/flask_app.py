@@ -6,7 +6,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from backend_app.auth import auth_bp
-from backend_app.auth_init import bcrypt, jwt
+from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.config import settings
 from backend_app.routes.example import example_bp
 from backend_app.routes.health import health_bp
@@ -26,6 +26,7 @@ def create_flask_app() -> Flask:
 
     bcrypt.init_app(app)
     jwt.init_app(app)
+    limiter.init_app(app)
 
     app.register_blueprint(auth_bp)
 

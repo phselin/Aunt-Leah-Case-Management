@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import axios from "axios";
+import { createContext, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 
 
@@ -23,7 +24,13 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: {children:React.ReactNode}) => {
-    const [auth, setAuth ] = useState({});
+    const [auth, setAuth ] = useState<AuthData>({});
+
+    useEffect(() => {
+        axios.get("http://localhost:8000/me", {withCredentials: true})
+            .then(res => setAuth({user: res.data.user}))
+            .catch(() => setAuth({}))
+    }, []);
 
     return (
         <AuthContext.Provider value= {{ auth, setAuth }}>

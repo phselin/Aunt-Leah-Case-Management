@@ -11,7 +11,7 @@ from flask_jwt_extended import (
     jwt_required
 )
 
-from backend_app.auth_init import bcrypt, jwt
+from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.db import db
 
 auth_bp = Blueprint("auth", __name__)
@@ -30,6 +30,7 @@ def user_lookup(_jwt_header, jwt_data):
 
 
 @auth_bp.post("/login")
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     email = data.get("email")
