@@ -12,6 +12,8 @@ type Person = {
   referralDate?: string | null;
 };
 
+// TODO debouncing query because storing all clients inside array is inefficient
+
 const Client = () => {
   const errRef = useRef<HTMLParagraphElement>(null);
 
@@ -48,7 +50,7 @@ const Client = () => {
     .replace(/\s+/g, " ")
     .toLowerCase();
 
-  return name.includes(q);
+  return name.includes(q) || p.email?.includes(q);
   });
 
 
