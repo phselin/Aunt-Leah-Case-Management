@@ -4,11 +4,11 @@ from flask import Blueprint, g, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
+    jwt_required,
     set_access_cookies,
     set_refresh_cookies,
     unset_jwt_cookies,
     verify_jwt_in_request,
-    jwt_required
 )
 
 from backend_app.auth_init import bcrypt, jwt, limiter
@@ -20,6 +20,9 @@ auth_bp = Blueprint("auth", __name__)
 @jwt.user_lookup_loader
 def user_lookup(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
+
+    # TODO use redis to cache user so that we don't have to access database for every endpoint call
+    # which is what it is doing right now
 
     try:
         oid = ObjectId(identity)
@@ -76,21 +79,24 @@ def logout():
     unset_jwt_cookies(resp)
     return resp
 
+
 @auth_bp.get("/me")
 @jwt_required()
 def me():
     if not g.user:
         return jsonify({"detail": "User not found"}), 404
-    
-    return jsonify({
-        "user": {
-            "email": g.user["email"],
-            "role": g.user["role"],
-            "id": str(g.user["_id"]),
-            "firstname": g.user["firstname"],
-            "lastname": g.user["lastname"],
+
+    return jsonify(
+        {
+            "user": {
+                "email": g.user["email"],
+                "role": g.user["role"],
+                "id": str(g.user["_id"]),
+                "firstname": g.user["firstname"],
+                "lastname": g.user["lastname"],
+            }
         }
-    })
+    )
 
 
 @auth_bp.before_app_request

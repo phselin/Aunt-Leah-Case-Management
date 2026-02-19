@@ -30,7 +30,7 @@ def get_mongo_client() -> MongoClient:
         global _MONGO_MOCK_CLIENT
         if _MONGO_MOCK_CLIENT is None:
             _MONGO_MOCK_CLIENT = mongomock.MongoClient()
-        return _MONGO_MOCK_CLIENT
+        return _MONGO_MOCK_CLIENT  # type: ignore
     return MongoClient(settings.mongo_uri, serverSelectionTimeoutMS=1500)
 
 
