@@ -78,7 +78,8 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .clientTitle{
-    font-size: 14px;
+    margin-top: 20px;
+    font-size: 50px;
     font-weight: 700;
     color: #333;
   }
@@ -139,7 +140,7 @@ const GlobalStyle = createGlobalStyle`
     color: white;
     padding: 14px 16px;
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 1fr 0.6fr;
+    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 0.6fr;
     gap: 10px;
     font-size: 13px;
     font-weight: 800;
@@ -148,7 +149,7 @@ const GlobalStyle = createGlobalStyle`
   .clientTableRow{
     padding: 14px 16px;
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 1fr 0.6fr;
+    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 0.6fr;
     gap: 10px;
     align-items: center;
     font-size: 13px;
