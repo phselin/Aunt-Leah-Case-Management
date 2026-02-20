@@ -55,13 +55,14 @@ def login():
     email = data.get("email")
     password = data.get("password")
 
+    if not email or not password:
+        return jsonify({"detail": "Missing email or password"}), 400
+
     try:
         email = sanitizeEmail(email)
     except ValueError as e:
         return jsonify({"detail": "Invalid email format"}), 400
 
-    if not email or not password:
-        return jsonify({"detail": "Missing email or password"}), 400
 
     user = db.staff.find_one({"email": email})
     if not user:
