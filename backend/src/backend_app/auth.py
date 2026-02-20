@@ -1,3 +1,5 @@
+import re
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime, timedelta, timezone
@@ -34,6 +36,17 @@ def user_lookup(_jwt_header, jwt_data):
 
     return db.staff.find_one({"_id": oid})
 
+"""
+Helper for making sure email is formatted correctly and sanitized
+"""
+def sanitizeEmail(email):
+    email = email.strip()
+    emailPattern = r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
+
+    if re.match(emailPattern, email, re.IGNORECASE) is None:
+        raise ValueError("String is not in email format")
+
+    return email
 
 @auth_bp.post("/login")
 @limiter.limit("5 per minute")
@@ -44,6 +57,12 @@ def login():
 
     if not email or not password:
         return jsonify({"detail": "Missing email or password"}), 400
+
+    try:
+        email = sanitizeEmail(email)
+    except ValueError as e:
+        return jsonify({"detail": "Invalid email format"}), 400
+
 
     user = db.staff.find_one({"email": email})
     if not user:
