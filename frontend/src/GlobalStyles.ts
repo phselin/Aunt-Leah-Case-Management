@@ -61,6 +61,181 @@ const GlobalStyle = createGlobalStyle`
     outline: 4px auto -webkit-focus-ring-color;
   }
 
+    /Client Search page/
+  .clientSearchPage{
+    min-height: 100vh;
+    background: #f6f6f7;
+    padding: 24px;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  .clientSearchHeaderRow{
+    max-width: 1050px;
+    margin: 0 auto 14px auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .clientSearchTitle{
+    margin-top: 20px;
+    font-size: 50px;
+    font-weight: 700;
+    color: #333;
+  }
+
+  /* override global button style for this button */
+  .addClientBtn{
+    background: #d45b6f;
+    color: white;
+    border: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .addClientBtn:hover{
+    border-color: transparent;
+    filter: brightness(0.98);
+  }
+
+  /* Search bar */
+  .clientSearchBar{
+    max-width: 1050px;
+    margin: 0 auto 18px auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid #e2e2e2;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .searchIcon{
+    opacity: 0.6;
+  }
+
+  .clientSearchBar input{
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    background: transparent;
+  }
+
+  /* Table card */
+  .clientSearchTableCard{
+    max-width: 1050px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+
+  .clientSearchTableHeader{
+    background: #3f1622;
+    color: white;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 0.6fr;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .clientSearchTableRow{
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 1.3fr 1fr 0.9fr 0.6fr;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+  }
+
+  .clientSearchTableRow:hover{
+    background: #fafafa;
+  }
+
+  .clientSearchName{
+    font-weight: 700;
+    color: #d45b6f;
+  }
+
+  .clientSeachActions{
+    display: flex;
+    gap: 10px;
+  }
+
+
+  .clientSearchActions button{
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  .clientSearchActions button:hover{
+    opacity: 1;
+    border-color: transparent;
+    transform: translateY(-1px);
+  }
+
+  .clientSearchTableFooter{
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #666;
+    background: #fff;
+  }
+
+  .clientSeachEmpty{
+    padding: 60px 16px;
+    text-align: center;
+  }
+  .clientSearchEmptyIcon{
+    font-size: 34px;
+    opacity: 0.35;
+    margin-bottom: 10px;
+  }
+  .clientSearchEmptyTitle{
+    font-weight: 800;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .clientSearchEmptySub{
+    color: #888;
+    font-size: 13px;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px){
+    .clientSearchTableHeader{
+      display: none;
+    }
+
+    .clientSearchTableRow{
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .clientSearchTableRow > div{
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .clientSearchActions{
+      justify-content: flex-end;
+    }
+  }
+
+
   @media (prefers-color-scheme: light) {
     :root {
       color: #213547;

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../../context/AuthProvider'
 import {Logo, Nav,NavLink, Bars, NavMenu, NavBtn, NavBtnLink} from './NavbarElement'
+import { useActiveClient } from '../../context/ActiveClientProvider';
 
 const Navbar = () => {
 
   const { setAuth } = useContext(AuthContext)
   const navigate = useNavigate()
+  const {activeClientId} = useActiveClient();
 
   const handleLogout = async () => {
     try {
@@ -31,7 +33,7 @@ const Navbar = () => {
             <NavLink to = "/home">
             Home
             </NavLink>
-            <NavLink to = "/client">
+            <NavLink to = {activeClientId ? `/client/${activeClientId}` : "/client"}>
             Client
             </NavLink>
             <NavLink to = "/report">

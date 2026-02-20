@@ -1,11 +1,15 @@
-import React from 'react'
+import { useParams } from "react-router-dom";
+import ClientSearch from "./clientSearch";
+import ClientDetails from "./clientDetails";
 
 const Client = () => {
-  return (
-    <div>
-      <h1>client page</h1>
-    </div>
-  )
-}
+  const { id } = useParams();
 
-export default Client
+  return (
+    <div className="clientPage">
+      {id ? <ClientDetails /> : <ClientSearch />}
+    </div>
+  );
+};
+
+export default Client;

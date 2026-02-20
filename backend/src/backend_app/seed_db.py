@@ -52,7 +52,7 @@ def seed_db():
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
             "role": "admin",
-            "phone": faker.phone_number(),
+            "phone": faker.numerify(text="###-###-####"),
             "email": "admin@auntleah.org",
             "password_hash": admin_hash_pwd,
         }
@@ -63,7 +63,7 @@ def seed_db():
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
             "role": "staff",
-            "phone": faker.phone_number(),
+            "phone": faker.numerify(text="###-###-####"),
             "email": faker.free_email(),
             "programs": random.sample(PROGRAMS, k=random.randint(1, 2)),
         }
@@ -77,9 +77,10 @@ def seed_db():
             "dob": faker.date_of_birth(minimum_age=18, maximum_age=60).strftime("%Y-%m-%d"),
             "gender": random.choice(["male", "female", "non-binary", "prefer not to say"]),
             "programs": enrolled_programs,
-            "phone": faker.phone_number(),
+            "phone": faker.numerify(text="###-###-####"),
             "address": faker.address(),
             "email": faker.free_email(),
+            "referraldate": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d")
         }
 
         res = db.people.insert_one(person)
@@ -103,7 +104,7 @@ def seed_db():
             case_note = {
                 "personid": person_id,
                 "goalid": random.choice(goal_ids),
-                "date": faker.date_between(start_date="-1y", end_date="now").strftime("%Y-%m-%d"),
+                "date": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d"),
                 "note": faker.paragraph(nb_sentences=5),
             }
             case_notes.append(case_note)

@@ -1,24 +1,31 @@
 from bson import ObjectId
 from bson.errors import InvalidId
-from flask import Blueprint, g, jsonify, request
+from datetime import datetime, timedelta, timezone
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
-    create_refresh_token,
+    current_user,
+    jwt_required,
     set_access_cookies,
-    set_refresh_cookies,
+    get_jwt_identity,
+    get_jwt,
     unset_jwt_cookies,
-    verify_jwt_in_request,
 )
 
-from backend_app.auth_init import bcrypt, jwt
+from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.db import db
 
 auth_bp = Blueprint("auth", __name__)
+
+# TODO replace direct field access [] with .get()
 
 
 @jwt.user_lookup_loader
 def user_lookup(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
+
+    # TODO use redis to cache user so that we don't have to access database for every endpoint call
+    # which is what it is doing right now
 
     try:
         oid = ObjectId(identity)
@@ -29,6 +36,7 @@ def user_lookup(_jwt_header, jwt_data):
 
 
 @auth_bp.post("/login")
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     email = data.get("email")
@@ -47,11 +55,10 @@ def login():
         return jsonify({"detail": "Invalid credentials"}), 401
 
     access_token = create_access_token(identity=str(user["_id"]))
-    refresh_token = create_refresh_token(identity=str(user["_id"]))
 
     resp = jsonify(
         {
-            "message": "Login successful",
+            "detail": "Login successful",
             "user": {
                 "email": user["email"],
                 "role": user["role"],
@@ -63,26 +70,44 @@ def login():
     )
 
     set_access_cookies(resp, access_token)
-    set_refresh_cookies(resp, refresh_token)
 
     return resp
 
 
 @auth_bp.post("/logout")
 def logout():
-    resp = jsonify({"message": "Logout successful"})
+    resp = jsonify({"detail": "Logout successful"})
     unset_jwt_cookies(resp)
     return resp
 
 
-@auth_bp.before_app_request
-def set_global_user():
-    g.user = None
-    try:
-        verify_jwt_in_request(optional=True)
-        from flask_jwt_extended import current_user
+@auth_bp.get("/me")
+@jwt_required()
+def me():
+    if not current_user:
+        return jsonify({"detail": "User not found"}), 404
 
-        if current_user:
-            g.user = current_user
+    return jsonify(
+        {
+            "user": {
+                "email": current_user["email"],
+                "role": current_user["role"],
+                "id": str(current_user["_id"]),
+                "firstname": current_user["firstname"],
+                "lastname": current_user["lastname"],
+            }
+        }
+    )
+
+@auth_bp.after_app_request
+def refresh_expiring_jwt(response):
+    try:
+        exp = get_jwt()["exp"]
+        now = datetime.now(timezone.utc)
+        
+        if datetime.timestamp(now + timedelta(minutes=10)) > exp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+        return response
     except Exception:
-        pass
+        return response
