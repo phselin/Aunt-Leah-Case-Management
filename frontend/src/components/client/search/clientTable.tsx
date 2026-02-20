@@ -1,5 +1,4 @@
 import type { Person } from "./person";
-import { useNavigate } from "react-router-dom";
 
 type Props = {
   people: Person[];
@@ -8,7 +7,6 @@ type Props = {
 const nameOf = (p: Person) => `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
 const ClientTable = ({ people }: Props) => {
-  const navigate = useNavigate();
 
   return (
     <div className="clientSearchTableCard">
@@ -16,7 +14,9 @@ const ClientTable = ({ people }: Props) => {
         <div className="clientSearchEmpty">
           <div className="clientSearchEmptyIcon">👤</div>
           <div className="clientSearchEmptyTitle">No Clients Found</div>
-          <div className="clientSearchEmptySub">Add your first client to get started</div>
+          <div className="clientSearchEmptySub">
+            Add your first client to get started
+          </div>
         </div>
       ) : (
         <>
@@ -31,7 +31,9 @@ const ClientTable = ({ people }: Props) => {
 
           {people.map((p, idx) => (
             <div className="clientSearchTableRow" key={p._id ?? idx}>
-              <div className="clientSearchName" onClick={() => {if (p._id) navigate(`/client/${p._id}`)}}>{nameOf(p)}</div>
+              <div className="clientSearchName">
+                <a href={`/client/${p._id}`}>{nameOf(p)}</a>
+              </div>
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
               <div>{p.phone ?? ""}</div>
