@@ -321,8 +321,11 @@ def get_goals():
 @jwt_required()
 def get_stats():
     stats = {}
+    stats["clients"] = {"total": db.people.count_documents({})}
     for program, milestones in GENERAL_MILESTONES.items():
+        stats["clients"][program] = db.people.count_documents({"programs": program})
         stats[program] = {}
+        stats[program]["order"] = milestones
         stats[program]["general"] = {}
         for milestone in milestones:
             stats[program]["general"][milestone] = len(

@@ -11,10 +11,10 @@ NOTES_PER_PERSON = 20
 PROGRAMS = ["Housing", "Education", "Employment", "Drug Rehabilitation"]
 # we can have multiple goal types but including general only for now for simplicity
 GENERAL_MILESTONES = {
-    "Housing": ["homeless", "shelter", "transitional"],
+    "Housing": ["homeless", "shelter", "transitional", "permanent"],
     "Education": ["F", "D", "C", "B", "A"],
     "Employment": ["unemployed", "search", "interview", "hired", "stable"],
-    "Drug Rehabilitation": [7, 15, 30, 90, 180, 360],
+    "Drug Rehabilitation": [7, 30, 90, 180, 360],
 }
 NUM_STAFF = 50
 

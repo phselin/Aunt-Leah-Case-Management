@@ -359,7 +359,7 @@ const GlobalStyle = createGlobalStyle`
 
   .reportStatValue{
     margin-top: 8px;
-    font-size: 30px;
+    font-size: 24px;
     font-weight: 900;
     color: #222;
     overflow: hidden;

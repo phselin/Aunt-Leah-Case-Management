@@ -3,23 +3,19 @@ import axios from "axios";
 
 import { palette } from "../theme/palette";
 
-type Program = {
-  _id: string;
-  name: string;
-};
-
-type Person = {
-  programs?: unknown;
-};
-
 type BarDatum = { label: string; value: number };
 
 const API_BASE = (import.meta as ImportMeta).env?.VITE_API_BASE_URL || "http://localhost:8000";
 
+// We need >= max(milestones) colors otherwise it causes issues 
+// for programs with no. of pie colors + 1 = no of milestones in program
+// maybe there is a better way to do it (for later)
 const PIE_COLORS = [
   palette.bubblegumPink,
   palette.mutedTeal,
   palette.crimsonViolet,
+  palette.warmBronze,
+  palette.dustyBlue
 ] as const;
 
 function collapseToTopNWithOther(data: BarDatum[], maxSlices: number): BarDatum[] {
@@ -139,13 +135,9 @@ function PieChart({
   );
 }
 
-type StatsResponse = Record<string, { general?: Record<string, number> }>;
-
-const MILESTONE_ORDER: Record<string, string[]> = {
-  Housing: ["homeless", "shelter", "transitional"],
-  Education: ["F", "D", "C", "B", "A"],
-  Employment: ["unemployed", "search", "interview", "hired", "stable"],
-  "Drug Rehabilitation": ["7", "15", "30", "90", "180", "360"],
+type StatsResponse = {
+  clients?: Record<string, number>;
+  [program: string]: any;
 };
 
 function formatMilestone(program: string, milestone: string): string {
@@ -164,7 +156,7 @@ function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatu
   const raw = stats?.[program]?.general;
   if (!raw) return [];
   const entries = Object.entries(raw).map(([label, value]) => ({ label, value: Number(value) || 0 }));
-  const order = MILESTONE_ORDER[program];
+  const order: string[] = stats?.[program]?.order;
   if (order?.length) {
     const idx = new Map(order.map((k, i) => [k, i]));
     return entries
@@ -179,9 +171,7 @@ function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatu
 }
 
 const Report = () => {
-  const [programs, setPrograms] = useState<Program[]>([]);
   const [stats, setStats] = useState<StatsResponse>({});
-  const [people, setPeople] = useState<Person[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>("");
@@ -192,19 +182,10 @@ const Report = () => {
       setLoading(true);
       setErrMsg("");
       try {
-        const [statsRes, progRes, peopleRes] = await Promise.all([
-          axios.get(`${API_BASE}/stats`, { withCredentials: true }),
-          axios.get(`${API_BASE}/programs`, { withCredentials: true }),
-          axios.get(`${API_BASE}/people`, { withCredentials: true }),
-        ]);
-
-        const progData = Array.isArray(progRes.data) ? progRes.data : progRes.data?.programs;
-        const peopleData = Array.isArray(peopleRes.data) ? peopleRes.data : peopleRes.data?.people;
+        const statsRes = await axios.get(`${API_BASE}/stats`, {withCredentials: true});
 
         if (!cancelled) {
-          setPrograms(Array.isArray(progData) ? (progData as Program[]) : []);
           setStats(statsRes.data && typeof statsRes.data === "object" ? (statsRes.data as StatsResponse) : {});
-          setPeople(Array.isArray(peopleData) ? (peopleData as Person[]) : []);
         }
       } catch (err) {
         if (cancelled) return;
@@ -224,33 +205,21 @@ const Report = () => {
     };
   }, []);
 
-  const clientCountsByProgram = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const p of people) {
-      const programs = Array.isArray(p.programs) ? p.programs : [];
-      for (const pr of programs) {
-        if (typeof pr !== "string") continue;
-        const name = pr.trim();
-        if (!name) continue;
-        m.set(name, (m.get(name) || 0) + 1);
-      }
-    }
-    return m;
-  }, [people]);
-
-  const totalClients = people.length;
+  const totalClients = stats?.clients?.total || 0;
 
   const clientsPerProgramData = useMemo(() => {
-    const arr = Array.from(clientCountsByProgram.entries()).map(([label, value]) => ({ label, value }));
+    if (!stats?.clients) return [];
+    const arr = Object.entries(stats.clients)
+      .filter(([key]) => key !== "total")
+      .map(([label, value]) => ({ label, value: Number(value) }));
     arr.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
     return arr;
-  }, [clientCountsByProgram]);
+  }, [stats]);
 
   const programOptions = useMemo(() => {
-    const fromApi = programs.map((p) => p.name).filter(Boolean);
-    const fromStats = Object.keys(stats || {});
-    return ["All", ...Array.from(new Set([...fromApi, ...fromStats])).sort((a, b) => a.localeCompare(b))];
-  }, [programs, stats]);
+    const fromStats = Object.keys(stats || {}).filter(k => k !== "clients");
+    return ["All", ...fromStats.sort((a, b) => a.localeCompare(b))];
+  }, [stats]);
 
   const visiblePrograms = useMemo(() => {
     const all = programOptions.filter((p) => p !== "All");
@@ -260,8 +229,8 @@ const Report = () => {
 
   const clientsInScope = useMemo(() => {
     if (selectedProgram === "All") return totalClients;
-    return clientCountsByProgram.get(selectedProgram) || 0;
-  }, [clientCountsByProgram, selectedProgram, totalClients]);
+    return stats?.clients?.[selectedProgram] || 0;
+  }, [stats, selectedProgram, totalClients]);
 
   const selectedMilestones = useMemo(() => {
     if (selectedProgram === "All") return [];
@@ -329,8 +298,16 @@ const Report = () => {
           <div className="reportStatValue">{loading ? "…" : totalClients}</div>
         </div>
         <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">Clients</div>
-          <div className="reportStatValue">{loading ? "…" : clientsInScope}</div>
+          <div className="reportStatLabel">
+            {selectedProgram === "All" ? "Total programs" : "Program clients"}
+          </div>
+          <div className="reportStatValue">
+            {loading 
+              ? "…" 
+              : selectedProgram === "All" 
+                ? summary.programCount 
+                : clientsInScope}
+          </div>
         </div>
         <div className="reportCard reportStatCard">
           <div className="reportStatLabel">Milestone buckets</div>
