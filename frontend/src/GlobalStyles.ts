@@ -235,6 +235,252 @@ const GlobalStyle = createGlobalStyle`
     }
   }
 
+  /* Report page (Goal Progress) */
+  .reportPage{
+    padding: 24px;
+    background: #f7f8f7;
+    min-height: calc(100vh - 70px);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  .reportHeaderRow{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1120px;
+    margin: 0 auto 16px auto;
+  }
+
+  @media (max-width: 720px) {
+    .reportHeaderRow{
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  .reportTitle{
+    margin: 0;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    color: #4d1e31;
+  }
+
+  .reportSubTitle{
+    margin: 6px 0 0 0;
+    color: #5a5a5a;
+    font-size: 14px;
+  }
+
+  .reportControls{
+    display: grid;
+    gap: 6px;
+    min-width: 260px;
+  }
+
+  .reportLabel{
+    font-size: 12px;
+    font-weight: 700;
+    color: #5a5a5a;
+  }
+
+  .reportSelect{
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #e2e2e2;
+    background: white;
+    padding: 0 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    outline: none;
+  }
+
+  .reportErrorBox{
+    max-width: 1120px;
+    margin: 0 auto 14px auto;
+    background: #fff3f4;
+    border: 1px solid #ffd0d6;
+    color: #7a0b1e;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .reportStatsGrid{
+    max-width: 1120px;
+    margin: 0 auto 18px auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 860px) {
+    .reportStatsGrid{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .reportChartsGrid{
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 980px) {
+    .reportChartsGrid{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .reportCard{
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 14px 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+
+  .reportChartCard{
+    padding: 14px 14px 12px 14px;
+  }
+
+  .reportStatLabel{
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b6b6b;
+  }
+
+  .reportStatValue{
+    margin-top: 8px;
+    font-size: 30px;
+    font-weight: 900;
+    color: #222;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .reportCardTitle{
+    font-weight: 900;
+    color: #2b2b2b;
+    font-size: 14px;
+  }
+
+  .reportCardHint{
+    margin-top: 4px;
+    color: #6b6b6b;
+    font-size: 12px;
+  }
+
+  .reportEmptyState{
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px dashed #e2e2e2;
+    color: #6b6b6b;
+    font-size: 13px;
+  }
+
+  /* Bar list */
+  .reportBarList{
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .reportBarRow{
+    display: grid;
+    grid-template-columns: 120px 1fr 44px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .reportBarLabel{
+    font-size: 12px;
+    color: #2b2b2b;
+    font-weight: 700;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .reportBarTrack{
+    height: 10px;
+    border-radius: 999px;
+    background: #f0f0f0;
+    overflow: hidden;
+  }
+
+  .reportBarFill{
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .reportBarValue{
+    font-size: 12px;
+    color: #2b2b2b;
+    font-weight: 900;
+    text-align: right;
+  }
+
+  /* Pie chart */
+  .reportPieLayout{
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+
+  @media (max-width: 980px) {
+    .reportPieLayout{
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .reportPieSvg{
+    width: 180px;
+    height: 180px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .reportLegend{
+    display: grid;
+    gap: 8px;
+  }
+
+  .reportLegendRow{
+    display: grid;
+    grid-template-columns: 12px 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .reportLegendSwatch{
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .reportLegendText{
+    font-size: 12px;
+    font-weight: 700;
+    color: #2b2b2b;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .reportLegendValue{
+    font-size: 12px;
+    font-weight: 900;
+    color: #2b2b2b;
+    text-align: right;
+  }
+
 
   @media (prefers-color-scheme: light) {
     :root {
