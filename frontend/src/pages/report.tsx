@@ -23,11 +23,6 @@ const PIE_COLORS = [
   palette.bubblegumPink,
   palette.mutedTeal,
   palette.crimsonViolet,
-  "#7a9cc6",
-  "#f0b35f",
-  "#7bbf9a",
-  "#c08bb3",
-  "#9aa0a6",
 ] as const;
 
 function collapseToTopNWithOther(data: BarDatum[], maxSlices: number): BarDatum[] {
