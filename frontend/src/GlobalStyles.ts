@@ -309,8 +309,14 @@ const GlobalStyle = createGlobalStyle`
     max-width: 1120px;
     margin: 0 auto 18px auto;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  @media (max-width: 1120px) {
+    .reportStatsGrid{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 860px) {

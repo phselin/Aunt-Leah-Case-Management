@@ -8,6 +8,10 @@ type Program = {
   name: string;
 };
 
+type Person = {
+  programs?: unknown;
+};
+
 type BarDatum = { label: string; value: number };
 
 const API_BASE = (import.meta as ImportMeta).env?.VITE_API_BASE_URL || "http://localhost:8000";
@@ -177,6 +181,7 @@ function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatu
 const Report = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [stats, setStats] = useState<StatsResponse>({});
+  const [people, setPeople] = useState<Person[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>("");
@@ -187,21 +192,24 @@ const Report = () => {
       setLoading(true);
       setErrMsg("");
       try {
-        const [statsRes, progRes] = await Promise.all([
+        const [statsRes, progRes, peopleRes] = await Promise.all([
           axios.get(`${API_BASE}/stats`, { withCredentials: true }),
           axios.get(`${API_BASE}/programs`, { withCredentials: true }),
+          axios.get(`${API_BASE}/people`, { withCredentials: true }),
         ]);
 
         const progData = Array.isArray(progRes.data) ? progRes.data : progRes.data?.programs;
+        const peopleData = Array.isArray(peopleRes.data) ? peopleRes.data : peopleRes.data?.people;
 
         if (!cancelled) {
           setPrograms(Array.isArray(progData) ? (progData as Program[]) : []);
           setStats(statsRes.data && typeof statsRes.data === "object" ? (statsRes.data as StatsResponse) : {});
+          setPeople(Array.isArray(peopleData) ? (peopleData as Person[]) : []);
         }
       } catch (err) {
         if (cancelled) return;
         if (axios.isAxiosError(err) && err.response) {
-          setErrMsg(err.response.data?.detail || "Failed to load demographics");
+          setErrMsg(err.response.data?.detail || "Failed to load report");
         } else {
           setErrMsg("Unable to connect to server");
         }
@@ -216,6 +224,28 @@ const Report = () => {
     };
   }, []);
 
+  const clientCountsByProgram = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of people) {
+      const programs = Array.isArray(p.programs) ? p.programs : [];
+      for (const pr of programs) {
+        if (typeof pr !== "string") continue;
+        const name = pr.trim();
+        if (!name) continue;
+        m.set(name, (m.get(name) || 0) + 1);
+      }
+    }
+    return m;
+  }, [people]);
+
+  const totalClients = people.length;
+
+  const clientsPerProgramData = useMemo(() => {
+    const arr = Array.from(clientCountsByProgram.entries()).map(([label, value]) => ({ label, value }));
+    arr.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+    return arr;
+  }, [clientCountsByProgram]);
+
   const programOptions = useMemo(() => {
     const fromApi = programs.map((p) => p.name).filter(Boolean);
     const fromStats = Object.keys(stats || {});
@@ -227,6 +257,11 @@ const Report = () => {
     if (selectedProgram === "All") return all;
     return all.includes(selectedProgram) ? [selectedProgram] : [];
   }, [programOptions, selectedProgram]);
+
+  const clientsInScope = useMemo(() => {
+    if (selectedProgram === "All") return totalClients;
+    return clientCountsByProgram.get(selectedProgram) || 0;
+  }, [clientCountsByProgram, selectedProgram, totalClients]);
 
   const selectedMilestones = useMemo(() => {
     if (selectedProgram === "All") return [];
@@ -290,8 +325,12 @@ const Report = () => {
           <div className="reportStatValue">{loading ? "…" : summary.label}</div>
         </div>
         <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">Programs</div>
-          <div className="reportStatValue">{loading ? "…" : summary.programCount}</div>
+          <div className="reportStatLabel">Total clients</div>
+          <div className="reportStatValue">{loading ? "…" : totalClients}</div>
+        </div>
+        <div className="reportCard reportStatCard">
+          <div className="reportStatLabel">Clients</div>
+          <div className="reportStatValue">{loading ? "…" : clientsInScope}</div>
         </div>
         <div className="reportCard reportStatCard">
           <div className="reportStatLabel">Milestone buckets</div>
@@ -300,6 +339,18 @@ const Report = () => {
       </div>
 
       <div className="reportChartsGrid">
+        {selectedProgram === "All" ? (
+          <div className="reportCard reportChartCard">
+            <div className="reportCardTitle">Clients per program</div>
+            <div className="reportCardHint">Enrollment counts based on clients’ programs</div>
+            {loading ? (
+              <div className="reportEmptyState">Loading…</div>
+            ) : (
+              <BarList data={clientsPerProgramData} color={palette.bubblegumPink} emptyLabel="No client data" />
+            )}
+          </div>
+        ) : null}
+
         {selectedProgram === "All" ? (
           visiblePrograms.map((program) => {
             const data = milestoneDataForProgram(stats, program);
