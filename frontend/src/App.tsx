@@ -7,7 +7,7 @@ import AuthContext from './context/AuthProvider';
 //pages
 import Home from './pages/index';
 import Client from './pages/client';
-import Report from './pages/report';
+import Report from './pages/Report';
 import Login from  './pages/login';
 import { useContext } from 'react';
 
@@ -32,7 +32,7 @@ function App() {
            <Routes>
               <Route path = '/' element={<Navigate to='/home'></Navigate>}/>
               <Route path = '/home' element={<Home/>}/>
-              <Route path = '/client/:id?' element={<Client />}/>
+              <Route path = '/client' element={<Client/>}/>
               <Route path = '/report' element={<Report/>}/>
            </Routes>
          </AppContainer>
