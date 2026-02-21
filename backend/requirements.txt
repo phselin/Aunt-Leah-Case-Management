@@ -12,6 +12,8 @@ redis
 requests
 uvicorn[standard]
 faker
+pandas
+openpyxl
 
 # dev/test
 pytest

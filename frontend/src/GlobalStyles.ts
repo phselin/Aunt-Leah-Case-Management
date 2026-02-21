@@ -85,7 +85,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   /* override global button style for this button */
-  .addClientBtn{
+  .addClientBtn, .exportClientsBtn {
     background: #d45b6f;
     color: white;
     border: 0;
@@ -94,9 +94,32 @@ const GlobalStyle = createGlobalStyle`
     cursor: pointer;
     font-weight: 700;
   }
-  .addClientBtn:hover{
+  .addClientBtn:hover, .exportClientsBtn:hover:not(:disabled) {
     border-color: transparent;
     filter: brightness(0.98);
+  }
+
+  .exportClientsBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .clientSearchHeaderActions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .clientSearchErrorBox {
+    max-width: 1050px;
+    margin: 20px auto 14px auto;
+    background: #fff3f4;
+    border: 1px solid #ffd0d6;
+    color: #7a0b1e;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
   }
 
   /* Search bar */

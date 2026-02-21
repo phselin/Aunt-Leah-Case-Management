@@ -80,7 +80,9 @@ def seed_db():
             "phone": faker.numerify(text="###-###-####"),
             "address": faker.address(),
             "email": faker.free_email(),
-            "referraldate": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d")
+            "referraldate": faker.date_between(start_date="-5y", end_date="now").strftime(
+                "%Y-%m-%d"
+            ),
         }
 
         res = db.people.insert_one(person)

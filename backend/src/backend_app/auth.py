@@ -1,52 +1,75 @@
 import re
+from datetime import UTC, datetime, timedelta
 
-from bson import ObjectId
+from bson import ObjectId, json_util
 from bson.errors import InvalidId
-from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     current_user,
+    get_jwt,
+    get_jwt_identity,
     jwt_required,
     set_access_cookies,
-    get_jwt_identity,
-    get_jwt,
     unset_jwt_cookies,
 )
 
 from backend_app.auth_init import bcrypt, jwt, limiter
-from backend_app.db import db
+from backend_app.db import db, redis_client
 
 auth_bp = Blueprint("auth", __name__)
 
 # TODO replace direct field access [] with .get()
 
+@jwt.user_lookup_error_loader
+def user_lookup_error(_jwt_header, _jwt_data):
+    resp = jsonify({"detail": "Expired token"})
+    unset_jwt_cookies(resp)
+    return resp, 401
 
 @jwt.user_lookup_loader
 def user_lookup(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
 
-    # TODO use redis to cache user so that we don't have to access database for every endpoint call
-    # which is what it is doing right now
+    try:
+        cached_user = redis_client.get(identity)
+        if cached_user:
+            # print("using cached user")
+            return json_util.loads(cached_user)
+    except Exception as e:
+        print(e)
 
     try:
         oid = ObjectId(identity)
     except (InvalidId, TypeError):
         return None
 
-    return db.staff.find_one({"_id": oid})
+    user = db.staff.find_one({"_id": oid})
+    if user:
+        try:
+            redis_client.setex(
+                name=identity, time=timedelta(minutes=30), value=json_util.dumps(user)
+            )
+        except Exception as e:
+            print(e)
+
+    return user
+
 
 """
 Helper for making sure email is formatted correctly and sanitized
 """
+
+
 def sanitizeEmail(email):
     email = email.strip()
-    emailPattern = r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
+    emailPattern = r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"
 
     if re.match(emailPattern, email, re.IGNORECASE) is None:
         raise ValueError("String is not in email format")
 
     return email
+
 
 @auth_bp.post("/login")
 @limiter.limit("5 per minute")
@@ -60,9 +83,8 @@ def login():
 
     try:
         email = sanitizeEmail(email)
-    except ValueError as e:
+    except ValueError:
         return jsonify({"detail": "Invalid email format"}), 400
-
 
     user = db.staff.find_one({"email": email})
     if not user:
@@ -118,12 +140,13 @@ def me():
         }
     )
 
+
 @auth_bp.after_app_request
 def refresh_expiring_jwt(response):
     try:
         exp = get_jwt()["exp"]
-        now = datetime.now(timezone.utc)
-        
+        now = datetime.now(UTC)
+
         if datetime.timestamp(now + timedelta(minutes=10)) > exp:
             access_token = create_access_token(identity=get_jwt_identity())
             set_access_cookies(response, access_token)

@@ -1,32 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
-import ClientError from "../components/client/search/clientError";
 import ClientHeader from "../components/client/search/clientHeader";
 import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
 import type { Person } from "../components/client/search/person";
 
-// TODO debouncing query because storing all clients inside array is inefficient
-
 const ClientSearch = () => {
   const errRef = useRef<HTMLParagraphElement>(null);
 
   const [query, setQuery] = useState("");
+  const [debounceQuery, setDebounceQuery] = useState("");
   const [people, setPeople] = useState<Person[]>([]);
-  const [allPeople, setAllPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
+  const [exporting, setExporting] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounceQuery(query);
+    }, 500);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  useEffect(() => {
+    if (errMsg) {
+      const timer = setTimeout(() => {
+        setErrMsg("");
+      }, 2000);
+
+      return () => clearTimeout(timer); 
+    }
+  }, [errMsg]);
 
   useEffect(() => {
     const loadPeople = async () => {
+      const q = query.trim().toLowerCase();
       try {
-        const res = await axios.get("http://localhost:8000/people", {
+        const res = await axios.get(`http://localhost:8000/people${q ? `?person=${q}` : ""}`, {
           withCredentials: true,
         });
         const data = Array.isArray(res.data) ? res.data : res.data.people;
         const arr = data ?? [];
-        setAllPeople(arr);
-        setPeople(arr.slice(-20).reverse()); // newest 20
+        setPeople(arr);
         setErrMsg("");
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
@@ -38,25 +55,42 @@ const ClientSearch = () => {
     };
 
     loadPeople();
-  }, []);
+  }, [debounceQuery]);
 
-  const q = query.trim().toLowerCase();
+  const handleExport = async () => {
+    setExporting(true)
+    setErrMsg("")
+    
+    try {
+      const res = await axios.get("http://localhost:8000/people/export", {
+        withCredentials: true, 
+        responseType: "blob"
+      });
 
-  const visiblePeople = q
-    ? allPeople.filter((p) => {
-        const name = `${p.firstname ?? ""} ${p.lastname ?? ""}`
-          .replace(/\s+/g, " ")
-          .toLowerCase();
-        return name.includes(q);
-      })
-    : people;
+      const url = window.URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+      console.log(res.headers["Content-Disposition"]);
+      link.href = url;
+      link.download = "clients.xlsx";
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setErrMsg("Failed to export clients. Try again after some time.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="clientSearchPage">
-      <ClientError errRef={errRef} errMsg={errMsg} />
-      <ClientHeader />
+      {errMsg && (
+        <div className="clientSearchErrorBox" ref={errRef}>
+          {errMsg}
+        </div>
+      )}
+      <ClientHeader onAdd={() => {}} onExport={handleExport} exporting={exporting}/>
       <ClientSearchBar query={query} setQuery={setQuery} />
-      <ClientTable people={visiblePeople} />
+      <ClientTable people={people} />
     </div>
   );
 };
