@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
-from backend_app.seed_db import GENERAL_MILESTONES
 
 # ideally we want seperate blueprints for casenotes, goals and users but since everything has one
 # endpoint i am adding it all here
@@ -201,6 +200,28 @@ def get_programs():
     return jsonify(programs)
 
 
+@sections_bp.post("/programs")
+@jwt_required()
+def add_program():
+    body = request.get_json(silent=True) or {}
+    # only super admin can add programs
+    # commented out for now because we don't have a super admin role yet
+    # if not g.user["role"] == "superadmin":
+    #     return jsonify({"detail": "Unauthorized"}), 403
+    res = db.programs.insert_one(
+        {
+            "name": body.get("name"),
+            "goalTypes": body.get("goalTypes"),
+        }
+    )
+    program = {
+        "_id": str(res.inserted_id),
+        "name": body.get("name"),
+        "goalTypes": body.get("goalTypes"),
+    }
+    return jsonify(program), 201
+
+
 @sections_bp.get("/staff")
 @jwt_required()
 def get_staff():
@@ -265,17 +286,23 @@ def get_goals():
 def get_stats():
     stats = {}
     stats["clients"] = {"total": db.people.count_documents({})}
-    for program, milestones in GENERAL_MILESTONES.items():
-        stats["clients"][program] = db.people.count_documents({"programs": program})
-        stats[program] = {}
-        stats[program]["order"] = milestones
-        stats[program]["general"] = {}
-        for milestone in milestones:
-            stats[program]["general"][milestone] = len(
-                db.goals.distinct(
-                    "personid",
-                    {"status": milestone, "program": program},
+    for program in db.programs.find({}):
+        program_name = program["name"]
+        stats["clients"][program_name] = db.people.count_documents({"programs": program_name})
+        stats[program_name] = {}
+        # returning only general statistics for now
+        for goal_type, milestones in program.get("goalTypes", {}).items():
+            stats[program_name][goal_type] = []
+            for milestone in milestones:
+                stats[program_name][goal_type].append(
+                    {
+                        "milestone": milestone,
+                        "value": len(
+                            db.goals.distinct(
+                                "personid",
+                                {"status": milestone, "program": program_name, "type": goal_type},
+                            )
+                        ),
+                    }
                 )
-            )
     return jsonify(stats)
-    

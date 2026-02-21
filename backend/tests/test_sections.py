@@ -1,4 +1,5 @@
 import pytest
+from bson import ObjectId
 from test_utils import auth_client, unauth_client
 
 from backend_app.db import db
@@ -64,3 +65,23 @@ def test_get_staff():
         response_after = client.get("/staff")
         assert response_after.status_code == 200
         assert response_after.json[1]["test"] == "pass"  # type: ignore
+
+
+def test_add_program():
+    with unauth_client() as client:
+        response = client.post("/programs")
+        assert response.status_code == 401
+    with auth_client() as client:
+        payload = {"name": "Test Program", "goalTypes": ["Goal 1", "Goal 2"]}
+        response = client.post("/programs", json=payload)
+        assert response.status_code == 201
+        assert response.json["name"] == payload["name"]
+        assert response.json["goalTypes"] == payload["goalTypes"]
+        program_id = response.json["_id"]
+        assert program_id is not None
+        assert db.programs.count_documents({}) == 1
+        program_doc = db.programs.find_one({"_id": ObjectId(program_id)})
+        assert program_doc is not None
+        assert program_doc["name"] == payload["name"]
+        assert program_doc["goalTypes"] == payload["goalTypes"]
+        assert str(program_doc["_id"]) == program_id

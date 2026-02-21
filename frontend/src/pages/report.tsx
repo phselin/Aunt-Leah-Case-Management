@@ -7,6 +7,9 @@ type BarDatum = { label: string; value: number };
 
 const API_BASE = (import.meta as ImportMeta).env?.VITE_API_BASE_URL || "http://localhost:8000";
 
+// TODO provide report for all goalTypes and not just general
+// TODO preserve milestone ordering in bar graph but sort by count for line graph (currently sorting according to count for line graph as well as bar graph)
+
 // We need >= max(milestones) colors otherwise it causes issues 
 // for programs with no. of pie colors + 1 = no of milestones in program
 // maybe there is a better way to do it (for later)
@@ -154,16 +157,14 @@ function formatMilestone(program: string, milestone: string): string {
 
 function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatum[] {
   const raw = stats?.[program]?.general;
-  if (!raw) return [];
-  const entries = Object.entries(raw).map(([label, value]) => ({ label, value: Number(value) || 0 }));
-  const order: string[] = stats?.[program]?.order;
-  if (order?.length) {
-    const idx = new Map(order.map((k, i) => [k, i]));
-    return entries
-      .sort((a, b) => (idx.get(a.label) ?? 999) - (idx.get(b.label) ?? 999))
-      .filter((d) => d.value > 0)
-      .map((d) => ({ ...d, label: formatMilestone(program, d.label) }));
-  }
+  
+  if (!Array.isArray(raw)) return [];
+
+  const entries = raw.map((item) => ({ 
+    label: String(item.milestone), 
+    value: Number(item.value) || 0 
+  }));
+
   return entries
     .filter((d) => d.value > 0)
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
