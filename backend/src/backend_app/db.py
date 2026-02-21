@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+import redis
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 
@@ -36,6 +37,7 @@ def get_mongo_client() -> MongoClient:
 
 client = get_mongo_client()
 db = client[_db_name_from_uri(settings.mongo_uri)]
+redis_client = redis.from_url(settings.redis_url, decode_responses=True)
 
 
 def ping_mongo() -> bool:
