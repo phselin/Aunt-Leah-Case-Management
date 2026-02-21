@@ -22,6 +22,7 @@ def create_flask_app() -> Flask:
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     # app.config["JWT_COOKIE_SECURE"] = True # True in production
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
     bcrypt.init_app(app)

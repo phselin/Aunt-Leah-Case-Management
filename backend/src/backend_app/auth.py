@@ -21,11 +21,13 @@ auth_bp = Blueprint("auth", __name__)
 
 # TODO replace direct field access [] with .get()
 
+
 @jwt.user_lookup_error_loader
 def user_lookup_error(_jwt_header, _jwt_data):
     resp = jsonify({"detail": "Expired token"})
     unset_jwt_cookies(resp)
     return resp, 401
+
 
 @jwt.user_lookup_loader
 def user_lookup(_jwt_header, jwt_data):

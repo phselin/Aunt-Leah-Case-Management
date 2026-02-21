@@ -1,12 +1,13 @@
+from io import BytesIO
+
+import pandas
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required
-import pandas
-from io import BytesIO
 
-from backend_app.db import db
 from backend_app.auth_init import limiter
+from backend_app.db import db
 
 people_bp = Blueprint("people", __name__)
 
@@ -40,6 +41,7 @@ def get_people():
         [{**p, "_id": str(p["_id"])} for p in list(db.people.find(query).limit(30))]
     ), 200
 
+
 @people_bp.get("/people/export")
 @limiter.limit("5 per minute")
 @jwt_required()
@@ -48,23 +50,20 @@ def export_people():
         data = list(db.people.find({}, {"_id": 0}))
         if not data:
             return jsonify({"detail": "No data"}), 404
-        
+
         df = pandas.json_normalize(data)
         for col in df.columns:
-                df[col] = df[col].apply(lambda x: ', '.join(map(str, x)) if isinstance(x, list) else x)
+            df[col] = df[col].apply(lambda x: ", ".join(map(str, x)) if isinstance(x, list) else x)
 
         file = BytesIO()
         df.to_excel(file, index=False, engine="openpyxl")
         file.seek(0)
 
-        return send_file(
-            file,
-            as_attachment=True,
-            download_name='clients.xlsx'
-        )
+        return send_file(file, as_attachment=True, download_name="clients.xlsx")
 
     except Exception:
         return jsonify({"detail": "Failed to export"}), 500
+
 
 @people_bp.get("/people/<id>")
 @jwt_required()
