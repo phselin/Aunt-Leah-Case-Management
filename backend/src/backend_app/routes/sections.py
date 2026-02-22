@@ -229,37 +229,6 @@ def get_staff():
     return jsonify(staff)
 
 
-@sections_bp.get("/casenotes")
-@jwt_required()
-def get_casenotes():
-    person = request.args.get("person")
-    if not person:
-        casenotes = [
-            {
-                **casenote,
-                "_id": str(casenote["_id"]),
-                "personid": str(casenote.get("personid", "")),
-                "goalid": str(casenote.get("goalid", "")),
-            }
-            for casenote in db.casenotes.find({})
-        ]
-        return jsonify(casenotes)
-    try:
-        person_oid = ObjectId(person)
-    except (InvalidId, TypeError):
-        return jsonify({"detail": "Invalid Object ID"}), 400
-    person_name = db.people.find_one({"_id": person_oid}, {"firstname": 1, "lastname": 1, "_id": 0})
-    if not person_name:
-        return jsonify({"detail": "User not found"}), 404
-    casenotes = [
-        {**casenote, "goalid": str(casenote["goalid"])}
-        for casenote in db.casenotes.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort(
-            "date", -1
-        )
-    ]
-    return jsonify([person_name, *casenotes])
-
-
 @sections_bp.get("/goals")
 @jwt_required()
 def get_goals():

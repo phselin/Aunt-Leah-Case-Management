@@ -92,6 +92,8 @@ def create_person():
     if not firstname or not lastname:
         return jsonify({"detail": "firstname or lastname are required"}), 400
 
+    # TODO santize fields
+
     person = {
         "firstname": firstname,
         "lastname": lastname,

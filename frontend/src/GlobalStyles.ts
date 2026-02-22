@@ -48,6 +48,7 @@ const GlobalStyle = createGlobalStyle`
     font-weight: 500;
     font-family: inherit;
     background-color: #1a1a1a;
+    color: white;
     cursor: pointer;
     transition: border-color 0.25s;
   }
@@ -62,7 +63,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
     /Client Search page/
-  .clientSearchPage{
+  .clientPage{
     min-height: 100vh;
     background: #f6f6f7;
     padding: 24px;
@@ -110,7 +111,7 @@ const GlobalStyle = createGlobalStyle`
     align-items: center;
   }
 
-  .clientSearchErrorBox {
+  .clientErrorBox {
     max-width: 1050px;
     margin: 20px auto 14px auto;
     background: #fff3f4;
@@ -187,6 +188,10 @@ const GlobalStyle = createGlobalStyle`
   .clientSearchName{
     font-weight: 700;
     color: #d45b6f;
+  }
+
+  .clientSearchName:hover {
+    cursor: pointer;
   }
 
   .clientSeachActions{

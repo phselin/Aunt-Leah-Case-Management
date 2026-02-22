@@ -103,8 +103,8 @@ def seed_db():
             case_note = {
                 "personid": person_id,
                 "goalid": random.choice(goal_ids),
-                "date": faker.date_between(start_date="-5y", end_date="now").strftime("%Y-%m-%d"),
-                "note": faker.paragraph(nb_sentences=5),
+                "date": faker.date_between(start_date="-30d", end_date="now").strftime("%Y-%m-%d"),
+                "content": faker.paragraph(nb_sentences=5),
             }
             case_notes.append(case_note)
 

@@ -2,11 +2,14 @@ import type { Person } from "./person";
 
 type Props = {
   people: Person[];
+  onEdit: (id: string) => void;
+  onClick: (id: string) => void;
+  onError: (msg: string) => void;
 };
 
 const nameOf = (p: Person) => `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
-const ClientTable = ({ people }: Props) => {
+const ClientTable = ({ people, onEdit, onClick, onError }: Props) => {
 
   return (
     <div className="clientSearchTableCard">
@@ -31,15 +34,15 @@ const ClientTable = ({ people }: Props) => {
 
           {people.map((p, idx) => (
             <div className="clientSearchTableRow" key={p._id ?? idx}>
-              <div className="clientSearchName">
-                <a href={`/client/${p._id}`}>{nameOf(p)}</a>
+              <div className="clientSearchName" onClick={() => p._id ? onClick(p._id) : onError("No such client exists")}>
+                  {nameOf(p)}
               </div>
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
               <div>{p.phone ?? ""}</div>
               <div>{p.referraldate ?? ""}</div>
               <div className="clientSearchActions">
-                <button type="button">✏️</button>
+                <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
                 <button type="button">🗑️</button>
               </div>
             </div>
