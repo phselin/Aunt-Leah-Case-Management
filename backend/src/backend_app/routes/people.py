@@ -38,7 +38,7 @@ def get_people():
             ]
         }
     return jsonify(
-        [{**p, "_id": str(p["_id"])} for p in list(db.people.find(query).limit(30))]
+        [{**p, "_id": str(p["_id"])} for p in list(db.people.find(query).sort("_id", -1).limit(30))]
     ), 200
 
 

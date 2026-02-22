@@ -16,6 +16,8 @@ const Client = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [reloadFlag, setReloadFlag] = useState(0);
+  const reloadClients = () => setReloadFlag((x) => x + 1);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,7 +58,7 @@ const Client = () => {
     };
 
     loadPeople();
-  }, [debounceQuery]);
+  }, [debounceQuery, reloadFlag]);
 
   const handleExport = async () => {
     setExporting(true)
@@ -96,7 +98,7 @@ const Client = () => {
         onEdit={(pid) => navigate(`/client/${pid}`)} 
         onClick={(pid) => navigate(`/client/${pid}/casenotes`)} 
         onError={(msg: string) => setErrMsg(msg)}/>
-      <Outlet context={{ setErrMsg }} />
+      <Outlet context={{ setErrMsg, reloadClients }} />
     </div>
   );
 };

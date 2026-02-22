@@ -19,10 +19,30 @@ export const Card = styled.div`
 export const CalendarCard = styled(Card)`
   min-width: 320px;
 
-  /* make react-calendar fit nicer */
   .react-calendar {
     border: none;
     width: 100%;
+    color: #111; /* <-- key line */
+  }
+
+  /* Most of the day numbers are buttons */
+  .react-calendar button {
+    color: #111;
+  }
+
+  /* Weekday labels (MON, TUE, etc.) */
+  .react-calendar__month-view__weekdays {
+    color: #111;
+  }
+
+  /* Optional: dim “neighboring month” days */
+  .react-calendar__month-view__days__day--neighboringMonth {
+    color: #999;
+  }
+
+  /* Optional: disabled days */
+  .react-calendar__tile:disabled {
+    color: #bbb;
   }
 `;
 
