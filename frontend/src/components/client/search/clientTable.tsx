@@ -40,7 +40,7 @@ const ClientTable = ({ people, onEdit, onClick, onError }: Props) => {
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
               <div>{p.phone ?? ""}</div>
-              <div>{p.referraldate ?? ""}</div>
+              <div>{p.referralDate ?? p.referraldate ?? ""}</div>
               <div className="clientSearchActions">
                 <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
                 <button type="button">🗑️</button>
