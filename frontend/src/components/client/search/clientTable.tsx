@@ -5,11 +5,12 @@ type Props = {
   onEdit: (id: string) => void;
   onClick: (id: string) => void;
   onError: (msg: string) => void;
+  onDelete: (id: string, name: string) => void;
 };
 
 const nameOf = (p: Person) => `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
-const ClientTable = ({ people, onEdit, onClick, onError }: Props) => {
+const ClientTable = ({ people, onEdit, onClick, onError, onDelete }: Props) => {
 
   return (
     <div className="clientSearchTableCard">
@@ -43,7 +44,7 @@ const ClientTable = ({ people, onEdit, onClick, onError }: Props) => {
               <div>{p.referralDate ?? ""}</div>
               <div className="clientSearchActions">
                 <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
-                <button type="button">🗑️</button>
+                <button type="button" onClick={() => p._id ? onDelete(p._id, nameOf(p)) : onError("No such client exists")}>🗑️</button>
               </div>
             </div>
           ))}

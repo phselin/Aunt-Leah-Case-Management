@@ -84,6 +84,18 @@ const Client = () => {
     }
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      if (!window.confirm(`Are you sure you want to delete client ${name}?`)) return;
+      await axios.delete(`http://localhost:8000/people/${id}`, {
+        withCredentials: true,
+      });
+      reloadClients();
+    } catch (err) {
+      setErrMsg("Failed to delete client");
+    }
+  };
+
   return (
     <div className="clientPage">
       {errMsg && (
@@ -97,7 +109,8 @@ const Client = () => {
         people={people}
         onEdit={(pid) => navigate(`/client/${pid}`)}
         onClick={(pid) => navigate(`/client/${pid}/casenotes`)}
-        onError={(msg: string) => setErrMsg(msg)} />
+        onError={(msg: string) => setErrMsg(msg)}
+        onDelete={(pid, pname) => handleDelete(pid, pname)} />
       <Outlet context={{ setErrMsg, reloadClients }} />
     </div>
   );

@@ -146,3 +146,15 @@ def create_person():
     res = db.people.insert_one(person)
     person["_id"] = str(res.inserted_id)
     return jsonify(person), 201
+
+
+@people_bp.delete("/people/<id>")
+@jwt_required()
+def delete_person(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    db.people.delete_one({"_id": oid})
+    return jsonify({"detail": "Client deleted successfully"}), 200
