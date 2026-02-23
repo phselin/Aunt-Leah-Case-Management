@@ -39,6 +39,7 @@ function App() {
                 <Route path=':id/casenotes' element={<CaseManagementView />} />
               </Route>
               <Route path = '/report' element={<Report/>}/>
+              <Route path = '*' element={<Navigate to='/home'></Navigate>}/>
            </Routes>
          </AppContainer>
       </>

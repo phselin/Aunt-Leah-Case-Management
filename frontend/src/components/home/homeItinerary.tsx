@@ -18,6 +18,8 @@ import {
   FormActions,
   SecondaryBtn,
 } from "./homeElement";
+import type { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
@@ -32,16 +34,13 @@ type EventItem = {
 type EventsByDate = Record<string, EventItem[]>;
 
 type ItineraryProps = {
-  value: Value;
+  value: Dayjs | null;
 };
 
 const STORAGE_KEY = "home_itinerary_events_v1";
 
-function toDateKey(d: Date) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+function toDateKey(d: Dayjs) {
+  return d.format(`YYYY-MM-DD`);
 }
 
 function newId() {
@@ -49,9 +48,9 @@ function newId() {
 }
 
 const Itinerary = ({ value }: ItineraryProps) => {
+
   const selectedDate = useMemo(() => {
-    const d = Array.isArray(value) ? value[0] : value;
-    return d ?? new Date();
+    return value ?? dayjs();
   }, [value]);
 
   const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
@@ -75,7 +74,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
       const parsed = JSON.parse(raw) as EventsByDate;
       if (parsed && typeof parsed === "object") setEventsByDate(parsed);
     } catch {
-      
+
     }
   }, []);
 
@@ -84,7 +83,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(eventsByDate));
     } catch {
-      
+
     }
   }, [eventsByDate]);
 
@@ -117,7 +116,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
     const cleanTime = time.trim();
 
     if (!cleanTitle || !cleanTime) {
-      
+
       alert("Please enter a title and time.");
       return;
     }
@@ -125,7 +124,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
     setEventsByDate((prev) => {
       const day = prev[dateKey] ?? [];
 
-      
+
       if (editingId) {
         const updated = day.map((ev) =>
           ev.id === editingId
@@ -135,7 +134,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
         return { ...prev, [dateKey]: updated };
       }
 
-      
+
       const newEvent: EventItem = {
         id: newId(),
         title: cleanTitle,
@@ -160,7 +159,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
   return (
     <ItineraryCard>
       <ItineraryTitle>Itinerary</ItineraryTitle>
-      <ItineraryDate>{selectedDate.toDateString()}</ItineraryDate>
+      <ItineraryDate>{selectedDate.format(`ddd MMM DD YYYY`)}</ItineraryDate>
 
       <AddEventBtn type="button" onClick={openAdd}>
         + Add Event

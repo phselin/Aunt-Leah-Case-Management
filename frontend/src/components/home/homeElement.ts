@@ -182,7 +182,7 @@ export const SecondaryBtn = styled.button`
   border: 1px solid #ececec;
   background: #fff;
   cursor: pointer;
-
+  color: #c04b5a;
   &:hover {
     background: #f6f6f6;
   }

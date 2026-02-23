@@ -1,16 +1,15 @@
 import * as React from 'react';
 import axios from 'axios';
-import { 
-  Box, Grid, TextField, Button, Paper, Typography, Container, IconButton 
+import {
+  Box, Grid, TextField, Button, Paper, Typography, Container, IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import type { TransitionProps } from '@mui/material/transitions';
 import { Dialog, Slide } from "@mui/material";
-import { LocalizationProvider, DateCalendar } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import CalendarComponent from '../components/calendar';
 
 const COLORS = {
   headerText: '#5d3b4b',
@@ -27,7 +26,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 const CaseManagementView = () => {
-  const {id} = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { setErrMsg } = useOutletContext<{ setErrMsg: (msg: string) => void }>();
   const [loading, setLoading] = React.useState(false);
@@ -36,7 +35,7 @@ const CaseManagementView = () => {
   const [caseNotes, setCaseNotes] = React.useState<any[]>([]);
   const [note, setNote] = React.useState("");
 
-React.useEffect(() => {
+  React.useEffect(() => {
     const fetchInitialData = async () => {
       if (!id) return;
       try {
@@ -48,7 +47,7 @@ React.useEffect(() => {
         setClientName(`${nameRes.data.firstname || ""} ${nameRes.data.lastname || ""}`.trim());
         setCaseNotes(notesRes.data || []);
       } catch (err) {
-        setErrMsg("Unable to find client details");
+        setErrMsg("Unable to find client notes");
         navigate("/client");
       } finally {
         setLoading(false);
@@ -57,7 +56,6 @@ React.useEffect(() => {
 
     fetchInitialData();
   }, [id]);
-  
   // replaced date with id because otherwise every date change you are fetching the case note
 
   React.useEffect(() => {
@@ -97,10 +95,9 @@ React.useEffect(() => {
 
   return (
     <Dialog fullScreen open={true} onClose={() => navigate("/client")} TransitionComponent={Transition}>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ bgcolor: COLORS.background, minHeight: '100vh', py: 4 }}>
         <Container maxWidth="lg">
-          
+
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
             <Box>
               <Typography variant="h4" sx={{ color: COLORS.headerText, fontWeight: 700 }}>
@@ -115,19 +112,7 @@ React.useEffect(() => {
 
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 5 }}>
-              <Paper elevation={0} sx={{ p: 2, borderRadius: 4, height: '100%' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, px: 2, color: COLORS.headerText, fontWeight: 600 }}>
-                  Select Session Date
-                </Typography>
-                <DateCalendar 
-                  value={selectedDate} 
-                  onChange={(newVal) => setSelectedDate(newVal)}
-                  sx={{
-                    width: '100%',
-                    '& .MuiPickersDay-root.Mui-selected': { backgroundColor: COLORS.primary }
-                  }}
-                />
-              </Paper>
+              <CalendarComponent value={selectedDate} onChange={(newVal) => setSelectedDate(newVal)} />
             </Grid>
 
             <Grid size={{ xs: 12, md: 7 }}>
@@ -135,7 +120,6 @@ React.useEffect(() => {
                 <Typography variant="subtitle2" sx={{ mb: 2, color: COLORS.headerText, fontWeight: 600 }}>
                   Case Notes - {selectedDate?.format('MMMM D, YYYY')}
                 </Typography>
-                
                 <TextField
                   fullWidth
                   multiline
@@ -145,19 +129,19 @@ React.useEffect(() => {
                   onChange={(e) => setNote(e.target.value)}
                   placeholder={loading ? "Loading..." : "Enter clinical observations here..."}
                   variant="outlined"
-                  sx={{ 
+                  sx={{
                     flexGrow: 1, mb: 2,
                     '& .MuiOutlinedInput-root': { bgcolor: '#ffffff', borderRadius: 2 }
                   }}
                 />
-                
-                <Button 
-                  fullWidth 
-                  variant="contained" 
+
+                <Button
+                  fullWidth
+                  variant="contained"
                   size="large"
                   startIcon={<SaveIcon />}
                   onClick={handleSave}
-                  sx={{ 
+                  sx={{
                     bgcolor: COLORS.secondary, color: '#4a5d4e', fontWeight: 700,
                     '&:hover': { bgcolor: '#b1c4b5' },
                     textTransform: 'none', borderRadius: 2, boxShadow: 'none'
@@ -167,11 +151,10 @@ React.useEffect(() => {
                 </Button>
               </Paper>
             </Grid>
-            
+
           </Grid>
         </Container>
       </Box>
-    </LocalizationProvider>
     </Dialog>
   );
 }

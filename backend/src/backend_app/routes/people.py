@@ -80,6 +80,43 @@ def get_person(id):
     person["_id"] = str(person["_id"])
     return jsonify(person), 200
 
+# TODO in the future, we will have dynamic fields and using the current design 
+# of body.get(<field>, "") wll be very inefficint. need something else
+
+@people_bp.put("/people/<id>")
+@jwt_required()
+def update_person(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    body = request.get_json(silent=True) or {}
+    firstname = (body.get("firstname") or "").strip()
+    lastname = (body.get("lastname") or "").strip()
+
+    if not firstname or not lastname:
+        return jsonify({"detail": "firstname or lastname are required"}), 400
+
+    update_data = {
+        "firstname": firstname,
+        "lastname": lastname,
+        "dob": body.get("dob", ""),
+        "gender": body.get("gender", ""),
+        "email": body.get("email", ""),
+        "phone": body.get("phone", ""),
+        "address": body.get("address", ""),
+        "programs": body.get("programs", []),
+        "referralDate": body.get("referralDate", ""),
+    }
+
+    res = db.people.update_one({"_id": oid}, {"$set": update_data})
+    
+    if res.matched_count == 0:
+        return jsonify({"detail": "Client not found"}), 404
+
+    return jsonify({"detail": "Client updated successfully"}), 200
+
 
 @people_bp.post("/people")
 @jwt_required()

@@ -1,15 +1,12 @@
 import { useContext, useState } from "react";
 import AuthContext from "../context/AuthProvider";
-import HomeCalendar from "../components/home/homeCalendar";
 import Itinerary from "../components/home/homeItinerary";
-
-
-type ValuePiece = Date | null;
-type Value = ValuePiece | [ValuePiece, ValuePiece];
+import dayjs, { Dayjs } from "dayjs";
+import CalendarComponent from "../components/calendar";
 
 const Home = () => {
   const { auth } = useContext(AuthContext);
-  const [value, onChange] = useState<Value>(new Date());
+  const [selectedDate, onChange] = useState<Dayjs | null>(dayjs());
 
   return (
     <div style={{ padding: "24px" }}>
@@ -22,8 +19,13 @@ const Home = () => {
       )}
 
       <div style={{ marginTop: "16px", display: "flex", gap: "24px", alignItems: "flex-start" }}>
-        <HomeCalendar value={value} onChange={onChange} />
-        <Itinerary value={value} />
+        <div style={{ flex: 1, minWidth: "320px" }}>
+          <CalendarComponent
+            value={selectedDate}
+            onChange={onChange}
+          />
+        </div>
+        <Itinerary value={selectedDate} />
       </div>
     </div>
   );

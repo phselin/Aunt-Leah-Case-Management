@@ -18,7 +18,7 @@ const Client = () => {
   const [exporting, setExporting] = useState(false);
   const [reloadFlag, setReloadFlag] = useState(0);
   const reloadClients = () => setReloadFlag((x) => x + 1);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebounceQuery(query);
@@ -34,7 +34,7 @@ const Client = () => {
         setErrMsg("");
       }, 2000);
 
-      return () => clearTimeout(timer); 
+      return () => clearTimeout(timer);
     }
   }, [errMsg]);
 
@@ -63,10 +63,10 @@ const Client = () => {
   const handleExport = async () => {
     setExporting(true)
     setErrMsg("")
-    
+
     try {
       const res = await axios.get("http://localhost:8000/people/export", {
-        withCredentials: true, 
+        withCredentials: true,
         responseType: "blob"
       });
 
@@ -91,13 +91,13 @@ const Client = () => {
           {errMsg}
         </div>
       )}
-      <ClientHeader onAdd={() => {navigate("/client/new")}} onExport={handleExport} exporting={exporting}/>
+      <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
       <ClientSearchBar query={query} setQuery={setQuery} />
-      <ClientTable 
+      <ClientTable
         people={people}
-        onEdit={(pid) => navigate(`/client/${pid}`)} 
-        onClick={(pid) => navigate(`/client/${pid}/casenotes`)} 
-        onError={(msg: string) => setErrMsg(msg)}/>
+        onEdit={(pid) => navigate(`/client/${pid}`)}
+        onClick={(pid) => navigate(`/client/${pid}/casenotes`)}
+        onError={(msg: string) => setErrMsg(msg)} />
       <Outlet context={{ setErrMsg, reloadClients }} />
     </div>
   );

@@ -6,7 +6,5 @@ export type Person = {
   email?: string;
   phone?: string;
   referralDate?: string | null;
-  /** @deprecated use referralDate (camelCase) - API returns camelCase */
-  referraldate?: string | null;
   [key: string]: any;
 };

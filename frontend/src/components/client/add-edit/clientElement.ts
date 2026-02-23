@@ -1,15 +1,10 @@
 import styled from "styled-components";
 
-export const AddClientCard = styled.div`
+export const ClientCard = styled.div`
   width: 100%;
-  background: #fff;
-  border: 1px solid #ececec;
-  border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 `;
 
-export const AddClientHeader = styled.div`
+export const ClientHeader = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -17,19 +12,19 @@ export const AddClientHeader = styled.div`
   margin-bottom: 14px;
 `;
 
-export const AddClientTitleWrap = styled.div`
+export const ClientTitleWrap = styled.div`
   display: grid;
   gap: 4px;
 `;
 
-export const AddClientTitle = styled.h2`
+export const ClientTitle = styled.h2`
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: #111;
 `;
 
-export const AddClientSubtitle = styled.p`
+export const ClientSubtitle = styled.p`
   margin: 0;
   font-size: 12px;
   color: #666;
@@ -60,7 +55,7 @@ export const ErrorBox = styled.div`
   font-size: 13px;
 `;
 
-export const AddClientGrid = styled.div`
+export const ClientGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;

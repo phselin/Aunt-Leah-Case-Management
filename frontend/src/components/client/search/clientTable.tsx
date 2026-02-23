@@ -35,12 +35,12 @@ const ClientTable = ({ people, onEdit, onClick, onError }: Props) => {
           {people.map((p, idx) => (
             <div className="clientSearchTableRow" key={p._id ?? idx}>
               <div className="clientSearchName" onClick={() => p._id ? onClick(p._id) : onError("No such client exists")}>
-                  {nameOf(p)}
+                {nameOf(p)}
               </div>
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
               <div>{p.phone ?? ""}</div>
-              <div>{p.referralDate ?? p.referraldate ?? ""}</div>
+              <div>{p.referralDate ?? ""}</div>
               <div className="clientSearchActions">
                 <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
                 <button type="button">🗑️</button>
