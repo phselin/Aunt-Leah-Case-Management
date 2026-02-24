@@ -29,7 +29,8 @@ def seed_db():
     bcrypt.init_app(app)
 
     with app.app_context():
-        admin_hash_pwd = bcrypt.generate_password_hash("password").decode("utf-8")
+        def hash_pwd(pwd):
+            return bcrypt.generate_password_hash(pwd).decode("utf-8")
 
     db.programs.delete_many({})
     db.staff.delete_many({})
@@ -51,7 +52,18 @@ def seed_db():
             "role": "admin",
             "phone": faker.numerify(text="###-###-####"),
             "email": "admin@auntleah.org",
-            "password_hash": admin_hash_pwd,
+            "password_hash": hash_pwd("password"),
+        }
+    )
+
+    db.staff.insert_one(
+        {
+            "firstname": "Gregor",
+            "lastname": "Kiczales",
+            "role": "admin",
+            "phone": faker.numerify(text="###-###-####"),
+            "email": "GKiczales@auntleah.org",
+            "password_hash": hash_pwd("trustTheNaturalRecursion"),
         }
     )
 
