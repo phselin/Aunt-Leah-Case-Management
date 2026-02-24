@@ -3,6 +3,7 @@ import { Paper, Typography } from "@mui/material";
 import { LocalizationProvider, DateCalendar } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Dayjs } from "dayjs";
+import { palette } from "../theme/palette";
 
 type Calendar = {
     value: Dayjs | null;
@@ -10,10 +11,10 @@ type Calendar = {
 };
 
 const COLORS = {
-    headerText: '#5d3b4b',
-    primary: '#b06a72',
-    secondary: '#c2d5c6',
-    background: '#f8f9fa'
+    headerText: palette.deepRed,
+    primary: palette.magentaPink,
+    secondary: palette.seafoamGreen,
+    background: palette.white,
 };
 
 const CalendarComponent = ({ value, onChange }: Calendar) => {

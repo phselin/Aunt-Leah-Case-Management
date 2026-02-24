@@ -7,6 +7,7 @@ from backend_app.db import db
 
 casenotes_bp = Blueprint("casenotes", __name__)
 
+
 @casenotes_bp.get("/casenotes")
 @jwt_required()
 def get_casenotes():
@@ -36,6 +37,7 @@ def get_casenotes():
     ]
     return jsonify(casenotes), 200
 
+
 @casenotes_bp.post("/casenotes")
 @jwt_required()
 def save_casenote():
@@ -53,9 +55,7 @@ def save_casenote():
         return jsonify({"detail": "Invalid Object ID"}), 400
 
     db.casenotes.update_one(
-        {"personid": person_oid, "date": date_str},
-        {"$set": {"content": content}},
-        upsert=True
+        {"personid": person_oid, "date": date_str}, {"$set": {"content": content}}, upsert=True
     )
-    
+
     return jsonify({"detail": "Casenote saved successfully"}), 200

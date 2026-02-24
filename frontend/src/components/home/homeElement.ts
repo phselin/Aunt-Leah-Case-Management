@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { palette } from "../../theme/palette";
 
 export const Row = styled.div`
   margin-top: 16px;
@@ -68,9 +69,9 @@ export const AddEventBtn = styled.button`
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #3aa36f;
+  border: 1px solid ${palette.seafoamGreen};
   background: #ffffff;
-  color: #3aa36f;
+  color: ${palette.seafoamGreen};
   font-weight: 600;
   cursor: pointer;
 

@@ -29,6 +29,7 @@ def seed_db():
     bcrypt.init_app(app)
 
     with app.app_context():
+
         def hash_pwd(pwd):
             return bcrypt.generate_password_hash(pwd).decode("utf-8")
 

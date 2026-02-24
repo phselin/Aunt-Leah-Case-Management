@@ -15,10 +15,10 @@ const API_BASE = (import.meta as ImportMeta).env?.VITE_API_BASE_URL || "http://l
 // maybe there is a better way to do it (for later)
 const PIE_COLORS = [
   palette.bubblegumPink,
-  palette.mutedTeal,
-  palette.crimsonViolet,
-  palette.warmBronze,
-  palette.dustyBlue
+  palette.seafoamGreen,
+  palette.deepRed,
+  palette.tangerineOrange,
+  palette.mintGreen,
 ] as const;
 
 function collapseToTopNWithOther(data: BarDatum[], maxSlices: number): BarDatum[] {
@@ -339,7 +339,7 @@ const Report = () => {
                 {loading ? (
                   <div className="reportEmptyState">Loading…</div>
                 ) : (
-                  <BarList data={data} color={palette.mutedTeal} emptyLabel="No milestone data" />
+                  <BarList data={data} color={palette.forestGreen} emptyLabel="No milestone data" />
                 )}
               </div>
             );
@@ -352,7 +352,7 @@ const Report = () => {
               {loading ? (
                 <div className="reportEmptyState">Loading…</div>
               ) : (
-                <BarList data={selectedMilestones} color={palette.mutedTeal} emptyLabel="No milestone data" />
+                <BarList data={selectedMilestones} color={palette.forestGreen} emptyLabel="No milestone data" />
               )}
             </div>
 

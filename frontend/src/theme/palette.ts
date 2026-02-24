@@ -1,11 +1,14 @@
 export const palette = {
-  crimsonViolet: '#4d1e31',
-  mutedTeal: '#93a48d',
-  bubblegumPink: '#bf606e',
-  warmBronze: "#C2926E",
-  dustyBlue: "#6A7B82",
-  brightSnow: '#f7f8f7cb',
+  deepRed: '#60082e',
+  seafoamGreen: '#4db68e',
+  magentaPink: '#eb4b6b',
+  bubblegumPink: '#f2c3fa',
+  mintGreen: '#d1efe2',
+  forestGreen: '#235037',
+  offWhite: '#f7eee5',
   white: '#ffffff',
+  tangerineOrange: '#ff8a00',
+  brightPeriwinkle: '#99a2f5',
 } as const;
 
 export type Palette = typeof palette;

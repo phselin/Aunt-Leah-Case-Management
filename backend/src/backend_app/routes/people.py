@@ -80,8 +80,10 @@ def get_person(id):
     person["_id"] = str(person["_id"])
     return jsonify(person), 200
 
-# TODO in the future, we will have dynamic fields and using the current design 
+
+# TODO in the future, we will have dynamic fields and using the current design
 # of body.get(<field>, "") wll be very inefficint. need something else
+
 
 @people_bp.put("/people/<id>")
 @jwt_required()
@@ -111,7 +113,7 @@ def update_person(id):
     }
 
     res = db.people.update_one({"_id": oid}, {"$set": update_data})
-    
+
     if res.matched_count == 0:
         return jsonify({"detail": "Client not found"}), 404
 

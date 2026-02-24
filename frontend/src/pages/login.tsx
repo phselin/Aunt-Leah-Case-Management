@@ -3,17 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import AuthContext from '../context/AuthProvider';
 import axios from 'axios';
-
-// Design tokens
-const COLORS = {
-  rose: '#D16279',
-  subheading: '#9A6A71',
-  border: '#D1D1D1',
-  placeholder: '#B0B0B0',
-  errorBg: '#fff3f4',
-  errorBorder: '#ffd0d6',
-  errorText: '#7a0b1e',
-} as const;
+import { palette } from '../theme/palette';
 
 const LoginLayout = styled.div`
   display: flex;
@@ -23,7 +13,7 @@ const LoginLayout = styled.div`
 
 const LeftPanel = styled.div`
   flex: 0 0 38%;
-  background: ${COLORS.rose};
+  background: ${palette.magentaPink};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,16 +41,17 @@ const FormHeading = styled.h1`
   margin: 0 0 8px 0;
   font-size: 1.75rem;
   font-weight: 600;
-  color: ${COLORS.rose};
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: ${palette.deepRed};
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
 `;
 
 const FormSubheading = styled.p`
   margin: 0 0 32px 0;
   font-size: 0.9375rem;
   font-weight: 400;
-  color: ${COLORS.subheading};
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: ${palette.seafoamGreen};
+  font-family: 'Poppins', sans-serif;
 `;
 
 const Form = styled.form`
@@ -80,15 +71,15 @@ const FieldGroup = styled.div`
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
-  color: ${COLORS.rose};
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: ${palette.deepRed};
+  font-family: 'Poppins', sans-serif;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 12px 14px;
   font-size: 1rem;
-  border: 1px solid ${COLORS.border};
+  border: 1px solid ${palette.seafoamGreen};
   border-radius: 10px;
   background: #ffffff;
   color: #222;
@@ -96,12 +87,12 @@ const Input = styled.input`
   box-sizing: border-box;
 
   &::placeholder {
-    color: ${COLORS.placeholder};
+    color: ${palette.seafoamGreen};
   }
 
   &:focus {
     outline: none;
-    border-color: ${COLORS.rose};
+    border-color: ${palette.brightPeriwinkle};
   }
 `;
 
@@ -111,11 +102,11 @@ const LoginButton = styled.button`
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff;
-  background: ${COLORS.rose};
+  background: ${palette.magentaPink};
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: 'Poppins', sans-serif;
   align-self: flex-start;
   min-width: 120px;
 
@@ -124,7 +115,7 @@ const LoginButton = styled.button`
   }
 
   &:focus-visible {
-    outline: 2px solid ${COLORS.rose};
+    outline: 2px solid ${palette.magentaPink};
     outline-offset: 2px;
   }
 `;
@@ -134,11 +125,11 @@ const ErrorAlert = styled.p<{ $visible: boolean }>`
   padding: 12px 14px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: ${COLORS.errorText};
-  background: ${COLORS.errorBg};
-  border: 1px solid ${COLORS.errorBorder};
+  color: ${palette.tangerineOrange};
+  background: ${palette.white};
+  border: 1px solid ${palette.tangerineOrange};
   border-radius: 10px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: 'Poppins', sans-serif;
   visibility: ${(p) => (p.$visible ? 'visible' : 'hidden')};
   position: ${(p) => (p.$visible ? 'relative' : 'absolute')};
   left: ${(p) => (p.$visible ? 'auto' : '-9999px')};

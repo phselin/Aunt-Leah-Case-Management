@@ -21,9 +21,6 @@ import {
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 
-type ValuePiece = Date | null;
-type Value = ValuePiece | [ValuePiece, ValuePiece];
-
 type EventItem = {
   id: string;
   title: string;

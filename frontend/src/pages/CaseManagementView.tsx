@@ -10,12 +10,13 @@ import { Dialog, Slide } from "@mui/material";
 import dayjs, { Dayjs } from 'dayjs';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import CalendarComponent from '../components/calendar';
+import { palette } from '../theme/palette';
 
 const COLORS = {
-  headerText: '#5d3b4b',
-  primary: '#b06a72',
-  secondary: '#c2d5c6',
-  background: '#f8f9fa'
+  headerText: palette.deepRed,
+  primary: palette.magentaPink,
+  secondary: palette.seafoamGreen,
+  background: palette.white,
 };
 
 const Transition = React.forwardRef(function Transition(

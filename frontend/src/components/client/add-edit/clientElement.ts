@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { palette } from "../../../theme/palette";
 
 export const ClientCard = styled.div`
   width: 100%;
@@ -49,9 +50,9 @@ export const ErrorBox = styled.div`
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #ffd1d1;
-  background: #fff3f3;
-  color: #b42318;
+  border: 1px solid ${palette.tangerineOrange};
+  background: ${palette.white};
+  color: ${palette.tangerineOrange};
   font-size: 13px;
 `;
 
@@ -147,9 +148,9 @@ export const FormActions = styled.div`
 export const SecondaryBtn = styled.button`
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #d92d20;
+  border: 1px solid ${palette.tangerineOrange};
   background: #fff;
-  color: #d92d20;
+  color: ${palette.tangerineOrange};
   font-weight: 700;
   cursor: pointer;
 
@@ -166,14 +167,14 @@ export const SecondaryBtn = styled.button`
 export const PrimaryBtn = styled.button`
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #3aa36f;
-  background: #3aa36f;
+  border: 1px solid ${palette.seafoamGreen};
+  background: ${palette.seafoamGreen};
   color: #fff;
   cursor: pointer;
   font-weight: 700;
 
   &:hover {
-    background: rgba(58, 163, 111, 0.92);
+    background: rgba(${palette.forestGreen}, 0.92);
   }
 
   &:disabled {

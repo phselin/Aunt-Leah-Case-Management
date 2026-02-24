@@ -1,6 +1,26 @@
 import { createGlobalStyle } from 'styled-components';
+import { palette } from './theme/palette';
+
+import PoppinsRegular from './assets/Poppins/Poppins-Regular.ttf';
+import PoppinsSemiBold from './assets/Poppins/Poppins-SemiBold.ttf';
 
 const GlobalStyle = createGlobalStyle`
+  @font-face {
+    font-family: 'Poppins';
+    src: url(${PoppinsRegular}) format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Poppins';
+    src: url(${PoppinsSemiBold}) format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
   * {
     margin: 0;
     padding: 0;
@@ -8,7 +28,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     line-height: 1.5;
     font-weight: 400;
 
@@ -22,7 +42,14 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background-color: #f8f9fa; /* Your AppContainer color */
+    background-color: #f8f9fa;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
   }
 
   h1 {
@@ -32,12 +59,12 @@ const GlobalStyle = createGlobalStyle`
 
   a {
     font-weight: 500;
-    color: #646cff;
+    color: ${palette.brightPeriwinkle};
     text-decoration: inherit;
   }
 
   a:hover {
-    color: #535bf2;
+    color: ${palette.brightPeriwinkle};
   }
 
   button {
@@ -54,7 +81,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   button:hover {
-    border-color: #646cff;
+    border-color: ${palette.brightPeriwinkle};
   }
 
   button:focus,
@@ -67,7 +94,7 @@ const GlobalStyle = createGlobalStyle`
     min-height: 100vh;
     background: #f6f6f7;
     padding: 24px;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
 
   .clientSearchHeaderRow{
@@ -87,7 +114,7 @@ const GlobalStyle = createGlobalStyle`
 
   /* override global button style for this button */
   .addClientBtn, .exportClientsBtn {
-    background: #d45b6f;
+    background: ${palette.magentaPink};
     color: white;
     border: 0;
     padding: 10px 14px;
@@ -160,7 +187,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .clientSearchTableHeader{
-    background: #3f1622;
+    background: ${palette.deepRed};
     color: white;
     padding: 14px 16px;
     display: grid;
@@ -182,16 +209,17 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .clientSearchTableRow:hover{
-    background: #fafafa;
+    background: ${palette.white};
   }
 
   .clientSearchName{
     font-weight: 700;
-    color: #d45b6f;
+    color: ${palette.magentaPink};
   }
 
   .clientSearchName:hover {
     cursor: pointer;
+    color: ${palette.deepRed};
   }
 
   .clientSeachActions{
@@ -266,9 +294,9 @@ const GlobalStyle = createGlobalStyle`
   /* Report page (Goal Progress) */
   .reportPage{
     padding: 24px;
-    background: #f7f8f7;
+    background: ${palette.offWhite};
     min-height: calc(100vh - 70px);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
 
   .reportHeaderRow{
@@ -523,7 +551,7 @@ const GlobalStyle = createGlobalStyle`
     }
     
     a:hover {
-      color: #747bff;
+      color: ${palette.brightPeriwinkle};
     }
     
     button {
