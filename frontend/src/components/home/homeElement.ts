@@ -157,6 +157,19 @@ export const Input = styled.input`
   }
 `;
 
+export const Select = styled.select`
+  padding: 10px 12px;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+
+  &:focus {
+    border-color: #bdbdbd;
+  }
+`;
+
 export const TextArea = styled.textarea`
   padding: 10px 12px;
   border: 1px solid #ececec;

@@ -44,6 +44,15 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2);
+  const m = i % 2 === 0 ? "00" : "30";
+  const suffix = h < 12 ? "AM" : "PM";
+  return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${m} ${suffix}`;
+});
+
+const VALID_TIME_RE = /^\d{1,2}:\d{2}\s*(AM|PM)$/i;
+
 const Itinerary = ({ value }: ItineraryProps) => {
 
   const selectedDate = useMemo(() => {
@@ -52,9 +61,20 @@ const Itinerary = ({ value }: ItineraryProps) => {
 
   const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
 
-  const [eventsByDate, setEventsByDate] = useState<EventsByDate>({});
-  const eventsForDay = eventsByDate[dateKey] ?? [];
+  const [eventsByDate, setEventsByDate] = useState<EventsByDate>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as EventsByDate;
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch (e) {
+      console.error("Error parsing events from localStorage:", e);
+    }
+    return {};
+  });
 
+  const eventsForDay = eventsByDate[dateKey] ?? [];
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,24 +83,11 @@ const Itinerary = ({ value }: ItineraryProps) => {
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
 
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as EventsByDate;
-      if (parsed && typeof parsed === "object") setEventsByDate(parsed);
-    } catch {
-
-    }
-  }, []);
-
-
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(eventsByDate));
-    } catch {
-
+    } catch (error) {
+      console.error("Error saving events to localStorage:", error);
     }
   }, [eventsByDate]);
 
@@ -113,8 +120,12 @@ const Itinerary = ({ value }: ItineraryProps) => {
     const cleanTime = time.trim();
 
     if (!cleanTitle || !cleanTime) {
-
       alert("Please enter a title and time.");
+      return;
+    }
+
+    if (!VALID_TIME_RE.test(cleanTime)) {
+      alert("Please enter a valid time (e.g., 10:00 AM).");
       return;
     }
 
@@ -171,7 +182,17 @@ const Itinerary = ({ value }: ItineraryProps) => {
 
           <FormRow>
             <Label>Time</Label>
-            <Input value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g., 10:00 AM" />
+            <Input
+              list="time-options"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              placeholder="e.g., 10:00 AM"
+            />
+            <datalist id="time-options">
+              {TIME_OPTIONS.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
           </FormRow>
 
           <FormRow>
