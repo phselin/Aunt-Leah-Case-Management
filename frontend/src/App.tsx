@@ -16,7 +16,6 @@ import CaseManagementView from './pages/CaseManagementView';
 
 function App() {
     const {auth} = useContext(AuthContext);
-    console.log(auth.user)
     if (!auth.user) {
       return (
         <>

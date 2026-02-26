@@ -72,7 +72,6 @@ const Client = () => {
 
       const url = window.URL.createObjectURL(res.data);
       const link = document.createElement("a");
-      console.log(res.headers["Content-Disposition"]);
       link.href = url;
       link.download = "clients.xlsx";
       link.click();
