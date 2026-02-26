@@ -5,7 +5,7 @@ import { Dialog } from "@mui/material";
 
 import {
   CloseBtn, ErrorBox, FullRow,
-  FormRow, Label, Input, TextArea, Hint, FormActions, SecondaryBtn, PrimaryBtn,
+  FormRow, Label, Input, TextArea, Hint, FormActions, SecondaryBtn, PrimaryBtn, Select,
   ClientCard, ClientHeader,
   ClientTitleWrap,
   ClientTitle,
@@ -152,7 +152,13 @@ const ClientModal = () => {
 
           <FormRow>
             <Label>Gender</Label>
-            <Input value={gender} onChange={(e) => setGender(e.target.value)} />
+            <Select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="">Select a gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-Binary</option>
+              <option value="prefer not to say">Prefer Not to Say</option>
+            </Select>
           </FormRow>
 
           <FormRow>

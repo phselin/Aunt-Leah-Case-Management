@@ -81,11 +81,37 @@ export const Label = styled.label`
 `;
 
 export const Input = styled.input`
-  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 12px;
   border: 1px solid #ececec;
   border-radius: 8px;
   outline: none;
   font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+
+  &:focus {
+    border-color: #bdbdbd;
+  }
+`;
+
+export const Select = styled.select`
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 32px 0 12px;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  appearance: none;
+  -webkit-appearance: none;
 
   &:focus {
     border-color: #bdbdbd;
