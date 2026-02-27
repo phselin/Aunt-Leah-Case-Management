@@ -32,8 +32,12 @@ export const NavLink = styled(Link)`
     cursor: pointer;
     
     &.active {
-    text-decoration: underline;
-}
+        text-decoration: underline;
+    }
+    
+    &:hover {
+        color: ${palette.deepRed}
+    }
 ` 
 
 export const Bars = styled(FaBars)`
@@ -86,6 +90,6 @@ text-decoration: none;
 &:hover {
     transition: all 0.2s ease-in-out;
     background: #fff;
-    color: ${palette.mintGreen};
+    color: ${palette.deepRed};
 }
 `
