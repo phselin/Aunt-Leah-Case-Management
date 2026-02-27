@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ItineraryCard,
   ItineraryTitle,
@@ -17,6 +17,9 @@ import {
   TextArea,
   FormActions,
   SecondaryBtn,
+  TimePickerWrapper,
+  TimeDropdown,
+  TimeOption,
 } from "./homeElement";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
@@ -83,6 +86,25 @@ const Itinerary = ({ value }: ItineraryProps) => {
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
 
+  const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
+  const timeWrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredTimeOptions = useMemo(() => {
+    const q = time.trim().toLowerCase();
+    if (!q) return TIME_OPTIONS;
+    return TIME_OPTIONS.filter((t) => t.toLowerCase().includes(q));
+  }, [time]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (timeWrapperRef.current && !timeWrapperRef.current.contains(e.target as Node)) {
+        setTimeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(eventsByDate));
@@ -113,6 +135,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
     setTitle("");
     setTime("");
     setNotes("");
+    setTimeDropdownOpen(false);
   };
 
   const saveEvent = () => {
@@ -182,17 +205,34 @@ const Itinerary = ({ value }: ItineraryProps) => {
 
           <FormRow>
             <Label>Time</Label>
-            <Input
-              list="time-options"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              placeholder="e.g., 10:00 AM"
-            />
-            <datalist id="time-options">
-              {TIME_OPTIONS.map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
+            <TimePickerWrapper ref={timeWrapperRef}>
+              <Input
+                value={time}
+                onChange={(e) => {
+                  setTime(e.target.value);
+                  setTimeDropdownOpen(true);
+                }}
+                onFocus={() => setTimeDropdownOpen(true)}
+                placeholder="e.g., 10:00 AM"
+                autoComplete="off"
+              />
+              {timeDropdownOpen && filteredTimeOptions.length > 0 && (
+                <TimeDropdown>
+                  {filteredTimeOptions.map((t) => (
+                    <TimeOption
+                      key={t}
+                      $highlighted={t === time}
+                      onClick={() => {
+                        setTime(t);
+                        setTimeDropdownOpen(false);
+                      }}
+                    >
+                      {t}
+                    </TimeOption>
+                  ))}
+                </TimeDropdown>
+              )}
+            </TimePickerWrapper>
           </FormRow>
 
           <FormRow>

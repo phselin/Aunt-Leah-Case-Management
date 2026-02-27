@@ -157,16 +157,41 @@ export const Input = styled.input`
   }
 `;
 
-export const Select = styled.select`
-  padding: 10px 12px;
+
+export const TimePickerWrapper = styled.div`
+  position: relative;
+
+  & > input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+`;
+
+export const TimeDropdown = styled.ul`
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
   border: 1px solid #ececec;
   border-radius: 8px;
-  outline: none;
-  background: #fff;
-  cursor: pointer;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+`;
 
-  &:focus {
-    border-color: #bdbdbd;
+export const TimeOption = styled.li<{ $highlighted?: boolean }>`
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background: ${({ $highlighted }) => ($highlighted ? "rgba(58, 163, 111, 0.1)" : "transparent")};
+
+  &:hover {
+    background: rgba(58, 163, 111, 0.1);
   }
 `;
 
