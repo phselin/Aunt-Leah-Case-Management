@@ -5,9 +5,13 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required
+from pydantic import ValidationError
+from pymongo import ReturnDocument
 
 from backend_app.auth_init import limiter
 from backend_app.db import db
+from backend_app.routes.routes_utils import get_program_names
+from backend_app.schemas.person import Person
 
 people_bp = Blueprint("people", __name__)
 
@@ -81,10 +85,6 @@ def get_person(id):
     return jsonify(person), 200
 
 
-# TODO in the future, we will have dynamic fields and using the current design
-# of body.get(<field>, "") wll be very inefficint. need something else
-
-
 @people_bp.put("/people/<id>")
 @jwt_required()
 def update_person(id):
@@ -94,6 +94,7 @@ def update_person(id):
         return jsonify({"detail": "Invalid client ID format"}), 400
 
     body = request.get_json(silent=True) or {}
+    
     firstname = (body.get("firstname") or "").strip()
     lastname = (body.get("lastname") or "").strip()
 
@@ -117,7 +118,25 @@ def update_person(id):
     if res.matched_count == 0:
         return jsonify({"detail": "Client not found"}), 404
 
-    return jsonify({"detail": "Client updated successfully"}), 200
+    try:
+        person = Person.model_validate(body, context={"valid_programs": get_program_names()})
+    except ValidationError as e:
+        return (
+            jsonify({"detail": "Validation error", "errors": e.json()}),
+            400,
+        )  # TODO better way to return error for user friendly error messages (change frontend too)
+
+    person_json = person.model_dump(exclude_none=True, mode="json")
+    res = db.people.find_one_and_update(
+        {"_id": oid}, {"$set": person_json}, return_document=ReturnDocument.AFTER
+    )
+
+    if not res:
+        return jsonify({"detail": "Client not found"}), 404
+    res["_id"] = str(res["_id"])
+    return jsonify(
+        res
+    ), 200  # earlier returning a simple message, better to return the updated client
 
 
 @people_bp.post("/people")
@@ -125,29 +144,18 @@ def update_person(id):
 def create_person():
     body = request.get_json(silent=True) or {}
 
-    firstname = (body.get("firstname") or "").strip()
-    lastname = (body.get("lastname") or "").strip()
+    try:
+        person = Person.model_validate(body, context={"valid_programs": get_program_names()})
+    except ValidationError as e:
+        return (
+            jsonify({"detail": "Validation error", "errors": e.json()}),
+            400,
+        )  # TODO better way to return error for user friendly error messages (change frontend too)
 
-    if not firstname or not lastname:
-        return jsonify({"detail": "firstname or lastname are required"}), 400
-
-    # TODO santize fields
-
-    person = {
-        "firstname": firstname,
-        "lastname": lastname,
-        "dob": body.get("dob", ""),
-        "gender": body.get("gender", ""),
-        "email": body.get("email", ""),
-        "phone": body.get("phone", ""),
-        "address": body.get("address", ""),
-        "programs": body.get("programs", []),
-        "referralDate": body.get("referralDate", ""),
-    }
-
-    res = db.people.insert_one(person)
-    person["_id"] = str(res.inserted_id)
-    return jsonify(person), 201
+    person_json = person.model_dump(exclude_none=True, mode="json")
+    res = db.people.insert_one(person_json)
+    person_json["_id"] = str(res.inserted_id)
+    return jsonify(person_json), 201
 
 
 @people_bp.delete("/people/<id>")

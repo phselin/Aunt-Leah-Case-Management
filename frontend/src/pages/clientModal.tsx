@@ -104,6 +104,7 @@ const ClientModal = () => {
       reloadClients();
       navigate("/client");
     } catch (err: any) {
+      console.log(err);
       setLocalErr(`Failed to ${isNew ? 'add' : 'update'} client`);
     } finally {
       setSubmitting(false);

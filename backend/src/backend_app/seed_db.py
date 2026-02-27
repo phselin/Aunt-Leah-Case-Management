@@ -18,7 +18,7 @@ GENERAL_MILESTONES = {
 }
 NUM_STAFF = 50
 
-faker = Faker()
+faker = Faker("en_CA")
 
 
 def seed_db():
@@ -51,7 +51,7 @@ def seed_db():
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
             "role": "admin",
-            "phone": faker.numerify(text="###-###-####"),
+            "phone": faker.numerify(text="(###) ###-####"),
             "email": "admin@auntleah.org",
             "password_hash": hash_pwd("password"),
         }
@@ -62,7 +62,7 @@ def seed_db():
             "firstname": "Gregor",
             "lastname": "Kiczales",
             "role": "admin",
-            "phone": faker.numerify(text="###-###-####"),
+            "phone": faker.numerify(text="(###) ###-####"),
             "email": "GKiczales@auntleah.org",
             "password_hash": hash_pwd("trustTheNaturalRecursion"),
         }
@@ -73,7 +73,7 @@ def seed_db():
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
             "role": "staff",
-            "phone": faker.numerify(text="###-###-####"),
+            "phone": faker.numerify(text="(###) ###-####"),
             "email": faker.free_email(),
             "programs": random.sample(PROGRAMS, k=random.randint(1, 2)),
         }
@@ -87,7 +87,7 @@ def seed_db():
             "dob": faker.date_of_birth(minimum_age=18, maximum_age=60).strftime("%Y-%m-%d"),
             "gender": random.choice(["male", "female", "non-binary", "prefer not to say"]),
             "programs": enrolled_programs,
-            "phone": faker.numerify(text="###-###-####"),
+            "phone": faker.numerify(text="(###) ###-####"),
             "address": faker.address(),
             "email": faker.free_email(),
             "referralDate": faker.date_between(start_date="-5y", end_date="now").strftime(
