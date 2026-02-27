@@ -36,7 +36,6 @@ def user_lookup(_jwt_header, jwt_data):
     try:
         cached_user = redis_client.get(identity)
         if cached_user:
-            # print("using cached user")
             return json_util.loads(cached_user)
     except Exception as e:
         print(e)
@@ -50,12 +49,22 @@ def user_lookup(_jwt_header, jwt_data):
     if user:
         try:
             redis_client.setex(
-                name=identity, time=timedelta(minutes=30), value=json_util.dumps(user)
+                name=identity, time=timedelta(minutes=15), value=json_util.dumps(user)
             )
         except Exception as e:
             print(e)
 
     return user
+
+
+@jwt.token_in_blocklist_loader
+def check_revoked_token(jwt_header, jwt_data):
+    jti = jwt_data["jti"]
+    try:
+        cached_token = redis_client.get(jti)
+        return cached_token is not None
+    except Exception:
+        return False
 
 
 """
@@ -118,7 +127,13 @@ def login():
 
 
 @auth_bp.post("/logout")
+@jwt_required
 def logout():
+    jti = get_jwt()["jti"]
+    try:
+        redis_client.setex(name=jti, time=timedelta(minutes=30), value="revoked")
+    except Exception:
+        print("Failed to add token to blocklist")
     resp = jsonify({"detail": "Logout successful"})
     unset_jwt_cookies(resp)
     return resp
