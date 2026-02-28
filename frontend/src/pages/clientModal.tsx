@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import axios from "axios";
-import { Dialog } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { Autocomplete, Dialog, TextField } from "@mui/material";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 
@@ -61,6 +61,7 @@ const ClientModal = () => {
         setValue("pronouns", data.pronouns || "");
         setValue("preferredContactMethod", data.preferredContactMethod || "");
 
+        setPrograms((await axios.get("http://localhost:8000/programNames", { withCredentials: true })).data)
       } catch (err) {
         setErrMsg("Unable to find client details");
         navigate("/client");
@@ -197,7 +198,21 @@ const ClientModal = () => {
             <FullRow>
               <FormRow>
                 <Label>Programs</Label>
-                {/* program */}
+                <Controller
+                  name="programs"
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <Autocomplete
+                      multiple
+                      options={programs}
+                      value={value || []}
+                      onChange={(_, newValue) => onChange(newValue)}
+                      renderInput={(params) => (
+                        <TextField {...params} placeholder="Search and add programs..." />
+                      )}
+                    />
+                  )}
+                />
               </FormRow>
             </FullRow>
 
