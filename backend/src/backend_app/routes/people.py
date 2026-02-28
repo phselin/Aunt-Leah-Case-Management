@@ -103,7 +103,9 @@ def update_person(id):
                 {
                     "detail": "Validation error",
                     "errors": {
-                        str(err["loc"][0]): err["msg"] for err in e.errors() if err.get("loc")
+                        str(err["loc"][0]): err["msg"].replace("Value error, ", "")
+                        for err in e.errors()
+                        if err.get("loc")
                     },
                 }
             ),
@@ -134,7 +136,9 @@ def create_person():
                 {
                     "detail": "Validation error",
                     "errors": {
-                        str(err["loc"][0]): err["msg"] for err in e.errors() if err.get("loc")
+                        str(err["loc"][0]): err["msg"].replace("Value error, ", "")
+                        for err in e.errors()
+                        if err.get("loc")
                     },
                 }
             ),

@@ -4,7 +4,7 @@ import axios from "axios";
 import { Autocomplete, Dialog, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import PhoneInput from "react-phone-number-input/input"
 
 import {
   CloseBtn, ErrorBox, FullRow,
@@ -40,6 +40,17 @@ const ClientModal = () => {
   } = useForm<Person>({
     resolver: zodResolver(personSchema),
   });
+
+  useEffect(() => {
+    if (localErr) {
+      const timer = setTimeout(() => {
+        setLocalErr("");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [localErr]);
+
 
   useEffect(() => {
     const loadClient = async () => {
@@ -149,7 +160,16 @@ const ClientModal = () => {
 
             <FormRow>
               <Label>Phone</Label>
-              <Input {...register("phone")} />
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    {...field}
+                    country="CA"
+                  />
+                )}
+              />
               {errors.phone && <span style={{ color: "red", fontSize: "12px" }}>{errors.phone.message}</span>}
             </FormRow>
 
@@ -214,6 +234,7 @@ const ClientModal = () => {
                   )}
                 />
               </FormRow>
+              {errors.programs && <span style={{ color: "red", fontSize: "12px" }}>{errors.programs.message}</span>}
             </FullRow>
 
             <FormRow>

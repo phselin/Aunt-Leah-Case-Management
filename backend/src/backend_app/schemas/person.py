@@ -23,6 +23,7 @@ class Person(BaseModel):
     def sanitize_name(cls, value: str) -> str:
         return value.strip().title()
 
+    # very strict right not, only accepts canadian numbers. we probably don't want it that strict
     @field_validator("phone")
     @classmethod
     def sanitize_phone(cls, value: str | None) -> str | None:
@@ -30,9 +31,13 @@ class Person(BaseModel):
             return None
 
         digits = re.sub(r"\D", "", value)
-        if not (7 <= len(digits) <= 15):
-            raise ValueError("Invalid phone number")
-        return value
+
+        if len(digits) == 11:
+            if digits[0] != "1":
+                raise ValueError("Invalid phone number. Wrong country code")
+            return f"+{digits}"
+
+        raise ValueError("Invalid phone number")
 
     @field_validator("programs")
     @classmethod
