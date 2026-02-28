@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import axios from "axios";
 import { Dialog } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 
 import {
   CloseBtn, ErrorBox, FullRow,
-  FormRow, Label, Input, TextArea, Hint, FormActions, SecondaryBtn, PrimaryBtn, Select,
+  FormRow, Label, Input, TextArea, FormActions, SecondaryBtn, PrimaryBtn, Select,
   ClientCard, ClientHeader,
   ClientTitleWrap,
   ClientTitle,
   ClientSubtitle,
   ClientGrid
 } from "../components/client/add-edit/clientElement";
-
-// TODO need a better way to deal with dynamic fields
+import { personSchema, type Person } from "../components/client/search/person";
 
 const ClientModal = () => {
   const { id } = useParams();
@@ -25,18 +27,19 @@ const ClientModal = () => {
     reloadClients: () => void;
   }>();
 
-  const [submitting, setSubmitting] = useState(false);
   const [localErr, setLocalErr] = useState("");
+  const [programs, setPrograms] = useState([]);
 
-  const [firstname, setFirstname] = useState("");
-  const [lastname, setLastname] = useState("");
-  const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [programsText, setProgramsText] = useState("");
-  const [referralDate, setReferralDate] = useState("");
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<Person>({
+    resolver: zodResolver(personSchema),
+  });
 
   useEffect(() => {
     const loadClient = async () => {
@@ -46,15 +49,17 @@ const ClientModal = () => {
         });
         const data = res.data;
 
-        setFirstname(data.firstname || "");
-        setLastname(data.lastname || "");
-        setDob(data.dob || "");
-        setGender(data.gender || "");
-        setEmail(data.email || "");
-        setPhone(data.phone || "");
-        setAddress(data.address || "");
-        setProgramsText((data.programs || []).join(", "));
-        setReferralDate(data.referralDate || "");
+        setValue("firstname", data.firstname || "");
+        setValue("lastname", data.lastname || "");
+        setValue("dob", data.dob || "");
+        setValue("gender", data.gender || "");
+        setValue("address", data.address || "");
+        setValue("phone", data.phone || "");
+        setValue("email", data.email || "");
+        setValue("referralDate", data.referralDate || "");
+        setValue("programs", data.programs || []);
+        setValue("pronouns", data.pronouns || "");
+        setValue("preferredContactMethod", data.preferredContactMethod || "");
 
       } catch (err) {
         setErrMsg("Unable to find client details");
@@ -65,57 +70,43 @@ const ClientModal = () => {
     if (id && !isNew) {
       loadClient();
     }
-  }, [id, isNew, navigate, setErrMsg]);
+  }, [id, isNew, navigate, setErrMsg, setValue]);
 
-  const handleSubmit = async () => {
+  const onSubmit = async (data: Person) => {
     setLocalErr("");
-
-    const fn = firstname.trim();
-    const ln = lastname.trim();
-    if (!fn || !ln) {
-      setLocalErr("First name and last name are required.");
-      return;
-    }
-
-    const payload = {
-      firstname: fn,
-      lastname: ln,
-      dob: dob || undefined,
-      gender: gender || undefined,
-      email: email || undefined,
-      phone: phone || undefined,
-      address: address || undefined,
-      programs: programsText.split(",").map((s) => s.trim()).filter(Boolean),
-      referralDate: referralDate || undefined,
-    };
-
+    const cleanData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value === "" ? null : value
+      ])
+    );
     try {
-      setSubmitting(true);
-
       if (isNew) {
-        await axios.post("http://localhost:8000/people", payload, {
+        await axios.post("http://localhost:8000/people", cleanData, {
           withCredentials: true,
         });
       } else {
-        await axios.put(`http://localhost:8000/people/${id}`, payload, {
+        await axios.put(`http://localhost:8000/people/${id}`, cleanData, {
           withCredentials: true,
         });
       }
+      alert(`Client ${isNew ? "added" : "saved"} successfully`)
       reloadClients();
       navigate("/client");
-    } catch (err: any) {
-      console.log(err);
+    } catch (e: any) {
+      const backendErrors = e.response?.data?.errors;
+
+      if (backendErrors) {
+        Object.entries(backendErrors).forEach(([field, msg]) => {
+          setError(field as keyof Person, { message: msg as string });
+        });
+      }
+
       setLocalErr(`Failed to ${isNew ? 'add' : 'update'} client`);
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleCancel = () => navigate("/client");
-
-  const titleText = isNew ? "Add New Client" : `${firstname} ${lastname}`.trim() || "Edit Client";
-  const subtitleText = isNew ? "Enter client details below" : "Update client details below";
-  const buttonText = isNew ? "Create Client" : "Save Changes";
 
   return (
     <Dialog open={true} onClose={handleCancel} maxWidth="lg" fullWidth PaperProps={{
@@ -127,86 +118,109 @@ const ClientModal = () => {
       <ClientCard >
         <ClientHeader>
           <ClientTitleWrap>
-            <ClientTitle>{titleText}</ClientTitle>
-            <ClientSubtitle>{subtitleText}</ClientSubtitle>
+            <ClientTitle>{isNew ? "Add New Client" : "Edit Client"}</ClientTitle>
+            <ClientSubtitle>{"Enter client details below"}</ClientSubtitle>
           </ClientTitleWrap>
           <CloseBtn onClick={handleCancel}>✕</CloseBtn>
         </ClientHeader>
 
         {localErr && <ErrorBox>{localErr}</ErrorBox>}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <ClientGrid>
 
-        <ClientGrid>
-          <FormRow>
-            <Label>First Name *</Label>
-            <Input value={firstname} onChange={(e) => setFirstname(e.target.value)} />
-          </FormRow>
-
-          <FormRow>
-            <Label>Last Name *</Label>
-            <Input value={lastname} onChange={(e) => setLastname(e.target.value)} />
-          </FormRow>
-
-          <FormRow>
-            <Label>Date of Birth</Label>
-            <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-          </FormRow>
-
-          <FormRow>
-            <Label>Gender</Label>
-            <Select value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="">Select a gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="non-binary">Non-Binary</option>
-              <option value="prefer not to say">Prefer Not to Say</option>
-            </Select>
-          </FormRow>
-
-          <FormRow>
-            <Label>Email</Label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-          </FormRow>
-
-          <FormRow>
-            <Label>Phone</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </FormRow>
-
-          <FullRow>
             <FormRow>
-              <Label>Address</Label>
-              <TextArea value={address} onChange={(e) => setAddress(e.target.value)} />
+              <Label>First Name *</Label>
+              <Input {...register("firstname")} />
+              {errors.firstname && <span style={{ color: "red", fontSize: "12px" }}>{errors.firstname.message}</span>}
             </FormRow>
-          </FullRow>
 
-          <FullRow>
             <FormRow>
-              <Label>Programs</Label>
-              <Input
-                value={programsText}
-                onChange={(e) => setProgramsText(e.target.value)}
-                placeholder="Education, Employment, Housing"
-              />
-              <Hint>Separate programs with commas</Hint>
+              <Label>Last Name *</Label>
+              <Input {...register("lastname")} />
+              {errors.lastname && <span style={{ color: "red", fontSize: "12px" }}>{errors.lastname.message}</span>}
             </FormRow>
-          </FullRow>
 
-          <FormRow>
-            <Label>Referral Date</Label>
-            <Input type="date" value={referralDate} onChange={(e) => setReferralDate(e.target.value)} />
-          </FormRow>
-        </ClientGrid>
+            <FormRow>
+              <Label>Email</Label>
+              <Input {...register("email")} />
+              {errors.email && <span style={{ color: "red", fontSize: "12px" }}>{errors.email.message}</span>}
+            </FormRow>
 
-        <FormActions>
-          <SecondaryBtn onClick={handleCancel} disabled={submitting}>
-            Cancel
-          </SecondaryBtn>
-          <PrimaryBtn onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Saving..." : buttonText}
-          </PrimaryBtn>
-        </FormActions>
+            <FormRow>
+              <Label>Phone</Label>
+              <Input {...register("phone")} />
+              {errors.phone && <span style={{ color: "red", fontSize: "12px" }}>{errors.phone.message}</span>}
+            </FormRow>
+
+            <FormRow>
+              <Label>Preferred Contact</Label>
+              <Select {...register("preferredContactMethod")}>
+                <option value="">Select method</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+              </Select>
+              {errors.preferredContactMethod && <span style={{ color: "red", fontSize: "12px" }}>{errors.preferredContactMethod.message}</span>}
+            </FormRow>
+
+            <FormRow>
+              <Label>Date of Birth</Label>
+              <Input type="date" {...register("dob")} />
+              {errors.dob && <span style={{ color: "red", fontSize: "12px" }}>{errors.dob.message}</span>}
+            </FormRow>
+
+            <FullRow>
+              <FormRow>
+                <Label>Address</Label>
+                <TextArea {...register("address")} />
+                {errors.address && <span style={{ color: "red", fontSize: "12px" }}>{errors.address.message}</span>}
+              </FormRow>
+            </FullRow>
+
+            <FormRow>
+              <Label>Gender</Label>
+              <Select {...register("gender")}>
+                <option value="">Select a gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="non-binary">Non-Binary</option>
+                <option value="prefer not to say">Prefer Not to Say</option>
+              </Select>
+              {errors.gender && <span style={{ color: "red", fontSize: "12px" }}>{errors.gender.message}</span>}
+            </FormRow>
+
+            <FormRow>
+              <Label>Pronouns</Label>
+              <Input {...register("pronouns")} />
+              {errors.pronouns && <span style={{ color: "red", fontSize: "12px" }}>{errors.pronouns.message}</span>}
+            </FormRow>
+
+            <FullRow>
+              <FormRow>
+                <Label>Programs</Label>
+                {/* program */}
+              </FormRow>
+            </FullRow>
+
+            <FormRow>
+              <Label>Referral Date</Label>
+              <Input type="date" {...register("referralDate")} />
+              {errors.referralDate && <span style={{ color: "red", fontSize: "12px" }}>{errors.referralDate.message}</span>}
+            </FormRow>
+
+          </ClientGrid>
+
+          <FormActions>
+            <SecondaryBtn type="button" onClick={handleCancel} disabled={isSubmitting}>
+              Cancel
+            </SecondaryBtn>
+            <PrimaryBtn type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : (isNew ? "Create Client" : "Save Changes")}
+            </PrimaryBtn>
+          </FormActions>
+        </form>
+
       </ClientCard>
-    </Dialog>
+    </Dialog >
   );
 };
 

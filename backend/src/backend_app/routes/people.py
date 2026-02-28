@@ -94,49 +94,31 @@ def update_person(id):
         return jsonify({"detail": "Invalid client ID format"}), 400
 
     body = request.get_json(silent=True) or {}
-    
-    firstname = (body.get("firstname") or "").strip()
-    lastname = (body.get("lastname") or "").strip()
-
-    if not firstname or not lastname:
-        return jsonify({"detail": "firstname or lastname are required"}), 400
-
-    update_data = {
-        "firstname": firstname,
-        "lastname": lastname,
-        "dob": body.get("dob", ""),
-        "gender": body.get("gender", ""),
-        "email": body.get("email", ""),
-        "phone": body.get("phone", ""),
-        "address": body.get("address", ""),
-        "programs": body.get("programs", []),
-        "referralDate": body.get("referralDate", ""),
-    }
-
-    res = db.people.update_one({"_id": oid}, {"$set": update_data})
-
-    if res.matched_count == 0:
-        return jsonify({"detail": "Client not found"}), 404
 
     try:
         person = Person.model_validate(body, context={"valid_programs": get_program_names()})
     except ValidationError as e:
         return (
-            jsonify({"detail": "Validation error", "errors": e.json()}),
+            jsonify(
+                {
+                    "detail": "Validation error",
+                    "errors": {
+                        str(err["loc"][0]): err["msg"] for err in e.errors() if err.get("loc")
+                    },
+                }
+            ),
             400,
-        )  # TODO better way to return error for user friendly error messages (change frontend too)
+        )
 
-    person_json = person.model_dump(exclude_none=True, mode="json")
-    res = db.people.find_one_and_update(
-        {"_id": oid}, {"$set": person_json}, return_document=ReturnDocument.AFTER
+    person_json = person.model_dump(mode="json")
+    res = db.people.find_one_and_replace(
+        {"_id": oid}, person_json, return_document=ReturnDocument.AFTER
     )
 
     if not res:
         return jsonify({"detail": "Client not found"}), 404
     res["_id"] = str(res["_id"])
-    return jsonify(
-        res
-    ), 200  # earlier returning a simple message, better to return the updated client
+    return jsonify(res), 200
 
 
 @people_bp.post("/people")
@@ -148,9 +130,16 @@ def create_person():
         person = Person.model_validate(body, context={"valid_programs": get_program_names()})
     except ValidationError as e:
         return (
-            jsonify({"detail": "Validation error", "errors": e.json()}),
+            jsonify(
+                {
+                    "detail": "Validation error",
+                    "errors": {
+                        str(err["loc"][0]): err["msg"] for err in e.errors() if err.get("loc")
+                    },
+                }
+            ),
             400,
-        )  # TODO better way to return error for user friendly error messages (change frontend too)
+        )
 
     person_json = person.model_dump(exclude_none=True, mode="json")
     res = db.people.insert_one(person_json)

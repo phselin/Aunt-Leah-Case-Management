@@ -1,5 +1,6 @@
 import re
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
@@ -14,13 +15,14 @@ class Person(BaseModel):
     email: EmailStr | None = None
     referralDate: date | None = None
     programs: list[str] = Field(default_factory=list)
+    pronouns: str | None = None
+    preferredContactMethod: Literal["email", "phone"] | None = None
 
     @field_validator("firstname", "lastname")
     @classmethod
     def sanitize_name(cls, value: str) -> str:
         return value.strip().title()
 
-    # maybe not such a strict check
     @field_validator("phone")
     @classmethod
     def sanitize_phone(cls, value: str | None) -> str | None:
@@ -28,15 +30,9 @@ class Person(BaseModel):
             return None
 
         digits = re.sub(r"\D", "", value)
-        if len(digits) == 10:
-            return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
-
-        if len(digits) == 11:
-            if digits[0] != "1":
-                raise ValueError("Invalid phone number. Wrong country code")
-            return f"+1 ({digits[1:4]}) {digits[4:7]}-{digits[7:]}"
-
-        raise ValueError("Invalid phone number")
+        if not (7 <= len(digits) <= 15):
+            raise ValueError("Invalid phone number")
+        return value
 
     @field_validator("programs")
     @classmethod
