@@ -1,4 +1,5 @@
 import type { Person } from "./person";
+import { formatPhoneNumber } from "react-phone-number-input";
 
 type Props = {
   people: Person[];
@@ -40,7 +41,7 @@ const ClientTable = ({ people, onEdit, onClick, onError, onDelete }: Props) => {
               </div>
               <div>{p.dob ?? ""}</div>
               <div>{p.email ?? ""}</div>
-              <div>{p.phone ?? ""}</div>
+              <div>{p.phone ? formatPhoneNumber(p.phone) : ""}</div>
               <div>{p.referralDate ?? ""}</div>
               <div className="clientSearchActions">
                 <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
