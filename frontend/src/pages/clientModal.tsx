@@ -166,6 +166,7 @@ const ClientModal = () => {
                   <PhoneInput
                     {...field}
                     country="CA"
+                    inputComponent={Input}
                   />
                 )}
               />
@@ -226,6 +227,18 @@ const ClientModal = () => {
                       options={availablePrograms}
                       value={value || []}
                       onChange={(_, newValue) => onChange(newValue)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          minHeight: 40,
+                          padding: '0 12px',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontFamily: 'inherit',
+                          '& fieldset': { borderColor: '#ececec' },
+                          '&:hover fieldset': { borderColor: '#ececec' },
+                          '&.Mui-focused fieldset': { borderColor: '#bdbdbd', borderWidth: '1px' },
+                        },
+                      }}
                       renderInput={(params) => (
                         <TextField {...params} placeholder="Search and add programs..." />
                       )}
