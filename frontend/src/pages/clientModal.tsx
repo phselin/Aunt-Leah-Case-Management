@@ -22,13 +22,13 @@ const ClientModal = () => {
   const navigate = useNavigate();
   const isNew = id === "new";
 
-  const { setErrMsg, reloadClients } = useOutletContext<{
+  const { setErrMsg, reloadClients, availablePrograms } = useOutletContext<{
     setErrMsg: (msg: string) => void;
     reloadClients: () => void;
+    availablePrograms: string[]
   }>();
 
   const [localErr, setLocalErr] = useState("");
-  const [programs, setPrograms] = useState([]);
 
   const {
     register,
@@ -72,7 +72,6 @@ const ClientModal = () => {
         setValue("pronouns", data.pronouns || "");
         setValue("preferredContactMethod", data.preferredContactMethod || "");
 
-        setPrograms((await axios.get("http://localhost:8000/programNames", { withCredentials: true })).data)
       } catch (err) {
         setErrMsg("Unable to find client details");
         navigate("/client");
@@ -224,7 +223,7 @@ const ClientModal = () => {
                   render={({ field: { onChange, value } }) => (
                     <Autocomplete
                       multiple
-                      options={programs}
+                      options={availablePrograms}
                       value={value || []}
                       onChange={(_, newValue) => onChange(newValue)}
                       renderInput={(params) => (

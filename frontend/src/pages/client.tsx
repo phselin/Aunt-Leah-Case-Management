@@ -17,6 +17,7 @@ const Client = () => {
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
   const [reloadFlag, setReloadFlag] = useState(0);
+  const [availablePrograms, setAvailablePrograms] = useState([]);
   const reloadClients = () => setReloadFlag((x) => x + 1);
 
   useEffect(() => {
@@ -37,6 +38,17 @@ const Client = () => {
       return () => clearTimeout(timer);
     }
   }, [errMsg]);
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        setAvailablePrograms((await axios.get("http://localhost:8000/programNames", { withCredentials: true })).data);
+      } catch (err) {
+        console.error("Failed to load programs");
+      }
+    };
+    fetchPrograms();
+  }, []);
 
   useEffect(() => {
     const loadPeople = async () => {
@@ -110,7 +122,7 @@ const Client = () => {
         onClick={(pid) => navigate(`/client/${pid}/casenotes`)}
         onError={(msg: string) => setErrMsg(msg)}
         onDelete={(pid, pname) => handleDelete(pid, pname)} />
-      <Outlet context={{ setErrMsg, reloadClients }} />
+      <Outlet context={{ setErrMsg, reloadClients, availablePrograms }} />
     </div>
   );
 };
