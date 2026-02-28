@@ -19,6 +19,8 @@ const Client = () => {
   const [reloadFlag, setReloadFlag] = useState(0);
   const [availablePrograms, setAvailablePrograms] = useState([]);
   const reloadClients = () => setReloadFlag((x) => x + 1);
+  const [open, setOpen] = useState(false);
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -118,8 +120,8 @@ const Client = () => {
       <ClientSearchBar query={query} setQuery={setQuery} />
       <ClientTable
         people={people}
-        onEdit={(pid) => navigate(`/client/${pid}`)}
-        onClick={(pid) => navigate(`/client/${pid}/casenotes`)}
+        onEdit={(pid) => navigate(`/client/${pid}/casenotes`)}
+        onClick={(pid) => navigate(`/client/${pid}`)}
         onError={(msg: string) => setErrMsg(msg)}
         onDelete={(pid, pname) => handleDelete(pid, pname)} />
       <Outlet context={{ setErrMsg, reloadClients, availablePrograms }} />

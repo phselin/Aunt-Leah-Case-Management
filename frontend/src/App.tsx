@@ -35,8 +35,8 @@ function App() {
               <Route path = '/' element={<Navigate to='/home'></Navigate>}/>
               <Route path = '/home' element={<Home/>}/>
               <Route path='/client' element={<Client />}>
-                <Route path=':id' element={<ClientModal />} />
                 <Route path=':id/casenotes' element={<CaseManagementView />} />
+                <Route path=':id' element={<ClientModal />} />
               </Route>
               <Route path = '/report' element={<Report/>}/>
               <Route path = '*' element={<Navigate to='/home'></Navigate>}/>
