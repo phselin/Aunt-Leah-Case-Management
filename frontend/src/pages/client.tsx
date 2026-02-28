@@ -44,7 +44,7 @@ const Client = () => {
       try {
         setAvailablePrograms((await axios.get("http://localhost:8000/programNames", { withCredentials: true })).data);
       } catch (err) {
-        console.error("Failed to load programs");
+        setErrMsg("Failed to load program names");
       }
     };
     fetchPrograms();
