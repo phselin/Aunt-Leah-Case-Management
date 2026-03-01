@@ -43,9 +43,11 @@ class Person(BaseModel):
     @field_validator("programs")
     @classmethod
     def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
-        valid_programs = info.context.get("valid_programs", []) if info.context else []
+        valid_programs_structure = (
+            info.context.get("valid_programs_structure", []) if info.context else []
+        )
         for program in value:
-            if program not in valid_programs:
+            if program not in valid_programs_structure:
                 raise ValueError(f"{program} is not a valid program")
         return value
 

@@ -99,7 +99,6 @@ def update_person(id):
         person = Person.model_validate(
             body,
             context={
-                "valid_programs": get_program_names(),
                 "valid_programs_structure": get_programs_structure(),
             },
         )
@@ -138,7 +137,6 @@ def create_person():
         person = Person.model_validate(
             body,
             context={
-                "valid_programs": get_program_names(),
                 "valid_programs_structure": get_programs_structure(),
             },
         )
