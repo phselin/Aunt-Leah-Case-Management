@@ -200,27 +200,6 @@ def get_staff():
     return jsonify(staff)
 
 
-@sections_bp.get("/goals")
-@jwt_required()
-def get_goals():
-    person = request.args.get("person")
-    if not person:
-        goals = [
-            {**goal, "_id": str(goal["_id"]), "personid": str(goal.get("personid", ""))}
-            for goal in db.goals.find({})
-        ]
-        return jsonify(goals)
-    try:
-        person_oid = ObjectId(person)
-    except (InvalidId, TypeError):
-        return jsonify({"detail": "Invalid Object ID"}), 400
-    person_name = db.people.find_one({"_id": person_oid}, {"firstname": 1, "lastname": 1, "_id": 0})
-    if not person_name:
-        return jsonify({"detail": "User not found"}), 404
-    goals = list(db.goals.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort("due", -1))
-    return jsonify([person_name, *goals])
-
-
 @sections_bp.get("/stats")
 @jwt_required()
 def get_stats():
@@ -237,11 +216,8 @@ def get_stats():
                 stats[program_name][goal_type].append(
                     {
                         "milestone": milestone,
-                        "value": len(
-                            db.goals.distinct(
-                                "personid",
-                                {"status": milestone, "program": program_name, "type": goal_type},
-                            )
+                        "value": db.people.count_documents(
+                            {f"status.{program_name}.{goal_type}": milestone}
                         ),
                     }
                 )
