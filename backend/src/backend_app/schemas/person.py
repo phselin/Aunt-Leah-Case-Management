@@ -17,6 +17,7 @@ class Person(BaseModel):
     programs: list[str] = Field(default_factory=list)
     pronouns: str | None = None
     preferredContactMethod: Literal["email", "phone"] | None = None
+    status: dict[str, dict[str, str]] = Field(default_factory=dict)
 
     @field_validator("firstname", "lastname")
     @classmethod
@@ -46,4 +47,27 @@ class Person(BaseModel):
         for program in value:
             if program not in valid_programs:
                 raise ValueError(f"{program} is not a valid program")
+        return value
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(
+        cls, value: dict[str, dict[str, str]], info: ValidationInfo
+    ) -> dict[str, dict[str, str]]:
+        valid_programs_structure = (
+            info.context.get("valid_programs_structure", {}) if info.context else {}
+        )
+        programs = info.data.get("programs", [])
+        for program, goal_types in value.items():
+            if program not in programs:
+                raise ValueError(f"Client doesn't belong to {program} program")
+            if program not in valid_programs_structure:
+                raise ValueError(f"{program} program doesn't have any milestones")
+            valid_goal_types = valid_programs_structure.get(program, {})
+            for goal_type, milestone in goal_types.items():
+                if goal_type not in valid_goal_types:
+                    raise ValueError(f"Invalid goaltype {goal_type} for {program}")
+                valid_milestones = valid_goal_types.get(goal_type, [])
+                if milestone not in valid_milestones:
+                    raise ValueError(f"Invalid milestone {milestone} for {program} {goal_type}")
         return value

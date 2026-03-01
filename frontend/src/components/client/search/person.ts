@@ -12,7 +12,8 @@ export const personSchema = z.object({
   referralDate: z.string().optional(),
   programs: z.array(z.string()).optional(),
   pronouns: z.string().optional(),
-  preferredContactMethod: z.string().optional()
+  preferredContactMethod: z.string().optional(),
+  status: z.record(z.string(), z.record(z.string(), z.string())).optional()
 });
 
 export type Person = z.infer<typeof personSchema>;

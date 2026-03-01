@@ -10,7 +10,7 @@ from pymongo import ReturnDocument
 
 from backend_app.auth_init import limiter
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_program_names
+from backend_app.routes.routes_utils import get_program_names, get_programs_structure
 from backend_app.schemas.person import Person
 
 people_bp = Blueprint("people", __name__)
@@ -96,7 +96,13 @@ def update_person(id):
     body = request.get_json(silent=True) or {}
 
     try:
-        person = Person.model_validate(body, context={"valid_programs": get_program_names()})
+        person = Person.model_validate(
+            body,
+            context={
+                "valid_programs": get_program_names(),
+                "valid_programs_structure": get_programs_structure(),
+            },
+        )
     except ValidationError as e:
         return (
             jsonify(
@@ -129,7 +135,13 @@ def create_person():
     body = request.get_json(silent=True) or {}
 
     try:
-        person = Person.model_validate(body, context={"valid_programs": get_program_names()})
+        person = Person.model_validate(
+            body,
+            context={
+                "valid_programs": get_program_names(),
+                "valid_programs_structure": get_programs_structure(),
+            },
+        )
     except ValidationError as e:
         return (
             jsonify(

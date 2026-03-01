@@ -14,7 +14,7 @@ GENERAL_MILESTONES = {
     "Housing": ["homeless", "shelter", "transitional", "permanent"],
     "Education": ["F", "D", "C", "B", "A"],
     "Employment": ["unemployed", "search", "interview", "hired", "stable"],
-    "Drug Rehabilitation": [7, 30, 90, 180, 360],
+    "Drug Rehabilitation": ["7", "30", "90", "180", "360"],
 }
 NUM_STAFF = 50
 
