@@ -120,7 +120,7 @@ const Client = () => {
       <ClientSearchBar query={query} setQuery={setQuery} />
       <ClientTable
         people={people}
-        onEdit={(pid) => navigate(`/client/${pid}/casenotes`)}
+        onCaseNotes={(pid) => navigate(`/client/${pid}/casenotes`)}
         onClick={(pid) => navigate(`/client/${pid}`)}
         onError={(msg: string) => setErrMsg(msg)}
         onDelete={(pid, pname) => handleDelete(pid, pname)} />

@@ -3,7 +3,7 @@ import { formatPhoneNumber } from "react-phone-number-input";
 
 type Props = {
   people: Person[];
-  onEdit: (id: string) => void;
+  onCaseNotes: (id: string) => void;
   onClick: (id: string) => void;
   onError: (msg: string) => void;
   onDelete: (id: string, name: string) => void;
@@ -11,7 +11,7 @@ type Props = {
 
 const nameOf = (p: Person) => `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
-const ClientTable = ({ people, onEdit, onClick, onError, onDelete }: Props) => {
+const ClientTable = ({ people, onCaseNotes, onClick, onError, onDelete }: Props) => {
 
   return (
     <div className="clientSearchTableCard">
@@ -44,8 +44,14 @@ const ClientTable = ({ people, onEdit, onClick, onError, onDelete }: Props) => {
               <div>{p.phone ? formatPhoneNumber(p.phone) : ""}</div>
               <div>{p.referralDate ?? ""}</div>
               <div className="clientSearchActions">
-                <button type="button" onClick={() => p._id ? onEdit(p._id) : onError("No such client exists")}>✏️</button>
-                <button type="button" onClick={() => p._id ? onDelete(p._id, nameOf(p)) : onError("No such client exists")}>🗑️</button>
+                <span style={{ display: "inline-flex", gap: "0.5rem" }}>
+                  <button type="button" style={{ fontSize: "16px" }} onClick={() => p._id ? onCaseNotes(p._id) : onError("No such client exists")} title="View/Edit Case Notes">
+                    <span style={{ display: "inline-block", width: "20px" }}>📝</span>
+                  </button>
+                  <button type="button" style={{ fontSize: "16px" }} onClick={() => p._id ? onDelete(p._id, nameOf(p)) : onError("No such client exists")} title="Delete Client">
+                    <span style={{ display: "inline-block", width: "20px" }}>🗑️</span>
+                  </button>
+                </span>
               </div>
             </div>
           ))}
