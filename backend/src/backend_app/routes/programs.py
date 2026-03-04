@@ -23,9 +23,7 @@ def get_programs():
     except InvalidId:
         return jsonify({"detail": "Invalid client ID format"}), 400
 
-    goals = list(
-        db.goals.find({"personid": oid},
-                      {"_id":0, "personid": 0}))
+    goals = list(db.goals.find({"personid": oid}, {"_id": 0, "personid": 0}))
     if not goals:
         return jsonify({"detail": "Client not found"}), 404
 
@@ -59,10 +57,11 @@ def add_program():
     }
     return jsonify(program), 201
 
+
 @programs_bp.get("/programs/<name>/milestones")
 @jwt_required()
 def get_program_milestones(name):
-    name = name.capitalize()
+    name = name.title()
 
     # A little quick sanitization JIC
     disallowed_symbols = [".", "/", "\\", "*", "[", "]", "(", ")", "{", "}"]
