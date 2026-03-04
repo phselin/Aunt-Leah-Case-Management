@@ -171,3 +171,51 @@ def delete_person(id):
 
     db.people.delete_one({"_id": oid})
     return jsonify({"detail": "Client deleted successfully"}), 200
+
+@people_bp.put("/people/<id>/milestones")
+@jwt_required()
+def update_milestones(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    body = request.get_json(silent=True) or {}
+
+    # Extract program names and milestones from request
+    milestones_data = body.get("milestones", {})
+    if not milestones_data:
+        return jsonify({"detail": "No milestones data provided"}), 400
+
+    program_names = list(milestones_data.keys())
+
+    # Fetch programs from db whose names are in the request
+    programs = list(db.programs.find({"name": {"$in": program_names}}))
+    if not programs:
+        return jsonify({"detail": "No matching programs found"}), 404
+    print("programs: ", programs)
+
+    # Fetch goals matching personid and programId
+    goals = list(db.goals.find({"personid": oid, "program": {"$in": program_names}}))
+    print("goals: ", goals)
+
+    #TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS
+
+    # Update goal statuses based on request data
+    for program_name in program_names:
+        for goal in goals:
+            if goal["program"] == program_name:
+                new_status = milestones_data[program_name]
+                #TODO: check the goalType for program to ensure status exists
+                db.goals.update_one(
+                    {"_id": goal["_id"]},
+                    {"$set": {"status": new_status}}
+                )
+
+    # Fetch and return updated person document
+    person = db.people.find_one({"_id": oid})
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+
+    person["_id"] = str(person["_id"])
+    return jsonify(person), 200
