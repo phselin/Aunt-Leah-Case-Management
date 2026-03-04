@@ -1,8 +1,10 @@
+from bson import ObjectId
+from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
-from backend_app.db import db
 from backend_app.routes.routes_utils import get_program_names
+from backend_app.db import db
 
 programs_bp = Blueprint("programs", __name__)
 
@@ -40,3 +42,25 @@ def add_program():
         "goalTypes": body.get("goalTypes"),
     }
     return jsonify(program), 201
+
+
+@programs_bp.get("/programs/<id>")
+@jwt_required()
+def fetch_client_programs(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    goals = list(
+        db.goals.find({"personid": oid},
+                      {"_id":0, "personid": 0}))
+    if not goals:
+        return jsonify({"detail": "Client not found"}), 404
+
+    for i, goal in enumerate(goals):
+        print("Goal: ", goal)
+        for k, v in goal.items():
+            if isinstance(v, ObjectId):
+                print("ObjectId at", i, k, v)
+    return jsonify(goals), 200
