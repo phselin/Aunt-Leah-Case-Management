@@ -18,6 +18,7 @@ def get_casenotes():
                 **casenote,
                 "_id": str(casenote["_id"]),
                 "personid": str(casenote.get("personid", "")),
+                "goalid": str(casenote.get("goalid", "")),
             }
             for casenote in db.casenotes.find({})
         ]
@@ -29,7 +30,11 @@ def get_casenotes():
     if not db.people.find_one({"_id": person_oid}):
         return jsonify({"detail": "User not found"}), 404
     casenotes = list(
-        db.casenotes.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort("date", -1)
+        {
+            **casenote,
+            "goalid": str(casenote.get("goalid", "")),
+        }
+        for casenote in db.casenotes.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort("date", -1)
     )
     return jsonify(casenotes), 200
 
