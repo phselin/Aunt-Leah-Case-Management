@@ -1,13 +1,25 @@
 import {type ReactNode, useEffect, useState} from "react";
 import { useNavigate, useParams } from 'react-router-dom'
-import { Dialog } from '@mui/material'
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  CircularProgress,
+  Divider,
+  Dialog,
+  DialogContent,
+} from '@mui/material'
 import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs'
-import CalendarComponent from "../components/calendar/calendarComponent";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { palette } from "../theme/palette";
 import {useForm} from "react-hook-form";
 import {type Person, personSchema} from "../components/client/search/person.ts";
 import {zodResolver} from "@hookform/resolvers/zod";
+
 
 type CaseNote = {
   content: string
@@ -15,79 +27,20 @@ type CaseNote = {
   goalid: string
 }
 
-enum SelectedView {
-  CaseNotes,
-  Program
-}
+const SelectedView = {
+  CaseNotes: "CaseNotes",
+  Program: "Program",
+} as const;
+
+
+type SelectedViewType = typeof SelectedView[keyof typeof SelectedView];
 
 export default function CaseManagementView() {
   const [errMsg, setErrMsg] = useState('')
-  const [caseNotes, setCaseNotes] = useState<CaseNote[]>([])
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs()) 
-  const [isEditing, setIsEditing] = useState(false)
-  const [noteText, setNoteText] = useState('')
+  const [curView, setCurView] = useState<SelectedViewType>(SelectedView.CaseNotes);
 
   const { id } = useParams()
   const navigate = useNavigate()
-  const selectedNote = caseNotes.find(note => note.date === selectedDate?.format('YYYY-MM-DD'))
-
-  const handleSave = async () => {
-  try {
-    const payload = {
-      personid: id,
-      date: selectedDate?.format('YYYY-MM-DD') ?? "",
-      content: noteText
-    }
-    await axios.post('http://localhost:8000/casenotes', payload, { withCredentials: true })
-    setCaseNotes(prev => {
-      const dateStr = selectedDate?.format('YYYY-MM-DD')
-      const exists = prev.find(n => n.date === dateStr)
-      if (exists) {
-        return prev.map(n => n.date === dateStr ? { ...n, content: noteText } : n)
-      }
-      return [...prev, { ...payload, goalid: '' }]
-    })
-    setIsEditing(false)
-  } catch (err) {
-    setErrMsg(`Failed to save note: ${err instanceof Error ? err.message : 'Unknown error'}`)
-  }
-}
-  
-  useEffect(() => {
-  const loadClientCaseNotes = async () => {
-    try {
-      const res = await axios.get(`http://localhost:8000/casenotes?person=${id}`, { withCredentials: true })
-      setCaseNotes(res.data)
-    } catch (err) {
-      setErrMsg(`Unable to find client details: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      //navigate("/client")
-    }
-  }
-  loadClientCaseNotes()
-}, [id, navigate])
-
-
-const [prevSelectedDate, setPrevSelectedDate] = useState(selectedDate)
-const [prevCaseNotes, setPrevCaseNotes] = useState(caseNotes)
-
-if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
-  setPrevSelectedDate(selectedDate)
-  setPrevCaseNotes(caseNotes)
-  setNoteText(selectedNote?.content || '')
-  setIsEditing(false)
-}
-
-  const calendarSx = {
-    '& .MuiPickersDay-root.Mui-selected': {
-      backgroundColor: palette.seafoamGreen,
-      '&:hover': { backgroundColor: palette.forestGreen },
-    },
-    '& .MuiPickersDay-root:focus.Mui-selected': {
-      backgroundColor: palette.seafoamGreen,
-    },
-  }
-
-  const [curView, setCurView] = useState(SelectedView.CaseNotes);
 
   return (
     <Dialog
@@ -95,8 +48,9 @@ if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
       onClose={() => navigate('/client')}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { borderRadius: '12px', padding: 0, overflow: 'hidden' } }}
+      scroll="paper"
     >
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0 24px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111' }}>Case Notes</h2>
@@ -182,79 +136,22 @@ if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
         {(() => {
           switch (curView) {
             case SelectedView.CaseNotes:
-              return <CaseNotesView/>;
+              return (
+                <DialogContent sx={{ overflowY: 'auto' }}>
+                  <CaseNotesView/>
+                </DialogContent>
+              )
             case SelectedView.Program:
               return <ProgramsView personId={id || ""}/>;
             default: {
               // Exhaustiveness check - TypeScript will error if a case is missing
               const _exhaustive: never = curView;
               return _exhaustive;
+              
             }
           }
         })()}
       </div>
-      {/*<div style={{ display: 'flex', gap: 16, padding: '16px 24px 24px 24px', minHeight: 380 }}>*/}
-      {/*  <div style={{ flexShrink: 0 }}>*/}
-      {/*    <CalendarComponent value={selectedDate} onChange={setSelectedDate} sx={calendarSx} />*/}
-      {/*  </div>*/}
-
-      {/*  <div style={{ flex: 1, borderLeft: '1px solid #ececec', paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>*/}
-      {/*    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#666' }}>*/}
-      {/*      {selectedDate?.format('MMMM D, YYYY')}*/}
-      {/*    </p>*/}
-
-      {/*    {isEditing ? (*/}
-      {/*      <>*/}
-      {/*        <textarea*/}
-      {/*          rows={10}*/}
-      {/*          value={noteText}*/}
-      {/*          onChange={(e) => setNoteText(e.target.value)}*/}
-      {/*          placeholder="Enter case note..."*/}
-      {/*          style={{*/}
-      {/*            flex: 1, padding: '10px 12px', border: '1px solid #ececec', borderRadius: 8,*/}
-      {/*            outline: 'none', resize: 'vertical', fontSize: 14, fontFamily: 'inherit',*/}
-      {/*          }}*/}
-      {/*        />*/}
-      {/*        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>*/}
-      {/*          <button*/}
-      {/*            onClick={() => setIsEditing(false)}*/}
-      {/*            style={{*/}
-      {/*              padding: '10px 14px', borderRadius: 8, border: `1px solid ${palette.tangerineOrange}`,*/}
-      {/*              background: '#fff', color: palette.tangerineOrange, fontWeight: 700, cursor: 'pointer',*/}
-      {/*            }}*/}
-      {/*          >*/}
-      {/*            Cancel*/}
-      {/*          </button>*/}
-      {/*          <button*/}
-      {/*            onClick={handleSave}*/}
-      {/*            style={{*/}
-      {/*              padding: '10px 14px', borderRadius: 8, border: `1px solid ${palette.seafoamGreen}`,*/}
-      {/*              background: palette.seafoamGreen, color: '#fff', fontWeight: 700, cursor: 'pointer',*/}
-      {/*            }}*/}
-      {/*          >*/}
-      {/*            Save*/}
-      {/*          </button>*/}
-      {/*        </div>*/}
-      {/*      </>*/}
-      {/*    ) : (*/}
-      {/*      <>*/}
-      {/*        <p style={{ flex: 1, margin: 0, fontSize: 14, color: selectedNote ? '#111' : '#999' }}>*/}
-      {/*          {selectedNote ? selectedNote.content : 'No note for this date'}*/}
-      {/*        </p>*/}
-      {/*        <button*/}
-      {/*          onClick={() => setIsEditing(true)}*/}
-      {/*          style={{*/}
-      {/*            width: '100%', padding: '10px 12px', borderRadius: 8,*/}
-      {/*            border: `1px solid ${palette.seafoamGreen}`, background: '#fff',*/}
-      {/*            color: palette.seafoamGreen, fontWeight: 600, cursor: 'pointer',*/}
-      {/*          }}*/}
-      {/*        >*/}
-      {/*          {selectedNote ? 'Edit Note' : 'Add Note'}*/}
-      {/*        </button>*/}
-      {/*      </>*/}
-      {/*    )}*/}
-      {/*  </div>*/}
-      {/*</div>*/}
     </Dialog>
   )
 }
@@ -262,16 +159,194 @@ if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
 
 
 function CaseNotesView() {
-      return (
-          <div>
-            {/* Select Date */}
-              Salut!
-            {/* Text box for Note */}
-            {/* Save case note btn */}
-            {/* Recent notes */}
-          </div>
-      );
+  const { id } = useParams()
+  const navigate = useNavigate()
+
+  const [caseNotes, setCaseNotes] = useState<CaseNote[]>([])
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs())
+  const [noteText, setNoteText] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [errMsg, setErrMsg] = useState('')
+
+  const dateKey = selectedDate?.format('YYYY-MM-DD')
+  const selectedNote = caseNotes.find((n) => n.date === dateKey)
+
+  useEffect(() => {
+    setNoteText(selectedNote?.content ?? '')
+  }, [dateKey, caseNotes])
+
+  useEffect(() => {
+    const loadClient = async () => {
+      try {
+        setLoading(true)
+        const res = await axios.get(`http://localhost:8000/casenotes?person=${id}`, { withCredentials: true })
+        setCaseNotes(res.data)
+      } catch (err) {
+        setErrMsg('Unable to find client details')
+        navigate('/client')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadClient()
+  }, [id])
+
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      setErrMsg('')
+      const payload = {
+        personid: id,
+        date: selectedDate?.format('YYYY-MM-DD') ?? '',
+        content: noteText,
+      }
+      await axios.post('http://localhost:8000/casenotes', payload, { withCredentials: true })
+      setCaseNotes((prev) => {
+        const dateStr = selectedDate?.format('YYYY-MM-DD')
+        const exists = prev.find((n) => n.date === dateStr)
+        if (exists) {
+          return prev.map((n) => (n.date === dateStr ? { ...n, content: noteText } : n))
+        }
+        return [...prev, { ...payload, goalid: '' }]
+      })
+    } catch (err) {
+      setErrMsg('Failed to save note')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const recentNotes = [...caseNotes]
+    .filter((n) => n.date !== dateKey && n.content)
+    .reduce((acc: CaseNote[], note) => {
+      if (!acc.find((n) => n.date === note.date)) acc.push(note)
+      return acc
+    }, [])
+    .sort((a: CaseNote, b: CaseNote) => (a.date > b.date ? -1 : 1))
+    .slice(0, 5)
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+        <CircularProgress size={28} />
+      </Box>
+    )
+  }
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+        {/* Select Date */}
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+            Select Date
+          </Typography>
+          <DatePicker
+            value={selectedDate}
+            onChange={(val) => setSelectedDate(val)}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } },
+              },
+            }}
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+            Note for {selectedDate?.format('MMMM D, YYYY')}
+          </Typography>
+          <TextField
+            multiline
+            rows={6}
+            fullWidth
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Enter case note for this date..."
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                backgroundColor: '#f5f5f5',
+                '& fieldset': { border: 'none' },
+                '&:hover fieldset': { border: 'none' },
+                '&.Mui-focused fieldset': { border: '1.5px solid #1a1a1a' },
+              },
+            }}
+          />
+        </Box>
+
+        {errMsg && (
+          <Typography variant="caption" color="error">{errMsg}</Typography>
+        )}
+
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={saving}
+          fullWidth
+          sx={{
+            bgcolor: '#1a1a1a',
+            color: '#fff',
+            borderRadius: '12px',
+            py: 1.5,
+            fontWeight: 600,
+            fontSize: '0.95rem',
+            textTransform: 'none',
+            boxShadow: 'none',
+            '&:hover': { bgcolor: '#333', boxShadow: 'none' },
+            '&.Mui-disabled': { bgcolor: '#9e9e9e', color: '#fff' },
+          }}
+        >
+          {saving ? 'Saving...' : 'Save Case Note'}
+        </Button>
+
+        {/* recent notes */}
+        
+        {recentNotes.length > 0 && (
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+              Recent Notes (Last 5)
+            </Typography>
+            <Box sx={{ border: '1.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+              {recentNotes.map((note, i) => (
+                <Box key={note.date}>
+                  <Box
+                    onClick={() => setSelectedDate(dayjs(note.date))}
+                    sx={{ px: 2, py: 1.5, cursor: 'pointer', '&:hover': { backgroundColor: '#fafafa' } }}
+                  >
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>
+                      {dayjs(note.date).format('MMMM D, YYYY')}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {note.content}
+                    </Typography>
+                  </Box>
+                  {i < recentNotes.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+      </Box>
+    </LocalizationProvider>
+  )
 }
+// end of casenotes
+
+
+
 
 type Program = {
     program: string;
@@ -298,7 +373,7 @@ function ProgramsView({personId}: ProgramsViewProps) {
     const saveProgramData = async () => {
         try {
 
-            const payload = {milestones: {}}
+            const payload: { milestones: Record<string, unknown> } = {milestones: {}}
             for (const [p, v] of selectedMilestones.entries()) {
                 payload.milestones[p] = v
             }
