@@ -66,21 +66,6 @@ export default function CaseManagementView() {
   loadClientCaseNotes()
 }, [id, navigate])
 
-  //Load programs
-  const [clientPrograms, setClientPrograms] = useState([]);
-
-  useEffect(() => {
-    const loadClientPrograms = async () => {
-      try {
-        const res = await axios.get(`http://localhost:8000/programs?person=${id}`, { withCredentials: true })
-        setClientPrograms(res.data);
-      }
-      catch (err) {
-          setErrMsg(`Unable to fetch client programs: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
-    }
-    loadClientPrograms()
-  }, [id, setClientPrograms])
 
 const [prevSelectedDate, setPrevSelectedDate] = useState(selectedDate)
 const [prevCaseNotes, setPrevCaseNotes] = useState(caseNotes)
@@ -185,6 +170,8 @@ if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
           </button>
         </div>
       </div>
+
+
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -197,7 +184,7 @@ if (prevSelectedDate !== selectedDate || prevCaseNotes !== caseNotes) {
             case SelectedView.CaseNotes:
               return <CaseNotesView/>;
             case SelectedView.Program:
-              return <ProgramsView/>;
+              return <ProgramsView personId={id || ""}/>;
             default: {
               // Exhaustiveness check - TypeScript will error if a case is missing
               const _exhaustive: never = curView;
@@ -286,10 +273,150 @@ function CaseNotesView() {
       );
 }
 
-type ProgramsViewProps = {
-    programs: [];
-
+type Program = {
+    program: string;
+    status: string;
 }
-function ProgramsView({programs}: ProgramsViewProps) {
-      return <div>Goodbye</div>;
+
+type ProgramsViewProps = {
+    personId: string;
+}
+function ProgramsView({personId}: ProgramsViewProps) {
+    const [programMilestones, setProgramMilestones] = useState<Map<string, Array<string>>>(
+        () => new Map()
+    );
+    const [failedToFetch, setFailedToFetch] = useState<Array<string>>(() => [])
+    const [selectedMilestones, setSelectedMilestones] = useState<Map<string, string>>(
+        () => new Map()
+    );
+
+    const changeSelectedMilestone = (program: string, value: string) => {
+        setSelectedMilestones(selectedMilestones => new Map(selectedMilestones).set(program, value))
+    }
+
+    // I know looping await is shit, but it works for now
+    const saveProgramData = async () => {
+        try {
+
+            const payload = {milestones: {}}
+            for (const [p, v] of selectedMilestones.entries()) {
+                payload.milestones[p] = v
+            }
+            await axios.put(`http://localhost:8000/people/${personId}/milestones`, payload,
+                {withCredentials: true})
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+
+    //Load programs
+    const [enrolledPrograms, setEnrolledPrograms] = useState<Program[]>([]);
+
+    useEffect(() => {
+        const loadClientPrograms = async () => {
+            try {
+                const res = await axios.get(`http://localhost:8000/programs?person=${personId}`, { withCredentials: true })
+                const programs = res.data.map((respr: any) => ({
+                    program: respr.program,
+                    status: respr.status,
+                }));
+                setEnrolledPrograms(programs);
+            }
+            catch (err) {
+                console.log(`error ar CaseManagementView:330 : ${err}`)
+            }
+        }
+        loadClientPrograms()
+    }, [personId, setEnrolledPrograms])
+
+    useEffect(() => {
+        const getAllMilestones = async ()=> {
+
+            for (const ep of enrolledPrograms) {
+                try {
+                    const res = await axios.get(`http://localhost:8000/programs/${ep.program}/milestones`, {withCredentials: true})
+                    setProgramMilestones(programMilestones => new Map(programMilestones).set(ep.program, res.data.general))
+                    console.log(`Data added to map: ${res.data.general}`);
+                } catch (e) {
+                    setFailedToFetch(failedToFetch => [...failedToFetch, ep.program]);
+                    console.error(`Failed to fetch ${ep.program}`)
+                }
+            }
+        };
+        getAllMilestones();
+    }, [enrolledPrograms]);
+
+    useEffect(() => {
+        const syncSelectedMilestonees = async () =>
+        {
+            for (const {program, status} of enrolledPrograms) {
+                changeSelectedMilestone(program, status);
+            }
+        }
+        syncSelectedMilestonees();
+    }, [enrolledPrograms]);
+
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            padding: '0 24px 16px 24px',
+            width: "100%"
+        }}>
+            { /*Programs and their status*/ }
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                padding: '0 24px 16px 24px',
+                width: "full"
+            }}>
+                {enrolledPrograms.map((ep) => {
+                    return (
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: "column",
+                            alignItems: 'flex-start',
+                            justifyContent: 'center',
+                            padding: '0 24px 16px 24px',
+                            width: "full",
+                            minWidth: "260px"
+                        }}>
+                            <h3>{ep.program}</h3>
+                            <select
+                                style={{minWidth: 260}}
+                                className="reportSelect" //The hijack
+                                id="program-filter"
+                                value={selectedMilestones.get(ep.program)}
+                                onChange={(e) =>
+                                    changeSelectedMilestone(ep.program, e.target.value)}
+                            >
+                                {programMilestones.get(ep.program) instanceof Array &&
+                                    programMilestones.get(ep.program)?.map(mo => (
+                                    <option key={mo} value={mo}>
+                                        {mo}
+                                    </option>)
+                                )}
+                            </select>
+                        </div>)
+                })}
+            </div>
+
+            { /* Save button */ }
+            <button
+                onClick={saveProgramData}
+                style={{
+                        width: '100%', padding: '10px 12px', borderRadius: 10,
+                        background: "black",
+                        color: palette.offWhite, fontWeight: 600, cursor: 'pointer',
+                }}
+            >
+                Save Program Progress
+            </button>
+        </div>
+    );
 }
