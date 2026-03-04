@@ -49,18 +49,41 @@ export default function CaseManagementView() {
       maxWidth="md"
       fullWidth
       scroll="paper"
+      PaperProps={{
+        sx: {
+          borderRadius: '14px',
+          backgroundColor: palette.offWhite,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+        },
+      }}
     >
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 0 24px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111' }}>Case Notes</h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: 12, color: '#666' }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: palette.deepRed }}>Case Notes</h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: 12, color: '#5a5a5a' }}>
             {errMsg || 'View and manage notes by date'}
           </p>
         </div>
         <button
           onClick={() => navigate('/client')}
-          style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '6px 8px', borderRadius: 8, color: '#666', fontSize: 14 }}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            padding: '6px 8px',
+            borderRadius: 8,
+            color: '#5a5a5a',
+            fontSize: 14,
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.background = palette.mintGreen;
+            e.currentTarget.style.color = palette.deepRed;
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = '#5a5a5a';
+          }}
         >
           ✕
         </button>
@@ -74,7 +97,13 @@ export default function CaseManagementView() {
         width: "full"
       }}>
         <div
-            style={{display: 'inline-flex', background: '#f0f0f0', borderRadius: 10, padding: 4, position: 'relative'}}>
+            style={{
+              display: 'inline-flex',
+              background: palette.mintGreen,
+              borderRadius: 10,
+              padding: 4,
+              position: 'relative',
+            }}>
           <div
               style={{
                 position: 'absolute',
@@ -82,10 +111,10 @@ export default function CaseManagementView() {
                 left: curView === SelectedView.CaseNotes ? 4 : 'calc(50% + 2px)',
                 width: 'calc(50% - 6px)',
                 height: 'calc(100% - 8px)',
-                background: '#fff',
+                background: palette.white,
                 borderRadius: 8,
                 transition: 'left 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
               }}
           />
           <button
@@ -95,7 +124,7 @@ export default function CaseManagementView() {
                 padding: '8px 20px',
                 border: 'none',
                 background: 'transparent',
-                color: curView === SelectedView.CaseNotes ? '#111' : '#666',
+                color: curView === SelectedView.CaseNotes ? palette.deepRed : '#5a5a5a',
                 fontWeight: 600,
                 cursor: 'pointer',
                 fontSize: 14,
@@ -112,7 +141,7 @@ export default function CaseManagementView() {
                 padding: '8px 20px',
                 border: 'none',
                 background: 'transparent',
-                color: curView === SelectedView.Program ? '#111' : '#666',
+                color: curView === SelectedView.Program ? palette.deepRed : '#5a5a5a',
                 fontWeight: 600,
                 cursor: 'pointer',
                 fontSize: 14,
@@ -240,23 +269,44 @@ function CaseNotesView() {
 
         {/* Select Date */}
         <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}>
             Select Date
           </Typography>
-          <DatePicker
-            value={selectedDate}
-            onChange={(val) => setSelectedDate(val)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                sx: { '& .MuiOutlinedInput-root': { borderRadius: '12px' } },
+          <Box
+            sx={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '1px solid #e2e2e2',
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#ffffff !important',
+                borderRadius: '12px',
+                '& fieldset': { border: 'none' },
+                '&:hover fieldset': { border: 'none' },
+                '&.Mui-focused fieldset': { border: 'none' },
               },
             }}
-          />
+          >
+            <DatePicker
+              value={selectedDate}
+              onChange={(val) => setSelectedDate(val)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  variant: 'outlined',
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'transparent !important',
+                      borderRadius: '12px',
+                    },
+                  },
+                },
+              }}
+            />
+          </Box>
         </Box>
 
         <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}>
             Note for {selectedDate?.format('MMMM D, YYYY')}
           </Typography>
           <TextField
@@ -269,10 +319,10 @@ function CaseNotesView() {
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '12px',
-                backgroundColor: '#f5f5f5',
-                '& fieldset': { border: 'none' },
-                '&:hover fieldset': { border: 'none' },
-                '&.Mui-focused fieldset': { border: '1.5px solid #1a1a1a' },
+                backgroundColor: palette.white,
+                '& fieldset': { border: `1px solid #e2e2e2` },
+                '&:hover fieldset': { borderColor: palette.seafoamGreen },
+                '&.Mui-focused fieldset': { border: `2px solid ${palette.seafoamGreen}` },
               },
             }}
           />
@@ -288,16 +338,16 @@ function CaseNotesView() {
           disabled={saving}
           fullWidth
           sx={{
-            bgcolor: '#1a1a1a',
-            color: '#fff',
+            bgcolor: palette.seafoamGreen,
+            color: palette.white,
             borderRadius: '12px',
             py: 1.5,
             fontWeight: 600,
             fontSize: '0.95rem',
             textTransform: 'none',
             boxShadow: 'none',
-            '&:hover': { bgcolor: '#333', boxShadow: 'none' },
-            '&.Mui-disabled': { bgcolor: '#9e9e9e', color: '#fff' },
+            '&:hover': { bgcolor: palette.forestGreen, boxShadow: 'none' },
+            '&.Mui-disabled': { bgcolor: '#9e9e9e', color: palette.white },
           }}
         >
           {saving ? 'Saving...' : 'Save Case Note'}
@@ -307,15 +357,15 @@ function CaseNotesView() {
         
         {recentNotes.length > 0 && (
           <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}>
               Recent Notes (Last 5)
             </Typography>
-            <Box sx={{ border: '1.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+            <Box sx={{ border: `1.5px solid ${palette.mintGreen}`, borderRadius: '12px', overflow: 'hidden' }}>
               {recentNotes.map((note, i) => (
                 <Box key={note.date}>
                   <Box
                     onClick={() => setSelectedDate(dayjs(note.date))}
-                    sx={{ px: 2, py: 1.5, cursor: 'pointer', '&:hover': { backgroundColor: '#fafafa' } }}
+                    sx={{ px: 2, py: 1.5, cursor: 'pointer', '&:hover': { backgroundColor: palette.mintGreen } }}
                   >
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>
                       {dayjs(note.date).format('MMMM D, YYYY')}
@@ -452,7 +502,7 @@ function ProgramsView({personId}: ProgramsViewProps) {
             }}>
                 {enrolledPrograms.map((ep) => {
                     return (
-                        <div style={{
+                        <div key={ep.program} style={{
                             display: 'flex',
                             flexDirection: "column",
                             alignItems: 'flex-start',
@@ -461,10 +511,10 @@ function ProgramsView({personId}: ProgramsViewProps) {
                             width: "full",
                             minWidth: "260px"
                         }}>
-                            <h3>{ep.program}</h3>
+                            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: palette.deepRed }}>{ep.program}</h3>
                             <select
-                                style={{minWidth: 260}}
-                                className="reportSelect" //The hijack
+                                style={{ minWidth: 260 }}
+                                className="reportSelect"
                                 id="program-filter"
                                 value={selectedMilestones.get(ep.program)}
                                 onChange={(e) =>
@@ -485,9 +535,20 @@ function ProgramsView({personId}: ProgramsViewProps) {
             <button
                 onClick={saveProgramData}
                 style={{
-                        width: '100%', padding: '10px 12px', borderRadius: 10,
-                        background: "black",
-                        color: palette.offWhite, fontWeight: 600, cursor: 'pointer',
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: palette.seafoamGreen,
+                    color: palette.white,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: 'none',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = palette.forestGreen;
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = palette.seafoamGreen;
                 }}
             >
                 Save Program Progress
