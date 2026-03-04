@@ -58,3 +58,22 @@ def add_program():
         "goalTypes": body.get("goalTypes"),
     }
     return jsonify(program), 201
+
+@programs_bp.get("/programs/<name>/milestones")
+@jwt_required()
+def get_program_milestones(name):
+    name = name.capitalize()
+
+    # A little quick sanitization JIC
+    disallowed_symbols = [".", "/", "\\", "*", "[", "]", "(", ")", "{", "}"]
+    if any(sym in name for sym in disallowed_symbols):
+        return jsonify({"detail": "Program does not exist"}), 404
+
+    program = db.programs.find_one({"name": name})
+
+    if not program:
+        return jsonify({"detail": "Program does not exist"}), 404
+
+    milestones = program["goalTypes"]
+    print(milestones)
+    return jsonify(milestones)
