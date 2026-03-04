@@ -12,8 +12,24 @@ programs_bp = Blueprint("programs", __name__)
 @programs_bp.get("/programs")
 @jwt_required()
 def get_programs():
-    programs = [{**program, "_id": str(program["_id"])} for program in db.programs.find({})]
-    return jsonify(programs)
+    person = request.args.get("person")
+    if not person:
+        # Return list of available programs
+        programs = [{**program, "_id": str(program["_id"])} for program in db.programs.find({})]
+        return jsonify(programs)
+
+    try:
+        oid = ObjectId(person)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    goals = list(
+        db.goals.find({"personid": oid},
+                      {"_id":0, "personid": 0}))
+    if not goals:
+        return jsonify({"detail": "Client not found"}), 404
+
+    return jsonify(goals), 200
 
 
 @programs_bp.get("/programNames")
@@ -42,25 +58,3 @@ def add_program():
         "goalTypes": body.get("goalTypes"),
     }
     return jsonify(program), 201
-
-
-@programs_bp.get("/programs/<id>")
-@jwt_required()
-def fetch_client_programs(id):
-    try:
-        oid = ObjectId(id)
-    except InvalidId:
-        return jsonify({"detail": "Invalid client ID format"}), 400
-
-    goals = list(
-        db.goals.find({"personid": oid},
-                      {"_id":0, "personid": 0}))
-    if not goals:
-        return jsonify({"detail": "Client not found"}), 404
-
-    for i, goal in enumerate(goals):
-        print("Goal: ", goal)
-        for k, v in goal.items():
-            if isinstance(v, ObjectId):
-                print("ObjectId at", i, k, v)
-    return jsonify(goals), 200
