@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useState} from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
@@ -16,9 +16,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { palette } from "../theme/palette";
-import {useForm} from "react-hook-form";
-import {type Person, personSchema} from "../components/client/search/person.ts";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type Person, personSchema } from "../components/client/search/person.ts";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 
 type CaseNote = {
@@ -97,57 +97,57 @@ export default function CaseManagementView() {
         width: "full"
       }}>
         <div
-            style={{
-              display: 'inline-flex',
-              background: palette.mintGreen,
-              borderRadius: 10,
-              padding: 4,
-              position: 'relative',
-            }}>
+          style={{
+            display: 'inline-flex',
+            background: palette.mintGreen,
+            borderRadius: 10,
+            padding: 4,
+            position: 'relative',
+          }}>
           <div
-              style={{
-                position: 'absolute',
-                top: 4,
-                left: curView === SelectedView.CaseNotes ? 4 : 'calc(50% + 2px)',
-                width: 'calc(50% - 6px)',
-                height: 'calc(100% - 8px)',
-                background: palette.white,
-                borderRadius: 8,
-                transition: 'left 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              }}
+            style={{
+              position: 'absolute',
+              top: 4,
+              left: curView === SelectedView.CaseNotes ? 4 : 'calc(50% + 2px)',
+              width: 'calc(50% - 6px)',
+              height: 'calc(100% - 8px)',
+              background: palette.white,
+              borderRadius: 8,
+              transition: 'left 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            }}
           />
           <button
-              onClick={() => setCurView(SelectedView.CaseNotes)}
-              style={{
-                position: 'relative',
-                padding: '8px 20px',
-                border: 'none',
-                background: 'transparent',
-                color: curView === SelectedView.CaseNotes ? palette.deepRed : '#5a5a5a',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: 14,
-                zIndex: 1,
-                transition: 'color 0.2s ease',
-              }}
+            onClick={() => setCurView(SelectedView.CaseNotes)}
+            style={{
+              position: 'relative',
+              padding: '8px 20px',
+              border: 'none',
+              background: 'transparent',
+              color: curView === SelectedView.CaseNotes ? palette.deepRed : '#5a5a5a',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: 14,
+              zIndex: 1,
+              transition: 'color 0.2s ease',
+            }}
           >
             Case Notes
           </button>
           <button
-              onClick={() => setCurView(SelectedView.Program)}
-              style={{
-                position: 'relative',
-                padding: '8px 20px',
-                border: 'none',
-                background: 'transparent',
-                color: curView === SelectedView.Program ? palette.deepRed : '#5a5a5a',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: 14,
-                zIndex: 1,
-                transition: 'color 0.2s ease',
-              }}
+            onClick={() => setCurView(SelectedView.Program)}
+            style={{
+              position: 'relative',
+              padding: '8px 20px',
+              border: 'none',
+              background: 'transparent',
+              color: curView === SelectedView.Program ? palette.deepRed : '#5a5a5a',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: 14,
+              zIndex: 1,
+              transition: 'color 0.2s ease',
+            }}
           >
             Program
           </button>
@@ -167,16 +167,16 @@ export default function CaseManagementView() {
             case SelectedView.CaseNotes:
               return (
                 <DialogContent sx={{ overflowY: 'auto' }}>
-                  <CaseNotesView/>
+                  <CaseNotesView />
                 </DialogContent>
               )
             case SelectedView.Program:
-              return <ProgramsView personId={id || ""}/>;
+              return <ProgramsView personId={id || ""} />;
             default: {
               // Exhaustiveness check - TypeScript will error if a case is missing
               const _exhaustive: never = curView;
               return _exhaustive;
-              
+
             }
           }
         })()}
@@ -239,6 +239,7 @@ function CaseNotesView() {
         }
         return [...prev, { ...payload, goalid: '' }]
       })
+      alert("Case Note saved successfully")
     } catch (err) {
       setErrMsg('Failed to save note')
     } finally {
@@ -354,7 +355,7 @@ function CaseNotesView() {
         </Button>
 
         {/* recent notes */}
-        
+
         {recentNotes.length > 0 && (
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}>
@@ -399,161 +400,160 @@ function CaseNotesView() {
 
 
 type Program = {
-    program: string;
-    status: string;
+  program: string;
+  status: string;
 }
 
 type ProgramsViewProps = {
-    personId: string;
+  personId: string;
 }
-function ProgramsView({personId}: ProgramsViewProps) {
-    const [programMilestones, setProgramMilestones] = useState<Map<string, Array<string>>>(
-        () => new Map()
-    );
-    const [failedToFetch, setFailedToFetch] = useState<Array<string>>(() => [])
-    const [selectedMilestones, setSelectedMilestones] = useState<Map<string, string>>(
-        () => new Map()
-    );
+function ProgramsView({ personId }: ProgramsViewProps) {
+  const [programMilestones, setProgramMilestones] = useState<Map<string, Array<string>>>(
+    () => new Map()
+  );
+  const [failedToFetch, setFailedToFetch] = useState<Array<string>>(() => [])
+  const [selectedMilestones, setSelectedMilestones] = useState<Map<string, string>>(
+    () => new Map()
+  );
 
-    const changeSelectedMilestone = (program: string, value: string) => {
-        setSelectedMilestones(selectedMilestones => new Map(selectedMilestones).set(program, value))
+  const changeSelectedMilestone = (program: string, value: string) => {
+    setSelectedMilestones(selectedMilestones => new Map(selectedMilestones).set(program, value))
+  }
+
+  // I know looping await is shit, but it works for now
+  const saveProgramData = async () => {
+    try {
+
+      const payload: { milestones: Record<string, unknown> } = { milestones: {} }
+      for (const [p, v] of selectedMilestones.entries()) {
+        payload.milestones[p] = v
+      }
+      await axios.put(`http://localhost:8000/people/${personId}/milestones`, payload,
+        { withCredentials: true })
+      alert("Program status updated successfully")
     }
+    catch (e) {
+      console.log(e);
+    }
+  }
 
-    // I know looping await is shit, but it works for now
-    const saveProgramData = async () => {
+  //Load programs
+  const [enrolledPrograms, setEnrolledPrograms] = useState<Program[]>([]);
+
+  useEffect(() => {
+    const loadClientPrograms = async () => {
+      try {
+        const res = await axios.get(`http://localhost:8000/programs?person=${personId}`, { withCredentials: true })
+        const programs = res.data.map((respr: any) => ({
+          program: respr.program,
+          status: respr.status,
+        }));
+        setEnrolledPrograms(programs);
+      }
+      catch (err) {
+        console.log(`error ar CaseManagementView:330 : ${err}`)
+      }
+    }
+    loadClientPrograms()
+  }, [personId, setEnrolledPrograms])
+
+  useEffect(() => {
+    const getAllMilestones = async () => {
+
+      for (const ep of enrolledPrograms) {
         try {
+          const res = await axios.get(`http://localhost:8000/programs/${ep.program}/milestones`, { withCredentials: true })
+          setProgramMilestones(programMilestones => new Map(programMilestones).set(ep.program, res.data.general))
+          console.log(`Data added to map: ${res.data.general}`);
+        } catch (e) {
+          setFailedToFetch(failedToFetch => [...failedToFetch, ep.program]);
+          console.error(`Failed to fetch ${ep.program}`)
+        }
+      }
+    };
+    getAllMilestones();
+  }, [enrolledPrograms]);
 
-            const payload: { milestones: Record<string, unknown> } = {milestones: {}}
-            for (const [p, v] of selectedMilestones.entries()) {
-                payload.milestones[p] = v
-            }
-            await axios.put(`http://localhost:8000/people/${personId}/milestones`, payload,
-                {withCredentials: true})
-            alert(`Program ${"updated status"} successfully`)
-        }
-        catch (e) {
-            console.log(e);
-        }
+  useEffect(() => {
+    const syncSelectedMilestonees = async () => {
+      for (const { program, status } of enrolledPrograms) {
+        changeSelectedMilestone(program, status);
+      }
     }
+    syncSelectedMilestonees();
+  }, [enrolledPrograms]);
 
-    //Load programs
-    const [enrolledPrograms, setEnrolledPrograms] = useState<Program[]>([]);
-
-    useEffect(() => {
-        const loadClientPrograms = async () => {
-            try {
-                const res = await axios.get(`http://localhost:8000/programs?person=${personId}`, { withCredentials: true })
-                const programs = res.data.map((respr: any) => ({
-                    program: respr.program,
-                    status: respr.status,
-                }));
-                setEnrolledPrograms(programs);
-            }
-            catch (err) {
-                console.log(`error ar CaseManagementView:330 : ${err}`)
-            }
-        }
-        loadClientPrograms()
-    }, [personId, setEnrolledPrograms])
-
-    useEffect(() => {
-        const getAllMilestones = async ()=> {
-
-            for (const ep of enrolledPrograms) {
-                try {
-                    const res = await axios.get(`http://localhost:8000/programs/${ep.program}/milestones`, {withCredentials: true})
-                    setProgramMilestones(programMilestones => new Map(programMilestones).set(ep.program, res.data.general))
-                    console.log(`Data added to map: ${res.data.general}`);
-                } catch (e) {
-                    setFailedToFetch(failedToFetch => [...failedToFetch, ep.program]);
-                    console.error(`Failed to fetch ${ep.program}`)
-                }
-            }
-        };
-        getAllMilestones();
-    }, [enrolledPrograms]);
-
-    useEffect(() => {
-        const syncSelectedMilestonees = async () =>
-        {
-            for (const {program, status} of enrolledPrograms) {
-                changeSelectedMilestone(program, status);
-            }
-        }
-        syncSelectedMilestonees();
-    }, [enrolledPrograms]);
-
-    return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'flex-start',
-            padding: '0 24px 16px 24px',
-            width: "100%"
-        }}>
-            { /*Programs and their status*/ }
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                padding: '0 24px 16px 24px',
-                width: "full"
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+      padding: '0 24px 16px 24px',
+      width: "100%"
+    }}>
+      { /*Programs and their status*/}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '0 24px 16px 24px',
+        width: "full"
+      }}>
+        {enrolledPrograms.map((ep) => {
+          return (
+            <div key={ep.program} style={{
+              display: 'flex',
+              flexDirection: "column",
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              padding: '0 24px 16px 24px',
+              width: "full",
+              minWidth: "260px"
             }}>
-                {enrolledPrograms.map((ep) => {
-                    return (
-                        <div key={ep.program} style={{
-                            display: 'flex',
-                            flexDirection: "column",
-                            alignItems: 'flex-start',
-                            justifyContent: 'center',
-                            padding: '0 24px 16px 24px',
-                            width: "full",
-                            minWidth: "260px"
-                        }}>
-                            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: palette.deepRed }}>{ep.program}</h3>
-                            <select
-                                style={{ minWidth: 260 }}
-                                className="reportSelect"
-                                id="program-filter"
-                                value={selectedMilestones.get(ep.program)}
-                                onChange={(e) =>
-                                    changeSelectedMilestone(ep.program, e.target.value)}
-                            >
-                                {programMilestones.get(ep.program) instanceof Array &&
-                                    programMilestones.get(ep.program)?.map(mo => (
-                                    <option key={mo} value={mo}>
-                                        {mo}
-                                    </option>)
-                                )}
-                            </select>
-                        </div>)
-                })}
-            </div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: palette.deepRed }}>{ep.program}</h3>
+              <select
+                style={{ minWidth: 260 }}
+                className="reportSelect"
+                id="program-filter"
+                value={selectedMilestones.get(ep.program)}
+                onChange={(e) =>
+                  changeSelectedMilestone(ep.program, e.target.value)}
+              >
+                {programMilestones.get(ep.program) instanceof Array &&
+                  programMilestones.get(ep.program)?.map(mo => (
+                    <option key={mo} value={mo}>
+                      {mo}
+                    </option>)
+                  )}
+              </select>
+            </div>)
+        })}
+      </div>
 
-            { /* Save button */ }
-            <button
-                onClick={saveProgramData}
-                style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    background: palette.seafoamGreen,
-                    color: palette.white,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = palette.forestGreen;
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = palette.seafoamGreen;
-                }}
-            >
-                Save Program Progress
-            </button>
-        </div>
-    );
+      { /* Save button */}
+      <button
+        onClick={saveProgramData}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          borderRadius: 10,
+          background: palette.seafoamGreen,
+          color: palette.white,
+          fontWeight: 600,
+          cursor: 'pointer',
+          border: 'none',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.background = palette.forestGreen;
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.background = palette.seafoamGreen;
+        }}
+      >
+        Save Program Progress
+      </button>
+    </div>
+  );
 }
