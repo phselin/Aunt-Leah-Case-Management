@@ -23,11 +23,19 @@ def get_programs():
     except InvalidId:
         return jsonify({"detail": "Invalid client ID format"}), 400
 
-    goals = list(db.goals.find({"personid": oid}, {"_id": 0, "personid": 0}))
-    if not goals:
-        return jsonify({"detail": "Client not found"}), 404
+    # goals = list(db.goals.find({"personid": oid}, {"_id": 0, "personid": 0}))
+    # if not goals:
+    #     return jsonify({"detail": "Client not found"}), 404
 
-    return jsonify(goals), 200
+    # TODO make this better
+
+    query = db.people.find_one({"_id": oid}, {"status": 1, "programs": 1, "_id": 0})
+    status = query["status"]
+    programs = query["programs"]
+    result = []
+    for program in programs:
+        result.append({"program": program, "status": {} if program not in status else status[program]["general"]})
+    return jsonify(result), 200
 
 
 @programs_bp.get("/programNames")

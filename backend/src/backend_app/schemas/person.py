@@ -17,7 +17,7 @@ class Person(BaseModel):
     programs: list[str] = Field(default_factory=list)
     pronouns: str | None = None
     preferredContactMethod: Literal["email", "phone"] | None = None
-    status: dict[str, dict[str, str]] = Field(default_factory=dict)
+    status: dict[str, dict[str, str]] = None
 
     @field_validator("firstname", "lastname")
     @classmethod
