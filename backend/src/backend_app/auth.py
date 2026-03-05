@@ -129,11 +129,11 @@ def login():
 @auth_bp.post("/logout")
 @jwt_required
 def logout():
-    jti = get_jwt()["jti"]
-    try:
-        redis_client.setex(name=jti, time=timedelta(minutes=30), value="revoked")
-    except Exception:
-        print("Failed to add token to blocklist")
+    # jti = get_jwt()["jti"]
+    # try:
+    #     redis_client.setex(name=jti, time=timedelta(minutes=30), value="revoked")
+    # except Exception:
+    #     print("Failed to add token to blocklist")
     resp = jsonify({"detail": "Logout successful"})
     unset_jwt_cookies(resp)
     return resp
@@ -158,15 +158,15 @@ def me():
     )
 
 
-@auth_bp.after_app_request
-def refresh_expiring_jwt(response):
-    try:
-        exp = get_jwt()["exp"]
-        now = datetime.now(UTC)
+# @auth_bp.after_app_request
+# def refresh_expiring_jwt(response):
+#     try:
+#         exp = get_jwt()["exp"]
+#         now = datetime.now(UTC)
 
-        if datetime.timestamp(now + timedelta(minutes=10)) > exp:
-            access_token = create_access_token(identity=get_jwt_identity())
-            set_access_cookies(response, access_token)
-        return response
-    except Exception:
-        return response
+#         if datetime.timestamp(now + timedelta(minutes=10)) > exp:
+#             access_token = create_access_token(identity=get_jwt_identity())
+#             set_access_cookies(response, access_token)
+#         return response
+#     except Exception:
+#         return response
