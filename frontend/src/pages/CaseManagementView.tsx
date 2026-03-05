@@ -429,6 +429,7 @@ function ProgramsView({personId}: ProgramsViewProps) {
             }
             await axios.put(`http://localhost:8000/people/${personId}/milestones`, payload,
                 {withCredentials: true})
+            alert(`Program ${"updated status"} successfully`)
         }
         catch (e) {
             console.log(e);
