@@ -117,9 +117,10 @@ def update_person(id):
             400,
         )
 
-    person_json = person.model_dump(mode="json")
-    res = db.people.find_one_and_replace(
-        {"_id": oid}, person_json, return_document=ReturnDocument.AFTER
+    person_json = person.model_dump(exclude_none=True, mode="json")
+
+    res = db.people.find_one_and_update(
+        {"_id": oid}, {"$set": person_json}, return_document=ReturnDocument.AFTER
     )
 
     if not res:
@@ -172,6 +173,7 @@ def delete_person(id):
     db.people.delete_one({"_id": oid})
     return jsonify({"detail": "Client deleted successfully"}), 200
 
+
 @people_bp.put("/people/<id>/milestones")
 @jwt_required()
 def update_milestones(id):
@@ -190,27 +192,36 @@ def update_milestones(id):
     program_names = list(milestones_data.keys())
 
     # Fetch programs from db whose names are in the request
-    programs = list(db.programs.find({"name": {"$in": program_names}}))
-    if not programs:
-        return jsonify({"detail": "No matching programs found"}), 404
-    print("programs: ", programs)
+    # programs = list(db.programs.find({"name": {"$in": program_names}}))
+    # if not programs:
+    #     return jsonify({"detail": "No matching programs found"}), 404
+    # print("programs: ", programs)
 
-    # Fetch goals matching personid and programId
-    goals = list(db.goals.find({"personid": oid, "program": {"$in": program_names}}))
-    print("goals: ", goals)
+    # # Fetch goals matching personid and programId
+    # goals = list(db.goals.find({"personid": oid, "program": {"$in": program_names}}))
+    # print("goals: ", goals)
 
-    #TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS
+    # # TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS
 
-    # Update goal statuses based on request data
+    # # Update goal statuses based on request data
+    # for program_name in program_names:
+    #     for goal in goals:
+    #         if goal["program"] == program_name:
+    #             new_status = milestones_data[program_name]
+    #             # TODO: check the goalType for program to ensure status exists
+    #             db.goals.update_one({"_id": goal["_id"]}, {"$set": {"status": new_status}})
+
+    valid_programs_structure = get_programs_structure()
     for program_name in program_names:
-        for goal in goals:
-            if goal["program"] == program_name:
-                new_status = milestones_data[program_name]
-                #TODO: check the goalType for program to ensure status exists
-                db.goals.update_one(
-                    {"_id": goal["_id"]},
-                    {"$set": {"status": new_status}}
-                )
+        if program_name not in valid_programs_structure:
+            return jsonify({"detail": "No matching programs found"}), 404
+        valid_goal_types = valid_programs_structure.get(program_name, {})
+        if milestones_data[program_name] not in valid_goal_types["general"]:
+            return jsonify({"detail": "Invalid milestone"}), 404
+        db.people.update_one(
+            {"_id": oid},
+            {"$set": {f"status.{program_name}.general": milestones_data[program_name]}},
+        )
 
     # Fetch and return updated person document
     person = db.people.find_one({"_id": oid})
