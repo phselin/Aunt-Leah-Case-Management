@@ -247,7 +247,7 @@ function CaseNotesView() {
   }
 
   const recentNotes = [...caseNotes]
-    .filter((n) => n.date !== dateKey && n.content)
+    //.filter((n) => n.date !== dateKey && n.content)
     .reduce((acc: CaseNote[], note) => {
       if (!acc.find((n) => n.date === note.date)) acc.push(note)
       return acc
