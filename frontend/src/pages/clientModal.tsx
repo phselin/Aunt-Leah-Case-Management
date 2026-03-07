@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import Tab from "@mui/material/Tab";
+import TabList from "@mui/lab/TabList";
+import TabContext from "@mui/lab/TabContext";
+import TabPanel from "@mui/lab/TabPanel";
 import axios from "axios";
-import { Autocomplete, Dialog, TextField } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import PhoneInput from "react-phone-number-input/input"
+import { palette } from "../theme/palette";
+import { ClientTitle } from "../components/client/modal/clientElement";
+import Details from "../components/client/modal/Details";
+import CaseNotes from "../components/client/modal/CaseNotes";
+import Progress from "../components/client/modal/Progress";
+import type { Person } from "../components/client/person";
 
-import {
-  CloseBtn, ErrorBox, FullRow,
-  FormRow, Label, Input, TextArea, FormActions, SecondaryBtn, PrimaryBtn, Select,
-  ClientCard, ClientHeader,
-  ClientTitleWrap,
-  ClientTitle,
-  ClientSubtitle,
-  ClientGrid
-} from "../components/client/add-edit/clientElement";
-import { personSchema, type Person } from "../components/client/search/person";
+const SelectedView = {
+  Details: "Client Information",
+  CaseNotes: "Case Notes",
+  Progress: "Progress",
+} as const;
+
+type SelectedViewType = (typeof SelectedView)[keyof typeof SelectedView];
+
+const tabs = Object.values(SelectedView);
 
 const ClientModal = () => {
   const { id } = useParams();
@@ -25,250 +30,129 @@ const ClientModal = () => {
   const { setErrMsg, reloadClients, availablePrograms } = useOutletContext<{
     setErrMsg: (msg: string) => void;
     reloadClients: () => void;
-    availablePrograms: string[]
+    availablePrograms: string[];
   }>();
 
-  const [localErr, setLocalErr] = useState("");
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<Person>({
-    resolver: zodResolver(personSchema),
-  });
+  const [curView, setCurView] = useState<SelectedViewType>(SelectedView.Details);
+  const [clientData, setClientData] = useState<Person | null>(null);
 
   useEffect(() => {
-    if (localErr) {
-      const timer = setTimeout(() => {
-        setLocalErr("");
-      }, 2000);
+    if (!id || isNew) return;
 
-      return () => clearTimeout(timer);
-    }
-  }, [localErr]);
-
-
-  useEffect(() => {
-    const loadClient = async () => {
+    const fetchClient = async () => {
       try {
         const res = await axios.get(`http://localhost:8000/people/${id}`, {
           withCredentials: true,
         });
-        const data = res.data;
-
-        setValue("firstname", data.firstname || "");
-        setValue("lastname", data.lastname || "");
-        setValue("dob", data.dob || "");
-        setValue("gender", data.gender || "");
-        setValue("address", data.address || "");
-        setValue("phone", data.phone || "");
-        setValue("email", data.email || "");
-        setValue("referralDate", data.referralDate || "");
-        setValue("programs", data.programs || []);
-        setValue("pronouns", data.pronouns || "");
-        setValue("preferredContactMethod", data.preferredContactMethod || "");
-
-      } catch (err) {
+        setClientData(res.data);
+      } catch {
         setErrMsg("Unable to find client details");
         navigate("/client");
       }
     };
 
-    if (id && !isNew) {
-      loadClient();
-    }
-  }, [id, isNew, navigate, setErrMsg, setValue]);
+    fetchClient();
+  }, [id, isNew, navigate, setErrMsg]);
 
-  const onSubmit = async (data: Person) => {
-    setLocalErr("");
-    const cleanData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        value === "" ? null : value
-      ])
-    );
-    try {
-      if (isNew) {
-        await axios.post("http://localhost:8000/people", cleanData, {
-          withCredentials: true,
-        });
-      } else {
-        await axios.put(`http://localhost:8000/people/${id}`, cleanData, {
-          withCredentials: true,
-        });
-      }
-      alert(`Client ${isNew ? "added" : "saved"} successfully`)
-      reloadClients();
-      navigate("/client");
-    } catch (e: any) {
-      const backendErrors = e.response?.data?.errors;
-
-      if (backendErrors) {
-        Object.entries(backendErrors).forEach(([field, msg]) => {
-          setError(field as keyof Person, { message: msg as string });
-        });
-      }
-
-      setLocalErr(`Failed to ${isNew ? 'add' : 'update'} client`);
-    }
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setCurView(newValue as SelectedViewType);
   };
 
-  const handleCancel = () => navigate("/client");
+  const clientName = clientData
+    ? `${clientData.firstname ?? ""} ${clientData.lastname ?? ""}`.trim()
+    : "";
+  const title = isNew ? "Add New Client" : clientName || "Client";
 
   return (
-    <Dialog open={true} onClose={handleCancel} maxWidth="lg" fullWidth PaperProps={{
-      sx: {
-        padding: '24px',
-        borderRadius: '12px'
-      }
-    }}>
-      <ClientCard >
-        <ClientHeader>
-          <ClientTitleWrap>
-            <ClientTitle>{isNew ? "Add New Client" : "Edit Client"}</ClientTitle>
-            <ClientSubtitle>{"Enter client details below"}</ClientSubtitle>
-          </ClientTitleWrap>
-          <CloseBtn onClick={handleCancel}>✕</CloseBtn>
-        </ClientHeader>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "calc(100vh - 80px)",
+        backgroundColor: palette.offWhite,
+      }}
+    >
+      <div style={{ padding: "16px 32px 0" }}>
+        <button
+          onClick={() => navigate("/client")}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: palette.deepRed,
+            fontSize: 14,
+            fontWeight: 500,
+            padding: 0,
+          }}
+        >
+          ← Back to Clients
+        </button>
+      </div>
 
-        {localErr && <ErrorBox>{localErr}</ErrorBox>}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <ClientGrid>
+      <div style={{ padding: "8px 32px 0" }}>
+        <ClientTitle style={{ fontSize: 28, fontWeight: 700 }}>{title}</ClientTitle>
+      </div>
 
-            <FormRow>
-              <Label>First Name *</Label>
-              <Input {...register("firstname")} />
-              {errors.firstname && <span style={{ color: "red", fontSize: "12px" }}>{errors.firstname.message}</span>}
-            </FormRow>
+      <TabContext value={curView}>
+        {!isNew && (
+          <div style={{ padding: "0 32px", borderBottom: "1px solid #e8e8e8" }}>
+            <TabList
+              onChange={handleTabChange}
+              sx={{
+                minHeight: 36,
+                "& .MuiTabs-indicator": {
+                  backgroundColor: palette.deepRed,
+                  height: 3,
+                  borderRadius: "3px 3px 0 0",
+                },
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  minHeight: 36,
+                  padding: "6px 20px",
+                  color: "#5a5a5a",
+                  "&.Mui-selected": {
+                    color: palette.deepRed,
+                  },
+                },
+              }}
+            >
+              {tabs.map((tab) => (
+                <Tab key={tab} label={tab} value={tab} />
+              ))}
+            </TabList>
+          </div>
+        )}
 
-            <FormRow>
-              <Label>Last Name *</Label>
-              <Input {...register("lastname")} />
-              {errors.lastname && <span style={{ color: "red", fontSize: "12px" }}>{errors.lastname.message}</span>}
-            </FormRow>
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 32px" }}>
+          <TabPanel value={SelectedView.Details} sx={{ p: 0, pt: 2 }}>
+            <Details
+              id={id}
+              isNew={isNew}
+              initialData={clientData}
+              availablePrograms={availablePrograms}
+              reloadClients={reloadClients}
+            />
+          </TabPanel>
 
-            <FormRow>
-              <Label>Email</Label>
-              <Input {...register("email")} />
-              {errors.email && <span style={{ color: "red", fontSize: "12px" }}>{errors.email.message}</span>}
-            </FormRow>
+          {id && !isNew && (
+            <>
+              <TabPanel value={SelectedView.CaseNotes} sx={{ p: 0, pt: 2 }}>
+                <CaseNotes personId={id} />
+              </TabPanel>
 
-            <FormRow>
-              <Label>Phone</Label>
-              <Controller
-                name="phone"
-                control={control}
-                render={({ field }) => (
-                  <PhoneInput
-                    {...field}
-                    country="CA"
-                    inputComponent={Input}
-                  />
-                )}
-              />
-              {errors.phone && <span style={{ color: "red", fontSize: "12px" }}>{errors.phone.message}</span>}
-            </FormRow>
-
-            <FormRow>
-              <Label>Preferred Contact</Label>
-              <Select {...register("preferredContactMethod")}>
-                <option value="">Select method</option>
-                <option value="email">Email</option>
-                <option value="phone">Phone</option>
-              </Select>
-              {errors.preferredContactMethod && <span style={{ color: "red", fontSize: "12px" }}>{errors.preferredContactMethod.message}</span>}
-            </FormRow>
-
-            <FormRow>
-              <Label>Date of Birth</Label>
-              <Input type="date" {...register("dob")} />
-              {errors.dob && <span style={{ color: "red", fontSize: "12px" }}>{errors.dob.message}</span>}
-            </FormRow>
-
-            <FullRow>
-              <FormRow>
-                <Label>Address</Label>
-                <TextArea {...register("address")} />
-                {errors.address && <span style={{ color: "red", fontSize: "12px" }}>{errors.address.message}</span>}
-              </FormRow>
-            </FullRow>
-
-            <FormRow>
-              <Label>Gender</Label>
-              <Select {...register("gender")}>
-                <option value="">Select a gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="non-binary">Non-Binary</option>
-                <option value="prefer not to say">Prefer Not to Say</option>
-              </Select>
-              {errors.gender && <span style={{ color: "red", fontSize: "12px" }}>{errors.gender.message}</span>}
-            </FormRow>
-
-            <FormRow>
-              <Label>Pronouns</Label>
-              <Input {...register("pronouns")} />
-              {errors.pronouns && <span style={{ color: "red", fontSize: "12px" }}>{errors.pronouns.message}</span>}
-            </FormRow>
-
-            <FullRow>
-              <FormRow>
-                <Label>Programs</Label>
-                <Controller
-                  name="programs"
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <Autocomplete
-                      multiple
-                      options={availablePrograms}
-                      value={value || []}
-                      onChange={(_, newValue) => onChange(newValue)}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          minHeight: 40,
-                          padding: '0 12px',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          fontFamily: 'inherit',
-                          '& fieldset': { borderColor: '#ececec' },
-                          '&:hover fieldset': { borderColor: '#ececec' },
-                          '&.Mui-focused fieldset': { borderColor: '#bdbdbd', borderWidth: '1px' },
-                        },
-                      }}
-                      renderInput={(params) => (
-                        <TextField {...params} placeholder="Search and add programs..." />
-                      )}
-                    />
-                  )}
-                />
-              </FormRow>
-              {errors.programs && <span style={{ color: "red", fontSize: "12px" }}>{errors.programs.message}</span>}
-            </FullRow>
-
-            <FormRow>
-              <Label>Referral Date</Label>
-              <Input type="date" {...register("referralDate")} />
-              {errors.referralDate && <span style={{ color: "red", fontSize: "12px" }}>{errors.referralDate.message}</span>}
-            </FormRow>
-
-          </ClientGrid>
-
-          <FormActions>
-            <SecondaryBtn type="button" onClick={handleCancel} disabled={isSubmitting}>
-              Cancel
-            </SecondaryBtn>
-            <PrimaryBtn type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : (isNew ? "Create Client" : "Save Changes")}
-            </PrimaryBtn>
-          </FormActions>
-        </form>
-
-      </ClientCard>
-    </Dialog >
+              <TabPanel value={SelectedView.Progress} sx={{ p: 0, pt: 2 }}>
+                <Progress personId={id} />
+              </TabPanel>
+            </>
+          )}
+        </div>
+      </TabContext>
+    </div>
   );
 };
 

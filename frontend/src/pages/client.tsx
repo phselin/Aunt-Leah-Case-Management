@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
+import { useNavigate, Outlet, useParams } from "react-router-dom";
 import axios from "axios";
 
 import ClientHeader from "../components/client/search/clientHeader";
 import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
-import type { Person } from "../components/client/search/person";
+import type { Person } from "../components/client/person";
 
 const Client = () => {
   const navigate = useNavigate();
   const errRef = useRef<HTMLParagraphElement>(null);
 
   const [query, setQuery] = useState("");
+  const { id } = useParams();
   const [debounceQuery, setDebounceQuery] = useState("");
   const [people, setPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
@@ -19,7 +20,6 @@ const Client = () => {
   const [reloadFlag, setReloadFlag] = useState(0);
   const [availablePrograms, setAvailablePrograms] = useState([]);
   const reloadClients = () => setReloadFlag((x) => x + 1);
-  const [open, setOpen] = useState(false);
 
 
   useEffect(() => {
@@ -116,15 +116,20 @@ const Client = () => {
           {errMsg}
         </div>
       )}
-      <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
-      <ClientSearchBar query={query} setQuery={setQuery} />
-      <ClientTable
-        people={people}
-        onCaseNotes={(pid) => navigate(`/client/${pid}/casenotes`)}
-        onClick={(pid) => navigate(`/client/${pid}`)}
-        onError={(msg: string) => setErrMsg(msg)}
-        onDelete={(pid, pname) => handleDelete(pid, pname)} />
-      <Outlet context={{ setErrMsg, reloadClients, availablePrograms }} />
+      {id ? (
+        <Outlet context={{ setErrMsg, reloadClients, availablePrograms }} />
+      ) : (
+        <>
+          <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
+          <ClientSearchBar query={query} setQuery={setQuery} />
+          <ClientTable
+            people={people}
+            onClick={(pid) => navigate(`/client/${pid}`)}
+            onError={(msg: string) => setErrMsg(msg)}
+            onDelete={(pid, pname) => handleDelete(pid, pname)} />
+        </>
+      )}
+
     </div>
   );
 };

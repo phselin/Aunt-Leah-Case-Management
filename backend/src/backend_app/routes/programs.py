@@ -3,8 +3,8 @@ from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
-from backend_app.routes.routes_utils import get_program_names
 from backend_app.db import db
+from backend_app.routes.routes_utils import get_program_names
 
 programs_bp = Blueprint("programs", __name__)
 
@@ -34,7 +34,12 @@ def get_programs():
     programs = query["programs"]
     result = []
     for program in programs:
-        result.append({"program": program, "status": {} if program not in status else status[program]["general"]})
+        result.append(
+            {
+                "program": program,
+                "status": {} if program not in status else status[program]["general"],
+            }
+        )
     return jsonify(result), 200
 
 

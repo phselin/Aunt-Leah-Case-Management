@@ -10,7 +10,7 @@ from pymongo import ReturnDocument
 
 from backend_app.auth_init import limiter
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_program_names, get_programs_structure
+from backend_app.routes.routes_utils import get_programs_structure
 from backend_app.schemas.person import Person
 
 people_bp = Blueprint("people", __name__)
