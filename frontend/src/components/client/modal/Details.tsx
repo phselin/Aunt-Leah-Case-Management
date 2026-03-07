@@ -26,7 +26,6 @@ type DetailsProps = {
     isNew: boolean;
     initialData: Person | null;
     availablePrograms: string[];
-    reloadClients: () => void;
 };
 
 const Details = ({
@@ -34,7 +33,6 @@ const Details = ({
     isNew,
     initialData,
     availablePrograms,
-    reloadClients,
 }: DetailsProps) => {
     const navigate = useNavigate();
     const [localErr, setLocalErr] = useState("");
@@ -85,15 +83,17 @@ const Details = ({
         );
         try {
             if (isNew) {
-                await axios.post("http://localhost:8000/people", cleanData, {
+                const res = await axios.post("http://localhost:8000/people", cleanData, {
                     withCredentials: true,
                 });
+                alert("Client added successfully");
+                navigate(`/client/${res.data._id}`)
             } else {
                 await axios.put(`http://localhost:8000/people/${id}`, cleanData, {
                     withCredentials: true,
                 });
+                alert("Client saved successfully");
             }
-            alert(`Client ${isNew ? "added" : "saved"} successfully`);
         } catch (e: any) {
             const backendErrors = e.response?.data?.errors;
             if (backendErrors) {
@@ -105,7 +105,10 @@ const Details = ({
         }
     };
 
-    const handleClose = () => navigate("/client");
+    const handleCancel = () => {
+        console.log("handling cancel");
+        isNew ? navigate("/client") : reset();
+    }
 
     return (
         <div style={{ padding: "20px 28px 28px" }}>
@@ -227,7 +230,7 @@ const Details = ({
                 </ClientGrid>
 
                 <FormActions>
-                    <SecondaryBtn type="button" onClick={handleClose} disabled={isSubmitting}>
+                    <SecondaryBtn type="button" onClick={handleCancel} disabled={isSubmitting}>
                         Cancel
                     </SecondaryBtn>
                     <PrimaryBtn type="submit" disabled={isSubmitting}>

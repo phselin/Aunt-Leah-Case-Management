@@ -135,7 +135,6 @@ const ClientModal = () => {
               isNew={isNew}
               initialData={clientData}
               availablePrograms={availablePrograms}
-              reloadClients={reloadClients}
             />
           </TabPanel>
 

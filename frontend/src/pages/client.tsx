@@ -17,9 +17,7 @@ const Client = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [reloadFlag, setReloadFlag] = useState(0);
   const [availablePrograms, setAvailablePrograms] = useState([]);
-  const reloadClients = () => setReloadFlag((x) => x + 1);
 
 
   useEffect(() => {
@@ -71,8 +69,10 @@ const Client = () => {
       }
     };
 
-    loadPeople();
-  }, [debounceQuery, reloadFlag]);
+    if (!id) {
+      loadPeople();
+    }
+  }, [debounceQuery, id]);
 
   const handleExport = async () => {
     setExporting(true)
@@ -103,7 +103,7 @@ const Client = () => {
       await axios.delete(`http://localhost:8000/people/${id}`, {
         withCredentials: true,
       });
-      reloadClients();
+      setPeople((before) => before.filter((p) => p._id != id))
     } catch (err) {
       setErrMsg("Failed to delete client");
     }
@@ -117,7 +117,7 @@ const Client = () => {
         </div>
       )}
       {id ? (
-        <Outlet context={{ setErrMsg, reloadClients, availablePrograms }} />
+        <Outlet context={{ setErrMsg, availablePrograms }} />
       ) : (
         <>
           <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
