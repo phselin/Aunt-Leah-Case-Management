@@ -14,7 +14,6 @@ import {
     Input,
     TextArea,
     FormActions,
-    SecondaryBtn,
     PrimaryBtn,
     Select,
     ClientGrid,
@@ -104,11 +103,6 @@ const Details = ({
             setLocalErr(`Failed to ${isNew ? "add" : "update"} client`);
         }
     };
-
-    const handleCancel = () => {
-        console.log("handling cancel");
-        isNew ? navigate("/client") : reset();
-    }
 
     return (
         <div style={{ padding: "20px 28px 28px" }}>
@@ -230,9 +224,6 @@ const Details = ({
                 </ClientGrid>
 
                 <FormActions>
-                    <SecondaryBtn type="button" onClick={handleCancel} disabled={isSubmitting}>
-                        Cancel
-                    </SecondaryBtn>
                     <PrimaryBtn type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Saving..." : (isNew ? "Create Client" : "Save Changes")}
                     </PrimaryBtn>

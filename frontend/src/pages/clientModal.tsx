@@ -80,12 +80,13 @@ const ClientModal = () => {
             alignItems: "center",
             gap: 6,
             background: "none",
-            border: "none",
+            border: `1.5px solid ${palette.deepRed}`,
+            borderRadius: 8,
             cursor: "pointer",
             color: palette.deepRed,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 500,
-            padding: 0,
+            padding: "6px 12px",
           }}
         >
           ← Back to Clients
