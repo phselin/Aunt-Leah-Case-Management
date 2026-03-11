@@ -126,10 +126,11 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           envs: RESET_DB
           script: |
-            cd ~/Aunt-Leah-Content-Management-System/backend
+            cd ~/Aunt-Leah-Content-Management-System
             git fetch origin
             git checkout main
             git reset --hard origin/main
+            cd backend
             if [ "$RESET_DB" = "true" ]; then
               make clean
             fi

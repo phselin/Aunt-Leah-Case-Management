@@ -21,7 +21,14 @@ from backend_app.routes.sections import sections_bp
 def create_flask_app() -> Flask:
     app = Flask(__name__)
 
-    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+    CORS(
+        app,
+        origins=[
+            "http://localhost:5173",
+            "https://aunt-leah-content-management-system.vercel.app/",
+        ],
+        supports_credentials=True,
+    )
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     production = os.environ.get("ENVIRONMENT", "local").lower() == "production"
