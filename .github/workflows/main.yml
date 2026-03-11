@@ -107,7 +107,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # used help with AI (i want make clean only when seed_db changes)
+      # clean only when seed_db changes
       - name: Detect changes to seed_db.py
         id: file_check
         uses: dorny/paths-filter@v3
