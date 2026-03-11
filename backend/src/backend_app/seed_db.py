@@ -6,8 +6,8 @@ from flask import Flask
 from backend_app.auth_init import bcrypt
 from backend_app.db import db
 
-NUM_PEOPLE = 1000
-NOTES_PER_PERSON = 20
+NUM_PEOPLE = 500
+NOTES_PER_PERSON = 10
 PROGRAMS = ["Housing", "Education", "Employment", "Drug Rehabilitation"]
 # we can have multiple goal types but including general only for now for simplicity
 GENERAL_MILESTONES = {
@@ -16,7 +16,7 @@ GENERAL_MILESTONES = {
     "Employment": ["unemployed", "search", "interview", "hired", "stable"],
     "Drug Rehabilitation": ["7", "30", "90", "180", "360"],
 }
-NUM_STAFF = 50
+NUM_STAFF = 25
 
 faker = Faker("en_CA")
 

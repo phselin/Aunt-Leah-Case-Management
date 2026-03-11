@@ -66,26 +66,37 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: [frontend, backend] # both must pass first
+    needs: [frontend, backend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
+      - name: "Look through commit history"
+        uses: actions/checkout@v4
         with:
-          name: frontend-build
-          path: frontend/build
+          fetch-depth: 0
 
-      - name: Deploy frontend
-        run: |
-          # TODO: Add frontend deployment
-          # Example: deploy to S3, Vercel, Netlify, etc.
-          echo "Deploy frontend here"
+      # used help with AI (i want make clean only when seed_db changes)
+      - name: Detect changes to seed_db.py
+        id: file_check
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            seed_script:
+              - 'backend/**/seed_db.py'
 
       - name: Deploy backend
-        run: |
-          # TODO: Add backend deployment
-          # Example: SSH into server, push to Heroku, deploy to AWS Lambda, etc.
-          echo "Deploy backend here"
+        uses: appleboy/ssh-action@v1
+        env:
+          RESET_DB: ${{ steps.file_check.outputs.seed_script }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          envs: RESET_DB
+          script: |
+            cd ~/Aunt-Leah-Content-Management-System/backend
+            git pull origin main
+            if [ "$RESET_DB" = "true" ]; then
+              make clean
+            fi
+            make up
