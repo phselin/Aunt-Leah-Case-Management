@@ -60,6 +60,12 @@ jobs:
         working-directory: backend
         run: make test
 
+      # Clean up named volumes (because of how build works)
+      - name: Clean up
+        if: always()
+        working-directory: backend
+        run: make clean
+
   # ─────────────────────────────────────────
   # DEPLOY (only on push to main)
   # ─────────────────────────────────────────
