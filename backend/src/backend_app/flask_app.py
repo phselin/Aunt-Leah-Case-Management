@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import timedelta
 
 from flask import Flask
@@ -23,8 +24,13 @@ def create_flask_app() -> Flask:
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-    # app.config["JWT_COOKIE_SECURE"] = True # True in production
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+    production = os.environ.get("ENVIRONMENT", "local").lower()
+    app.config["JWT_COOKIE_SECURE"] = production  # true in production
+    if production:
+        app.config["JWT_COOKIE_SAMESITE"] = "None"
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = (
+        False  # true in production (i tried to do this but couldn't make it work, maybe later)
+    )
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
     bcrypt.init_app(app)
