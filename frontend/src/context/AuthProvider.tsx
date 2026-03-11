@@ -1,6 +1,6 @@
-import axios from "axios";
 import { createContext, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import api from "../api";
 
 
 interface AuthData {
@@ -20,20 +20,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
     auth: {},
-    setAuth: () => {} 
+    setAuth: () => { }
 });
 
-export const AuthProvider = ({ children }: {children:React.ReactNode}) => {
-    const [auth, setAuth ] = useState<AuthData>({});
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [auth, setAuth] = useState<AuthData>({});
 
     useEffect(() => {
-        axios.get("http://localhost:8000/me", {withCredentials: true})
-            .then(res => setAuth({user: res.data.user}))
+        api.get("/me")
+            .then(res => setAuth({ user: res.data.user }))
             .catch(() => setAuth({}))
     }, []);
 
     return (
-        <AuthContext.Provider value= {{ auth, setAuth }}>
+        <AuthContext.Provider value={{ auth, setAuth }}>
             {children}
         </AuthContext.Provider>
     )

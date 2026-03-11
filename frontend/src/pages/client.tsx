@@ -6,6 +6,7 @@ import ClientHeader from "../components/client/search/clientHeader";
 import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
 import type { Person } from "../components/client/person";
+import api from "../api";
 
 const Client = () => {
   const navigate = useNavigate();
@@ -42,8 +43,8 @@ const Client = () => {
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        setAvailablePrograms((await axios.get("http://localhost:8000/programNames", { withCredentials: true })).data);
-      } catch (err) {
+        setAvailablePrograms((await api.get("/programNames")).data);
+      } catch {
         setErrMsg("Failed to load program names");
       }
     };
@@ -54,9 +55,7 @@ const Client = () => {
     const loadPeople = async () => {
       const q = debounceQuery.trim().toLowerCase();
       try {
-        const res = await axios.get(`http://localhost:8000/people${q ? `?person=${q}` : ""}`, {
-          withCredentials: true,
-        });
+        const res = await api.get(`/people${q ? `?person=${q}` : ""}`);
         const data = Array.isArray(res.data) ? res.data : res.data.people;
         const arr = data ?? [];
         setPeople(arr);
@@ -79,7 +78,7 @@ const Client = () => {
     setErrMsg("")
 
     try {
-      const res = await axios.get("http://localhost:8000/people/export", {
+      const res = await api.get("/people/export", {
         withCredentials: true,
         responseType: "blob"
       });
@@ -90,7 +89,7 @@ const Client = () => {
       link.download = "clients.xlsx";
       link.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       setErrMsg("Failed to export clients. Try again after some time.");
     } finally {
       setExporting(false);
@@ -100,11 +99,9 @@ const Client = () => {
   const handleDelete = async (id: string, name: string) => {
     try {
       if (!window.confirm(`Are you sure you want to delete client ${name}?`)) return;
-      await axios.delete(`http://localhost:8000/people/${id}`, {
-        withCredentials: true,
-      });
+      await api.delete(`/people/${id}`);
       setPeople((before) => before.filter((p) => p._id != id))
-    } catch (err) {
+    } catch {
       setErrMsg("Failed to delete client");
     }
   };

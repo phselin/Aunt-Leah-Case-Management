@@ -4,13 +4,13 @@ import Tab from "@mui/material/Tab";
 import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
-import axios from "axios";
 import { palette } from "../theme/palette";
 import { ClientTitle } from "../components/client/modal/clientElement";
 import Details from "../components/client/modal/Details";
 import CaseNotes from "../components/client/modal/CaseNotes";
 import Progress from "../components/client/modal/Progress";
 import type { Person } from "../components/client/person";
+import api from "../api"
 
 const SelectedView = {
   Details: "Client Information",
@@ -27,7 +27,7 @@ const ClientModal = () => {
   const navigate = useNavigate();
   const isNew = id === "new";
 
-  const { setErrMsg, reloadClients, availablePrograms } = useOutletContext<{
+  const { setErrMsg, availablePrograms } = useOutletContext<{
     setErrMsg: (msg: string) => void;
     reloadClients: () => void;
     availablePrograms: string[];
@@ -41,9 +41,7 @@ const ClientModal = () => {
 
     const fetchClient = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/people/${id}`, {
-          withCredentials: true,
-        });
+        const res = await api.get(`/people/${id}`);
         setClientData(res.data);
       } catch {
         setErrMsg("Unable to find client details");

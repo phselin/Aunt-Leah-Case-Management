@@ -7,12 +7,12 @@ import {
     CircularProgress,
     Divider,
 } from "@mui/material";
-import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { palette } from "../../../theme/palette";
+import api from "../../../api";
 
 type CaseNote = {
     content: string;
@@ -37,18 +37,16 @@ const CaseNotes = ({ personId }: CaseNotesProps) => {
 
     useEffect(() => {
         setNoteText(selectedNote?.content ?? "");
-    }, [dateKey, caseNotes]);
+    }, [selectedNote]);
 
     useEffect(() => {
         const loadNotes = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(
-                    `http://localhost:8000/casenotes?person=${personId}`,
-                    { withCredentials: true }
-                );
+                const res = await api.get(
+                    `/casenotes?person=${personId}`);
                 setCaseNotes(res.data);
-            } catch (err) {
+            } catch {
                 setErrMsg("Unable to load case notes");
             } finally {
                 setLoading(false);
@@ -66,9 +64,7 @@ const CaseNotes = ({ personId }: CaseNotesProps) => {
                 date: selectedDate?.format("YYYY-MM-DD") ?? "",
                 content: noteText,
             };
-            await axios.post("http://localhost:8000/casenotes", payload, {
-                withCredentials: true,
-            });
+            await api.post("/casenotes", payload);
             setCaseNotes((prev) => {
                 const dateStr = selectedDate?.format("YYYY-MM-DD");
                 const exists = prev.find((n) => n.date === dateStr);
@@ -80,7 +76,7 @@ const CaseNotes = ({ personId }: CaseNotesProps) => {
                 return [...prev, { ...payload, goalid: "" }];
             });
             alert("Case Note saved successfully");
-        } catch (err) {
+        } catch {
             setErrMsg("Failed to save note");
         } finally {
             setSaving(false);

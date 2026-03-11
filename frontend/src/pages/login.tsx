@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import AuthContext from '../context/AuthProvider';
 import axios from 'axios';
 import { palette } from '../theme/palette';
+import api from "../api";
 
 const LoginLayout = styled.div`
   display: flex;
@@ -160,10 +161,9 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        'http://localhost:8000/login',
-        { email: user, password: pwd },
-        { withCredentials: true }
+      const response = await api.post(
+        '/login',
+        { email: user, password: pwd }
       );
       setAuth({ user: response.data.user });
       navigate('/home');
@@ -205,9 +205,9 @@ const Login = () => {
               autoComplete="off"
               placeholder="Enter your username"
               onChange={(e) => {
-              setUser(e.target.value);
-              clearError();
-            }}
+                setUser(e.target.value);
+                clearError();
+              }}
               value={user}
               required
             />
@@ -219,9 +219,9 @@ const Login = () => {
               id="password"
               placeholder="Enter your password"
               onChange={(e) => {
-              setPwd(e.target.value);
-              clearError();
-            }}
+                setPwd(e.target.value);
+                clearError();
+              }}
               value={pwd}
               required
             />

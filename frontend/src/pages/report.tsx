@@ -2,10 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 import { palette } from "../theme/palette";
+import api from "../api";
 
 type BarDatum = { label: string; value: number };
-
-const API_BASE = (import.meta as ImportMeta).env?.VITE_API_BASE_URL || "http://localhost:8000";
 
 // TODO provide report for all goalTypes and not just general
 // TODO preserve milestone ordering in bar graph but sort by count for line graph (currently sorting according to count for line graph as well as bar graph)
@@ -157,12 +156,12 @@ function formatMilestone(program: string, milestone: string): string {
 
 function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatum[] {
   const raw = stats?.[program]?.general;
-  
+
   if (!Array.isArray(raw)) return [];
 
-  const entries = raw.map((item) => ({ 
-    label: String(item.milestone), 
-    value: Number(item.value) || 0 
+  const entries = raw.map((item) => ({
+    label: String(item.milestone),
+    value: Number(item.value) || 0
   }));
 
   return entries
@@ -183,7 +182,7 @@ const Report = () => {
       setLoading(true);
       setErrMsg("");
       try {
-        const statsRes = await axios.get(`${API_BASE}/stats`, {withCredentials: true});
+        const statsRes = await api.get(`/stats`);
 
         if (!cancelled) {
           setStats(statsRes.data && typeof statsRes.data === "object" ? (statsRes.data as StatsResponse) : {});
@@ -303,10 +302,10 @@ const Report = () => {
             {selectedProgram === "All" ? "Total programs" : "Program clients"}
           </div>
           <div className="reportStatValue">
-            {loading 
-              ? "…" 
-              : selectedProgram === "All" 
-                ? summary.programCount 
+            {loading
+              ? "…"
+              : selectedProgram === "All"
+                ? summary.programCount
                 : clientsInScope}
           </div>
         </div>

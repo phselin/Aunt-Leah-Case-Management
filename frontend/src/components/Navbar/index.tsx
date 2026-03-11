@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import AuthContext from '../../context/AuthProvider'
 import { Logo, Nav, NavLink, Bars, NavMenu, NavBtn, NavBtnLink } from './NavbarElement'
+import api from "../../api";
 
 const Navbar = () => {
 
@@ -11,7 +11,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:8000/logout', {}, { withCredentials: true });
+      await api.post('/logout', {});
     } catch (err) {
       console.error('Logout failed', err);
     } finally {

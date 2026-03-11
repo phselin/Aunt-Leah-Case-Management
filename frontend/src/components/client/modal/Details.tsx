@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Autocomplete, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PhoneInput from "react-phone-number-input/input";
+import api from "../../../api";
 
 import {
     ErrorBox,
@@ -82,15 +82,11 @@ const Details = ({
         );
         try {
             if (isNew) {
-                const res = await axios.post("http://localhost:8000/people", cleanData, {
-                    withCredentials: true,
-                });
+                const res = await api.post("/people", cleanData);
                 alert("Client added successfully");
                 navigate(`/client/${res.data._id}`)
             } else {
-                await axios.put(`http://localhost:8000/people/${id}`, cleanData, {
-                    withCredentials: true,
-                });
+                await api.put(`/people/${id}`, cleanData);
                 alert("Client saved successfully");
             }
         } catch (e: any) {

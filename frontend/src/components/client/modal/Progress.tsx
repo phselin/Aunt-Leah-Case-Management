@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { palette } from "../../../theme/palette";
+import api from "../../../api";
 
 type Program = {
     program: string;
@@ -17,7 +17,7 @@ const Progress = ({ personId }: ProgressProps) => {
     const [programMilestones, setProgramMilestones] = useState<
         Map<string, Array<string>>
     >(() => new Map());
-    const [failedToFetch, setFailedToFetch] = useState<Array<string>>(() => []);
+    const [, setFailedToFetch] = useState<Array<string>>(() => []);
     const [selectedMilestones, setSelectedMilestones] = useState<
         Map<string, string>
     >(() => new Map());
@@ -37,11 +37,9 @@ const Progress = ({ personId }: ProgressProps) => {
             for (const [p, v] of selectedMilestones.entries()) {
                 payload.milestones[p] = v;
             }
-            await axios.put(
-                `http://localhost:8000/people/${personId}/milestones`,
-                payload,
-                { withCredentials: true }
-            );
+            await api.put(
+                `/people/${personId}/milestones`,
+                payload);
             alert("Program status updated successfully");
         } catch (e) {
             console.log(e);
@@ -51,15 +49,14 @@ const Progress = ({ personId }: ProgressProps) => {
     useEffect(() => {
         const loadClientPrograms = async () => {
             try {
-                const res = await axios.get(
-                    `http://localhost:8000/programs?person=${personId}`,
-                    { withCredentials: true }
-                );
-                const programs = res.data.map((respr: any) => ({
+                const res = await api.get(
+                    `/programs?person=${personId}`);
+                const programs = res.data.map((respr: Program) => ({
                     program: respr.program,
                     status: respr.status,
                 }));
                 setEnrolledPrograms(programs);
+                setSelectedMilestones(new Map(programs.map((p: Program) => [p.program, p.status])));
             } catch (err) {
                 console.log(`Error loading programs: ${err}`);
             }
@@ -71,14 +68,12 @@ const Progress = ({ personId }: ProgressProps) => {
         const getAllMilestones = async () => {
             for (const ep of enrolledPrograms) {
                 try {
-                    const res = await axios.get(
-                        `http://localhost:8000/programs/${ep.program}/milestones`,
-                        { withCredentials: true }
-                    );
+                    const res = await api.get(
+                        `/programs/${ep.program}/milestones`);
                     setProgramMilestones(
                         (prev) => new Map(prev).set(ep.program, res.data.general)
                     );
-                } catch (e) {
+                } catch {
                     setFailedToFetch((prev) => [...prev, ep.program]);
                     console.error(`Failed to fetch ${ep.program}`);
                 }
@@ -87,11 +82,11 @@ const Progress = ({ personId }: ProgressProps) => {
         getAllMilestones();
     }, [enrolledPrograms]);
 
-    useEffect(() => {
-        for (const { program, status } of enrolledPrograms) {
-            changeSelectedMilestone(program, status);
-        }
-    }, [enrolledPrograms]);
+    // useEffect(() => {
+    //     for (const { program, status } of enrolledPrograms) {
+    //         changeSelectedMilestone(program, status);
+    //     }
+    // }, [enrolledPrograms]);
 
     return (
         <div
@@ -147,7 +142,7 @@ const Progress = ({ personId }: ProgressProps) => {
                             style={{ minWidth: 260 }}
                             className="reportSelect"
                             id={`program-filter-${ep.program}`}
-                            value={selectedMilestones.get(ep.program)}
+                            value={selectedMilestones.get(ep.program) ?? ""}
                             onChange={(e) =>
                                 changeSelectedMilestone(ep.program, e.target.value)
                             }
