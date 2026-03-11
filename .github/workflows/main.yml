@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main]
 
-  concurrency:
+concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
@@ -130,7 +130,6 @@ jobs:
             git fetch origin
             git checkout main
             git reset --hard origin/main
-            git pull origin main
             if [ "$RESET_DB" = "true" ]; then
               make clean
             fi
