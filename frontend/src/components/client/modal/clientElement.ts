@@ -174,7 +174,7 @@ export const PrimaryBtn = styled.button`
   font-weight: 700;
 
   &:hover {
-    background: rgba(${palette.forestGreen}, 0.92);
+    background: ${palette.forestGreen};
   }
 
   &:disabled {

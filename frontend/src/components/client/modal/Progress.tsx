@@ -169,7 +169,7 @@ const Progress = ({ personId }: ProgressProps) => {
                 <button
                     onClick={saveProgramData}
                     style={{
-                        width: "100%",
+                        width: "15%",
                         marginTop: 20,
                         padding: "10px 12px",
                         borderRadius: 10,
