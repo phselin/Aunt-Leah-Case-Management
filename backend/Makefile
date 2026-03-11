@@ -57,14 +57,9 @@ else
 endif
 
 lint:
-ifeq ($(DOCKER_OK),yes)
-	$(COMPOSE) run --rm api ruff check .
-	$(COMPOSE) run --rm api ruff format --check .
-else
-	$(MAKE) $(VENV_MARK)
-	$(RUFF) check .
-	$(RUFF) format --check .
-endif
+	pip install ruff
+	ruff check .
+	ruff format --check .
 
 clean:
 ifeq ($(DOCKER_OK),yes)

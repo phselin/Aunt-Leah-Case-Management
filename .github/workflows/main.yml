@@ -48,13 +48,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build
-        working-directory: backend
-        run: make build
-
       - name: Lint
         working-directory: backend
         run: make lint
+
+      - name: Build
+        working-directory: backend
+        run: make build
 
       - name: Test
         working-directory: backend
