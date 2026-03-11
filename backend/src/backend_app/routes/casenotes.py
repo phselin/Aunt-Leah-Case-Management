@@ -34,7 +34,9 @@ def get_casenotes():
             **casenote,
             "goalid": str(casenote.get("goalid", "")),
         }
-        for casenote in db.casenotes.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort("date", -1)
+        for casenote in db.casenotes.find({"personid": person_oid}, {"_id": 0, "personid": 0}).sort(
+            "date", -1
+        )  # noqa: E501
     )
     return jsonify(casenotes), 200
 

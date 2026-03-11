@@ -1,5 +1,4 @@
 from bson import ObjectId
-from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 

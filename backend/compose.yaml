@@ -40,14 +40,13 @@ services:
     build:
       context: .
     environment:
-      ENVIRONMENT:
-        - ENVIRONMENT=${ENVIRONMENT:-local}
-        - MONGO_URI=mongodb://mongo:27017/auntleah
-        - REDIS_URL=redis://redis:6379/0
-        - CELERY_BROKER_URL=redis://redis:6379/0
-        - CELERY_RESULT_BACKEND=redis://redis:6379/0
-        - GOTENBERG_URL=http://gotenberg:3000
-        - OUTPUT_DIR=/outputs
+      ENVIRONMENT: "${ENVIRONMENT:-local}"
+      MONGO_URI: mongodb://mongo:27017/auntleah
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      GOTENBERG_URL: http://gotenberg:3000
+      OUTPUT_DIR: /outputs
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:

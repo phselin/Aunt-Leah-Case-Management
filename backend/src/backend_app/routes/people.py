@@ -201,7 +201,7 @@ def update_milestones(id):
     # goals = list(db.goals.find({"personid": oid, "program": {"$in": program_names}}))
     # print("goals: ", goals)
 
-    # # TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS
+    # # TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS  # noqa: E501
 
     # # Update goal statuses based on request data
     # for program_name in program_names:

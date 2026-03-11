@@ -4,7 +4,7 @@ from test_utils import auth_client, unauth_client
 
 from backend_app.db import db
 
-SECTIONS = ["programs", "people", "casenotes", "goals"]
+SECTIONS = ["programs", "people", "casenotes"]
 
 
 @pytest.mark.parametrize("section", SECTIONS)

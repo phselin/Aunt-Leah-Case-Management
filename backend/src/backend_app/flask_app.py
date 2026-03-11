@@ -24,7 +24,7 @@ def create_flask_app() -> Flask:
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
     app.config["JWT_SECRET_KEY"] = settings.JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-    production = os.environ.get("ENVIRONMENT", "local").lower()
+    production = os.environ.get("ENVIRONMENT", "local").lower() == "production"
     app.config["JWT_COOKIE_SECURE"] = production  # true in production
     if production:
         app.config["JWT_COOKIE_SAMESITE"] = "None"
