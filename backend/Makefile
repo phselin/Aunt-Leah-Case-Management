@@ -27,7 +27,7 @@ endif
 
 up:
 ifeq ($(DOCKER_OK),yes)
-	$(COMPOSE) up -d
+	$(COMPOSE) up --build -d
 else
 	@echo "Docker not available; cannot start compose services."
 	@exit 2
