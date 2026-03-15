@@ -136,8 +136,8 @@ jobs:
             fi
             make up
             sleep 10
-            curl -f http://localhost:5000/ || exit 1
-            curl -f http://localhost:5000/db/ping || exit 1
+            curl -f http://localhost:8000/ || exit 1
+            curl -f http://localhost:8000/db/ping || exit 1
             echo "Smoke tests pass"
 
   # deploy_frontend:
