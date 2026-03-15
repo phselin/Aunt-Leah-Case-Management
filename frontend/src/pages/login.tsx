@@ -126,9 +126,9 @@ const ErrorAlert = styled.p<{ $visible: boolean }>`
   padding: 12px 14px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: ${palette.tangerineOrange};
+  color: red;
   background: ${palette.white};
-  border: 1px solid ${palette.tangerineOrange};
+  border: 1px solid red;
   border-radius: 10px;
   font-family: 'Poppins', sans-serif;
   visibility: ${(p) => (p.$visible ? 'visible' : 'hidden')};

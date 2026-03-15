@@ -50,9 +50,9 @@ export const ErrorBox = styled.div`
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid ${palette.tangerineOrange};
+  border: 1px solid red;
   background: ${palette.white};
-  color: ${palette.tangerineOrange};
+  color: red;
   font-size: 13px;
 `;
 
