@@ -44,10 +44,12 @@ def insert_admin(app):
 
 def seed_programs():
     for name in PROGRAMS:
-        db.programs.insert_one({
-            "name": name, 
-            "milestoneTree": {"general": GENERAL_MILESTONES[name]},
-        })
+        db.programs.insert_one(
+            {
+                "name": name,
+                "milestoneTree": {"general": GENERAL_MILESTONES[name]},
+            }
+        )
 
 
 def seed_people(n=10):
