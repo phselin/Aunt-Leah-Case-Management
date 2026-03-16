@@ -42,7 +42,7 @@ def seed_db():
     for program_name in PROGRAMS:
         program = {
             "name": program_name,
-            "goalTypes": {"general": GENERAL_MILESTONES.get(program_name, [])},
+            "milestoneTree": {"general": GENERAL_MILESTONES.get(program_name, [])},
         }
         db.programs.insert_one(program)
 

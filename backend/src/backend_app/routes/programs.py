@@ -60,13 +60,13 @@ def add_program():
     res = db.programs.insert_one(
         {
             "name": body.get("name"),
-            "goalTypes": body.get("goalTypes"),
+            "milestoneTree": body.get("milestoneTree"),
         }
     )
     program = {
         "_id": str(res.inserted_id),
         "name": body.get("name"),
-        "goalTypes": body.get("goalTypes"),
+        "milestoneTree": body.get("milestoneTree"),
     }
     return jsonify(program), 201
 
@@ -86,6 +86,6 @@ def get_program_milestones(name):
     if not program:
         return jsonify({"detail": "Program does not exist"}), 404
 
-    milestones = program["goalTypes"]
+    milestones = program["milestoneTree"]
     print(milestones)
     return jsonify(milestones)

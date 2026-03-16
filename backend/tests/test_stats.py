@@ -16,7 +16,7 @@ def test_get_stats():
 
         # Iterate through programs and ignore client counts
         for program_name, program_data in list(response.json.items())[:-1]:
-            dbMilestoneTrees = db.programs.find_one({"name": program_name})["goalTypes"]
+            dbMilestoneTrees = db.programs.find_one({"name": program_name})["milestoneTree"]
             for MT_name, milestoneTree_data in program_data.items():
                 existingMilestones = dbMilestoneTrees[MT_name]
                 for milestone, count in milestoneTree_data.values():

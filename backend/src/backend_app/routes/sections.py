@@ -209,7 +209,7 @@ def get_stats():
         stats["clients"][program_name] = db.people.count_documents({"programs": program_name})
         stats[program_name] = {}
         # returning only general statistics for now
-        for goal_type, milestones in program.get("goalTypes", {}).items():
+        for goal_type, milestones in program.get("milestoneTree", {}).items():
             stats[program_name][goal_type] = []
             for milestone in milestones:
                 stats[program_name][goal_type].append(
