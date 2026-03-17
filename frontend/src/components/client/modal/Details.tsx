@@ -189,6 +189,7 @@ const Details = ({
                                         multiple
                                         options={availablePrograms}
                                         value={value || []}
+                                        filterSelectedOptions
                                         onChange={(_, newValue) => onChange(newValue)}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
