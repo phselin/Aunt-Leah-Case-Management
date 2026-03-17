@@ -28,7 +28,7 @@ const CalendarComponent = ({ value, onChange }: Calendar) => {
                 flexDirection: 'column',
                 alignItems: 'stretch'
             }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, px: 2, color: COLORS.headerText, fontWeight: 600, alignSelf: 'flex-start' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, px: 2.5, color: COLORS.headerText, fontWeight: 600, alignSelf: 'flex-start' }}>
                     Select Date
                 </Typography>
 
@@ -38,7 +38,13 @@ const CalendarComponent = ({ value, onChange }: Calendar) => {
                     // used AI to help with this (Pranav)
                     sx={{
                         width: '100%',
-                        height: 'auto',
+                        '&.MuiDateCalendar-root': {
+                            height: 320,
+                            maxHeight: 'none',
+                        },
+                        '& .MuiDayCalendar-slideTransition': {
+                            minHeight: 320,
+                        },
                         '& .MuiPickersDay-root.Mui-selected': { backgroundColor: COLORS.primary },
 
                         '& .MuiDayCalendar-header': {
@@ -49,9 +55,9 @@ const CalendarComponent = ({ value, onChange }: Calendar) => {
                             marginBottom: '8px'
                         },
                         '& .MuiPickersDay-root': {
-                            width: { xs: '36px', sm: '45px' },
-                            height: { xs: '36px', sm: '45px' },
-                            fontSize: { xs: '0.9rem', sm: '1.05rem' }
+                            width: { xs: '30px', sm: '36px' },
+                            height: { xs: '30px', sm: '36px' },
+                            fontSize: { xs: '0.8rem', sm: '0.95rem' }
                         },
                         '& .MuiPickersCalendarHeader-root': {
                             paddingLeft: '24px',
