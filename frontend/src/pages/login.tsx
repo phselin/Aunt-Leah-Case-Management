@@ -197,13 +197,13 @@ const Login = () => {
         </ErrorAlert>
         <Form onSubmit={handleSubmit}>
           <FieldGroup>
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Email</Label>
             <Input
-              type="text"
+              type="email"
               id="username"
               ref={userRef}
-              autoComplete="off"
-              placeholder="Enter your username"
+              autoComplete="username"
+              placeholder="Enter your email"
               onChange={(e) => {
                 setUser(e.target.value);
                 clearError();
@@ -218,6 +218,7 @@ const Login = () => {
               type="password"
               id="password"
               placeholder="Enter your password"
+              autoComplete="current-password"
               onChange={(e) => {
                 setPwd(e.target.value);
                 clearError();

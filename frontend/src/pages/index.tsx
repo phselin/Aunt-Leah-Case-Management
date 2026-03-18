@@ -3,6 +3,7 @@ import AuthContext from "../context/AuthProvider";
 import Itinerary from "../components/home/homeItinerary";
 import dayjs, { Dayjs } from "dayjs";
 import CalendarComponent from "../components/calendar";
+import { Row } from "../components/home/homeElement";
 
 const Home = () => {
   const { auth } = useContext(AuthContext);
@@ -18,7 +19,7 @@ const Home = () => {
         <h1 style={{ margin: 0 }}>Home</h1>
       )}
 
-      <div style={{ marginTop: "16px", display: "flex", gap: "24px", alignItems: "flex-start" }}>
+      <Row>
         <div style={{ flex: 1, minWidth: "320px" }}>
           <CalendarComponent
             value={selectedDate}
@@ -26,7 +27,7 @@ const Home = () => {
           />
         </div>
         <Itinerary value={selectedDate} />
-      </div>
+      </Row>
     </div>
   );
 };

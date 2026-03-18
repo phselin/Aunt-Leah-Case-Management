@@ -7,6 +7,11 @@ export const Row = styled.div`
   gap: 24px;
   align-items: flex-start;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
 `;
 
 export const Card = styled.div`
@@ -19,6 +24,12 @@ export const Card = styled.div`
 
 export const CalendarCard = styled(Card)`
   min-width: 320px;
+  flex: 1 1 320px;
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    width: 100%;
+  }
 
   .react-calendar {
     border: none;
@@ -50,6 +61,11 @@ export const CalendarCard = styled(Card)`
 export const ItineraryCard = styled(Card)`
   min-width: 360px;
   flex: 1;
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    width: 100%;
+  }
 `;
 
 export const ItineraryTitle = styled.h2`

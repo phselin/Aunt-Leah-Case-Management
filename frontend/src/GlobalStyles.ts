@@ -138,6 +138,53 @@ const GlobalStyle = createGlobalStyle`
     align-items: center;
   }
 
+  @media (max-width: 768px) {
+    .clientPage{
+      padding: 16px;
+    }
+
+    .clientSearchHeaderRow{
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .clientSearchTitle{
+      margin-top: 8px;
+      font-size: 34px;
+      line-height: 1.05;
+    }
+
+    .clientSearchHeaderActions{
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .addClientBtn,
+    .exportClientsBtn{
+      width: 100%;
+    }
+
+    .clientSearchBar{
+      flex-wrap: wrap;
+    }
+
+    .clientSearchTableHeader{
+      display: none;
+    }
+
+    .clientSearchTableRow{
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .clientSearchActions{
+      justify-self: end;
+    }
+  }
+
   .clientErrorBox {
     max-width: 1050px;
     margin: 20px auto 14px auto;

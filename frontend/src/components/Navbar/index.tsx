@@ -1,13 +1,15 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/AuthProvider'
-import { Logo, Nav, NavLink, Bars, NavMenu, NavBtn, NavBtnLink } from './NavbarElement'
+import { FaBars } from 'react-icons/fa';
+import { Logo, Nav, NavLink, MenuToggle, NavMenu, NavBtn, NavBtnLink, MobileMenu } from './NavbarElement'
 import api from "../../api";
 
 const Navbar = () => {
 
   const { setAuth } = useContext(AuthContext)
   const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -16,9 +18,12 @@ const Navbar = () => {
       console.error('Logout failed', err);
     } finally {
       setAuth({});
+      setMobileOpen(false);
       navigate('/');
     }
   };
+
+  const closeMobileMenu = () => setMobileOpen(false);
 
   return (
     <div>
@@ -26,7 +31,14 @@ const Navbar = () => {
         <Logo>
           <img src="/auntleahslogo.svg" alt="Aunt Leah's Logo" />
         </Logo>
-        <Bars />
+        <MenuToggle
+          type="button"
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          <FaBars />
+        </MenuToggle>
         <NavMenu>
           <NavLink to="/home">
             Home
@@ -41,6 +53,18 @@ const Navbar = () => {
         <NavBtn>
           <NavBtnLink onClick={handleLogout}>Log Out</NavBtnLink>
         </NavBtn>
+        <MobileMenu $open={mobileOpen}>
+          <NavLink to="/home" onClick={closeMobileMenu}>
+            Home
+          </NavLink>
+          <NavLink to="/client" onClick={closeMobileMenu}>
+            Client
+          </NavLink>
+          <NavLink to="/report" onClick={closeMobileMenu}>
+            Report
+          </NavLink>
+          <NavBtnLink onClick={handleLogout}>Log Out</NavBtnLink>
+        </MobileMenu>
       </Nav>
     </div>
   )

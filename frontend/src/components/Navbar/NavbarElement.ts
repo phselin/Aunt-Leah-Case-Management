@@ -1,11 +1,11 @@
 import styled from 'styled-components'
 import { NavLink as Link } from 'react-router-dom'
-import {FaBars} from 'react-icons/fa'
 import { palette } from '../../theme/palette'
 
 export const Nav = styled.nav`
     background: ${palette.magentaPink};
     height: 80px;
+    position: relative;
     display: flex;
     justify-content: space-between;
     padding: 0 2rem;
@@ -38,20 +38,29 @@ export const NavLink = styled(Link)`
     &:hover {
         color: ${palette.deepRed}
     }
-` 
-
-export const Bars = styled(FaBars)`
-    display: none;
-    color: #fff;
 
     @media screen and (max-width: 850px) {
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(-100%, 75%);
-    font-size: 1.8rem;
-    cursor: pointer;
+        width: 100%;
+        height: auto;
+        padding: 12px 0;
+        justify-content: flex-start;
+    }
+` 
+
+export const MenuToggle = styled.button`
+    display: none;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 0;
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+
+    @media screen and (max-width: 850px) {
+        display: inline-flex;
     }
 `
 
@@ -61,7 +70,7 @@ export const NavMenu = styled.div`
     margin-right: -24px;
 
     @media screen and (max-width: 850px) {
-    display: none;
+        display: none;
     }
 `
 
@@ -72,7 +81,31 @@ export const NavBtn = styled.nav`
     margin-right: 24px;
 
     @media screen and (max-width: 850px) {
+        display: none;
+    }
+`
+
+export const MobileMenu = styled.div<{ $open: boolean }>`
     display: none;
+
+    @media screen and (max-width: 850px) {
+        display: ${({ $open }) => ($open ? 'flex' : 'none')};
+        flex-direction: column;
+        gap: 8px;
+        position: absolute;
+        top: 80px;
+        left: 0;
+        right: 0;
+        background: ${palette.magentaPink};
+        padding: 12px 16px 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        z-index: 20;
+
+        a,
+        button {
+            width: 100%;
+        }
     }
 `
 
@@ -91,5 +124,10 @@ text-decoration: none;
     transition: all 0.2s ease-in-out;
     background: #fff;
     color: ${palette.deepRed};
+}
+
+@media screen and (max-width: 850px) {
+    width: 100%;
+    text-align: left;
 }
 `
