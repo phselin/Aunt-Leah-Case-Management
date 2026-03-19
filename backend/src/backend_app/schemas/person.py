@@ -57,17 +57,6 @@ class Person(BaseModel):
                 raise ValueError(f"{program} is not a valid program")
         return value
 
-    @model_validator(mode="after")
-    def remove_status_for_removed_programs(self):
-        if self.status is None:
-            return self
-        self.status = {
-            program: milestone_trees
-            for program, milestone_trees in self.status.items()
-            if program in self.programs
-        } or None
-        return self
-
     @field_validator("status")
     @classmethod
     def validate_status(

@@ -119,10 +119,17 @@ def update_person(id):
         )
 
     person_json = person.model_dump(exclude_none=True, mode="json")
+    query = {"$set": person_json}
 
-    res = db.people.find_one_and_update(
-        {"_id": oid}, {"$set": person_json}, return_document=ReturnDocument.AFTER
-    )
+    person_in_db = db.people.find_one({"_id": oid})
+    if not person_in_db:
+        return jsonify({"detail": "Client not found"}), 404
+
+    remove_programs = set(person_in_db.get("status", {}).keys()) - set(person.programs)
+    if remove_programs:
+        query["$unset"] = {f"status.{p}": "" for p in remove_programs}
+
+    res = db.people.find_one_and_update({"_id": oid}, query, return_document=ReturnDocument.AFTER)
 
     if not res:
         return jsonify({"detail": "Client not found"}), 404
