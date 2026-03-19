@@ -57,7 +57,7 @@ def seed_db():
         }
     )
 
-    db.staff.insert_one(
+    res = db.staff.insert_one(
         {
             "firstname": "Gregor",
             "lastname": "Kiczales",
@@ -67,6 +67,8 @@ def seed_db():
             "password_hash": hash_pwd("trustTheNaturalRecursion"),
         }
     )
+
+    gregor_id = res.inserted_id
 
     for _ in range(NUM_STAFF):
         staff_member = {
@@ -84,7 +86,17 @@ def seed_db():
         status = {}
         for enrolled_program in enrolled_programs:
             status[enrolled_program] = {
-                "general": random.choice(GENERAL_MILESTONES[enrolled_program])
+                "general": {
+                    "value": random.choice(GENERAL_MILESTONES[enrolled_program]),
+                    "lastUpdateDate": faker.date_between(
+                        start_date="-30d", end_date="now"
+                    ).strftime("%Y-%m-%d"),
+                    "lastUpdatedBy": str(gregor_id),
+                    "lastUpdatedByName": "Gregor Kiczales",
+                    "startDate": faker.date_between(start_date="-60d", end_date="-30d").strftime(
+                        "%Y-%m-%d"
+                    ),
+                }
             }
         person = {
             "firstname": faker.first_name(),

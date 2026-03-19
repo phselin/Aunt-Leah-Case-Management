@@ -194,14 +194,14 @@ def update_milestones(id):
 
     program = body.get("program")
     type = body.get("type")
-    status = body.get("status")
+    milestone = body.get("milestone")
 
-    if program is None or type is None or status is None:
+    if program is None or type is None or milestone is None:
         return jsonify({"detail": "Missing fields"}), 400
 
     valid_programs_structure = get_programs_structure()
 
-    if program is None or program not in valid_programs_structure:
+    if program not in valid_programs_structure:
         return jsonify({"detail": f"Invalid program {program}"}), 400
 
     valid_milestone_trees = valid_programs_structure.get(program, {})
@@ -209,8 +209,8 @@ def update_milestones(id):
         return jsonify({"detail": f"Invalid milestoneTreeType '{type}' for {program}"}), 400
 
     valid_milestones = valid_milestone_trees.get(type, [])
-    if status not in valid_milestones:
-        return jsonify({"detail": f"Invalid status '{status}' for {program}/{type}"}), 400
+    if milestone not in valid_milestones:
+        return jsonify({"detail": f"Invalid milestone '{milestone}' for {program}/{type}"}), 400
 
     person = db.people.find_one({"_id": oid})
     if not person:
@@ -219,17 +219,27 @@ def update_milestones(id):
     if program not in person.get("programs", []):
         return jsonify({"detail": f"Client is not enrolled in {program}"}), 400
 
-    status_update = {
+    milestone_in_db = person.get("status", {}).get(program, {}).get(type)
+
+    # when a new program is added, it has a corresponding milestone
+    # the start date for that milestone will be when it is updated/set for the first time
+    milestone_update = {
         f"status.{program}.{type}": {
-            "value": status,
-            "updatedAt": datetime.now(UTC),
-            "updatedBy": current_user["_id"],
+            "value": milestone,
+            "lastUpdateDate": datetime.now(UTC),
+            "lastUpdatedBy": str(current_user["_id"]),
+            "lastUpdatedByName": f"{current_user['firstname']} {current_user['lastname']}",
+            "startDate": (
+                milestone_in_db["startDate"]
+                if milestone_in_db and milestone_in_db.get("startDate")
+                else datetime.now(UTC)
+            ),
         }
     }
 
     res = db.people.find_one_and_update(
         {"_id": oid},
-        {"$set": status_update},
+        {"$set": milestone_update},
         return_document=ReturnDocument.AFTER,
     )
 

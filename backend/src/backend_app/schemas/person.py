@@ -2,13 +2,15 @@ import re
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
 
-class MilestoneStatus(BaseModel):
+class Milestone(BaseModel):
     value: str
-    updatedAt: datetime
-    updatedBy: str
+    lastUpdateDate: datetime
+    lastUpdatedBy: str
+    lastUpdatedByName: str
+    startDate: datetime | None
 
 
 class Person(BaseModel):
@@ -23,7 +25,7 @@ class Person(BaseModel):
     programs: list[str] = Field(default_factory=list)
     pronouns: str | None = None
     preferredContactMethod: Literal["email", "phone"] | None = None
-    status: dict[str, dict[str, MilestoneStatus]] | None = None
+    status: dict[str, dict[str, Milestone]] | None = None
 
     @field_validator("firstname", "lastname")
     @classmethod
@@ -60,8 +62,8 @@ class Person(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(
-        cls, value: dict[str, dict[str, MilestoneStatus]], info: ValidationInfo
-    ) -> dict[str, dict[str, MilestoneStatus]] | None:
+        cls, value: dict[str, dict[str, Milestone]], info: ValidationInfo
+    ) -> dict[str, dict[str, Milestone]] | None:
         if value is None:
             return value
 
@@ -78,12 +80,12 @@ class Person(BaseModel):
 
             valid_milestone_trees = valid_programs_structure.get(program, {})
 
-            for milestone_tree_type, status in milestone_trees.items():
+            for milestone_tree_type, milestone in milestone_trees.items():
                 if milestone_tree_type not in valid_milestone_trees:
                     raise ValueError(f"Invalid milestoneTree {milestone_tree_type} for {program}")
                 valid_milestones = valid_milestone_trees.get(milestone_tree_type, [])
-                if status.value not in valid_milestones:
+                if milestone.value not in valid_milestones:
                     raise ValueError(
-                        f"Invalid milestone {status} for {program} {milestone_tree_type}"
+                        f"Invalid milestone {milestone.value} for {program} {milestone_tree_type}"
                     )
         return value
