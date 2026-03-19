@@ -208,15 +208,14 @@ def get_stats():
         program_name = program["name"]
         stats["clients"][program_name] = db.people.count_documents({"programs": program_name})
         stats[program_name] = {}
-        # returning only general statistics for now
-        for goal_type, milestones in program.get("milestoneTree", {}).items():
-            stats[program_name][goal_type] = []
+        for milestone_tree_type, milestones in program.get("milestoneTree", {}).items():
+            stats[program_name][milestone_tree_type] = []
             for milestone in milestones:
-                stats[program_name][goal_type].append(
+                stats[program_name][milestone_tree_type].append(
                     {
                         "milestone": milestone,
                         "value": db.people.count_documents(
-                            {f"status.{program_name}.{goal_type}": milestone}
+                            {f"status.{program_name}.{milestone_tree_type}.value": milestone}
                         ),
                     }
                 )
