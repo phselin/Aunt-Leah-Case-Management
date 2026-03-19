@@ -224,11 +224,11 @@ def update_milestones(id):
     milestone_update = {
         f"status.{program}.{type}": {
             "value": milestone,
-            "lastUpdateDate": datetime.now(UTC).strftime("%Y-%m-%d"),
+            "lastUpdateDate": datetime.now(UTC),
             "startDate": (
                 milestone_in_db["startDate"]
                 if milestone_in_db and milestone_in_db.get("startDate")
-                else datetime.now(UTC).strftime("%Y-%m-%d")
+                else datetime.now(UTC)
             ),
         }
     }
