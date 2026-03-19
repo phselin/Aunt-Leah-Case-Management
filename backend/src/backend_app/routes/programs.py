@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_program_names
+from backend_app.routes.routes_utils import get_program_names, get_programs_structure
 
 programs_bp = Blueprint("programs", __name__)
 
@@ -49,6 +49,12 @@ def program_names_route():
     return get_program_names()
 
 
+@programs_bp.get("/programs/structure")
+@jwt_required()
+def programs_structure():
+    return jsonify(get_programs_structure()), 200
+
+
 @programs_bp.post("/programs")
 @jwt_required()
 def add_program():
@@ -69,23 +75,3 @@ def add_program():
         "milestoneTree": body.get("milestoneTree"),
     }
     return jsonify(program), 201
-
-
-@programs_bp.get("/programs/<name>/milestones")
-@jwt_required()
-def get_program_milestones(name):
-    name = name.title()
-
-    # A little quick sanitization JIC
-    disallowed_symbols = [".", "/", "\\", "*", "[", "]", "(", ")", "{", "}"]
-    if any(sym in name for sym in disallowed_symbols):
-        return jsonify({"detail": "Program does not exist"}), 404
-
-    program = db.programs.find_one({"name": name})
-
-    if not program:
-        return jsonify({"detail": "Program does not exist"}), 404
-
-    milestones = program["milestoneTree"]
-    print(milestones)
-    return jsonify(milestones)

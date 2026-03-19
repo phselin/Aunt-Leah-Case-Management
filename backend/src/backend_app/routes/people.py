@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 import pandas
@@ -215,7 +215,7 @@ def update_milestones(id):
     status_update = {
         f"status.{program}.{type}": {
             "value": status,
-            "updatedAt": datetime.now(datetime.timezone.utc),
+            "updatedAt": datetime.now(UTC),
             "updatedBy": current_user["_id"],
         }
     }
