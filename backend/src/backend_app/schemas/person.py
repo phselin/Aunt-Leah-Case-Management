@@ -2,14 +2,13 @@ import re
 from datetime import date, datetime
 from typing import Literal
 
-from bson import ObjectId
 from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator, model_validator
 
 
 class MilestoneStatus(BaseModel):
     value: str
     updatedAt: datetime
-    updatedBy: ObjectId
+    updatedBy: str
 
 
 class Person(BaseModel):
@@ -59,7 +58,6 @@ class Person(BaseModel):
         return value
 
     @model_validator(mode="after")
-    @classmethod
     def remove_status_for_removed_programs(self):
         if self.status is None:
             return self
