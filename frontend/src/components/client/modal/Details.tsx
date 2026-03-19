@@ -25,6 +25,7 @@ type DetailsProps = {
     isNew: boolean;
     initialData: Person | null;
     availablePrograms: string[];
+    onSave?: (data: Person) => void;
 };
 
 const Details = ({
@@ -32,6 +33,7 @@ const Details = ({
     isNew,
     initialData,
     availablePrograms,
+    onSave
 }: DetailsProps) => {
     const navigate = useNavigate();
     const [localErr, setLocalErr] = useState("");
@@ -86,7 +88,8 @@ const Details = ({
                 alert("Client added successfully");
                 navigate(`/client/${res.data._id}`)
             } else {
-                await api.put(`/people/${id}`, cleanData);
+                const res = await api.put(`/people/${id}`, cleanData);
+                onSave?.(res.data)
                 alert("Client saved successfully");
             }
         } catch (e: any) {

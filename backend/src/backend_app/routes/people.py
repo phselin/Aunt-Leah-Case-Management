@@ -5,7 +5,7 @@ import pandas
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request, send_file
-from flask_jwt_extended import current_user, jwt_required
+from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
@@ -221,18 +221,14 @@ def update_milestones(id):
 
     milestone_in_db = person.get("status", {}).get(program, {}).get(type)
 
-    # when a new program is added, it has a corresponding milestone
-    # the start date for that milestone will be when it is updated/set for the first time
     milestone_update = {
         f"status.{program}.{type}": {
             "value": milestone,
-            "lastUpdateDate": datetime.now(UTC),
-            "lastUpdatedBy": str(current_user["_id"]),
-            "lastUpdatedByName": f"{current_user['firstname']} {current_user['lastname']}",
+            "lastUpdateDate": datetime.now(UTC).strftime("%Y-%m-%d"),
             "startDate": (
                 milestone_in_db["startDate"]
                 if milestone_in_db and milestone_in_db.get("startDate")
-                else datetime.now(UTC)
+                else datetime.now(UTC).strftime("%Y-%m-%d")
             ),
         }
     }

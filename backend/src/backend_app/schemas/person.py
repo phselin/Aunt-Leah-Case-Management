@@ -8,8 +8,6 @@ from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 class Milestone(BaseModel):
     value: str
     lastUpdateDate: datetime
-    lastUpdatedBy: str
-    lastUpdatedByName: str
     startDate: datetime | None
 
 

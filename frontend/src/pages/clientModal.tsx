@@ -133,6 +133,7 @@ const ClientModal = () => {
               isNew={isNew}
               initialData={clientData}
               availablePrograms={availablePrograms}
+              onSave={(updated: Person) => setClientData(updated)}
             />
           </TabPanel>
 

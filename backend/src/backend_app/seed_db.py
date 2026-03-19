@@ -68,8 +68,6 @@ def seed_db():
         }
     )
 
-    gregor_id = res.inserted_id
-
     for _ in range(NUM_STAFF):
         staff_member = {
             "firstname": faker.first_name(),
@@ -91,8 +89,6 @@ def seed_db():
                     "lastUpdateDate": faker.date_between(
                         start_date="-30d", end_date="now"
                     ).strftime("%Y-%m-%d"),
-                    "lastUpdatedBy": str(gregor_id),
-                    "lastUpdatedByName": "Gregor Kiczales",
                     "startDate": faker.date_between(start_date="-60d", end_date="-30d").strftime(
                         "%Y-%m-%d"
                     ),
