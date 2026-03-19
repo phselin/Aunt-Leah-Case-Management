@@ -1,10 +1,11 @@
+from datetime import datetime
 from io import BytesIO
 
 import pandas
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request, send_file
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import current_user, jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
@@ -184,49 +185,46 @@ def update_milestones(id):
 
     body = request.get_json(silent=True) or {}
 
-    # Extract program names and milestones from request
-    milestones_data = body.get("milestones", {})
-    if not milestones_data:
-        return jsonify({"detail": "No milestones data provided"}), 400
+    program = body.get("program")
+    type = body.get("type")
+    status = body.get("status")
 
-    program_names = list(milestones_data.keys())
-
-    # Fetch programs from db whose names are in the request
-    # programs = list(db.programs.find({"name": {"$in": program_names}}))
-    # if not programs:
-    #     return jsonify({"detail": "No matching programs found"}), 404
-    # print("programs: ", programs)
-
-    # # Fetch goals matching personid and programId
-    # goals = list(db.goals.find({"personid": oid, "program": {"$in": program_names}}))
-    # print("goals: ", goals)
-
-    # # TODO: Currently just accepts the user input as status. To the TA's, feel free to try and find a way to exploit this for XSS  # noqa: E501
-
-    # # Update goal statuses based on request data
-    # for program_name in program_names:
-    #     for goal in goals:
-    #         if goal["program"] == program_name:
-    #             new_status = milestones_data[program_name]
-    #             # TODO: check the goalType for program to ensure status exists
-    #             db.goals.update_one({"_id": goal["_id"]}, {"$set": {"status": new_status}})
+    if program is None or type is None or status is None:
+        return jsonify({"detail": "Missing fields"}), 400
 
     valid_programs_structure = get_programs_structure()
-    for program_name in program_names:
-        if program_name not in valid_programs_structure:
-            return jsonify({"detail": "No matching programs found"}), 404
-        valid_goal_types = valid_programs_structure.get(program_name, {})
-        if milestones_data[program_name] not in valid_goal_types["general"]:
-            return jsonify({"detail": "Invalid milestone"}), 404
-        db.people.update_one(
-            {"_id": oid},
-            {"$set": {f"status.{program_name}.general": milestones_data[program_name]}},
-        )
 
-    # Fetch and return updated person document
+    if program is None or program not in valid_programs_structure:
+        return jsonify({"detail": f"Invalid program {program}"}), 400
+
+    valid_milestone_trees = valid_programs_structure.get(program, {})
+    if type not in valid_milestone_trees:
+        return jsonify({"detail": f"Invalid milestoneTreeType '{type}' for {program}"}), 400
+
+    valid_milestones = valid_milestone_trees.get(type, [])
+    if status not in valid_milestones:
+        return jsonify({"detail": f"Invalid status '{status}' for {program}/{type}"}), 400
+
     person = db.people.find_one({"_id": oid})
     if not person:
         return jsonify({"detail": "Client not found"}), 404
 
-    person["_id"] = str(person["_id"])
-    return jsonify(person), 200
+    if program not in person.get("programs", []):
+        return jsonify({"detail": f"Client is not enrolled in {program}"}), 400
+
+    status_update = {
+        f"status.{program}.{type}": {
+            "value": status,
+            "updatedAt": datetime.now(datetime.timezone.utc),
+            "updatedBy": current_user["_id"],
+        }
+    }
+
+    res = db.people.find_one_and_update(
+        {"_id": oid},
+        {"$set": status_update},
+        return_document=ReturnDocument.AFTER,
+    )
+
+    res["_id"] = str(res["_id"])
+    return jsonify(res), 200

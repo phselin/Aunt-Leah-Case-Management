@@ -1,8 +1,15 @@
 import re
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
+from bson import ObjectId
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator, model_validator
+
+
+class MilestoneStatus(BaseModel):
+    value: str
+    updatedAt: datetime
+    updatedBy: ObjectId
 
 
 class Person(BaseModel):
@@ -17,7 +24,7 @@ class Person(BaseModel):
     programs: list[str] = Field(default_factory=list)
     pronouns: str | None = None
     preferredContactMethod: Literal["email", "phone"] | None = None
-    status: dict[str, dict[str, str]] = None
+    status: dict[str, dict[str, MilestoneStatus]] | None = None
 
     @field_validator("firstname", "lastname")
     @classmethod
@@ -51,25 +58,45 @@ class Person(BaseModel):
                 raise ValueError(f"{program} is not a valid program")
         return value
 
+    @model_validator(mode="after")
+    @classmethod
+    def remove_status_for_removed_programs(self):
+        if self.status is None:
+            return self
+        self.status = {
+            program: milestone_trees
+            for program, milestone_trees in self.status.items()
+            if program in self.programs
+        } or None
+        return self
+
     @field_validator("status")
     @classmethod
     def validate_status(
-        cls, value: dict[str, dict[str, str]], info: ValidationInfo
-    ) -> dict[str, dict[str, str]]:
+        cls, value: dict[str, dict[str, MilestoneStatus]], info: ValidationInfo
+    ) -> dict[str, dict[str, MilestoneStatus]] | None:
+        if value is None:
+            return value
+
         valid_programs_structure = (
             info.context.get("valid_programs_structure", {}) if info.context else {}
         )
         programs = info.data.get("programs", [])
-        for program, goal_types in value.items():
+
+        for program, milestone_trees in value.items():
             if program not in programs:
                 raise ValueError(f"Client doesn't belong to {program} program")
             if program not in valid_programs_structure:
                 raise ValueError(f"{program} program doesn't have any milestones")
-            valid_goal_types = valid_programs_structure.get(program, {})
-            for goal_type, milestone in goal_types.items():
-                if goal_type not in valid_goal_types:
-                    raise ValueError(f"Invalid goaltype {goal_type} for {program}")
-                valid_milestones = valid_goal_types.get(goal_type, [])
-                if milestone not in valid_milestones:
-                    raise ValueError(f"Invalid milestone {milestone} for {program} {goal_type}")
+
+            valid_milestone_trees = valid_programs_structure.get(program, {})
+
+            for milestone_tree_type, status in milestone_trees.items():
+                if milestone_tree_type not in valid_milestone_trees:
+                    raise ValueError(f"Invalid milestoneTree {milestone_tree_type} for {program}")
+                valid_milestones = valid_milestone_trees.get(milestone_tree_type, [])
+                if status.value not in valid_milestones:
+                    raise ValueError(
+                        f"Invalid milestone {status} for {program} {milestone_tree_type}"
+                    )
         return value
