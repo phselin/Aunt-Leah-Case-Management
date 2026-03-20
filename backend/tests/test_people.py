@@ -16,7 +16,7 @@ def test_create_person():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing", "Education"],
-                "status": {"Housing": {"general": "homeless"}},
+                "status": {"Housing": {"general": {"value": "homeless"}}},
             },
         )
         assert resp.status_code == 201
@@ -131,14 +131,14 @@ def test_update_milestones():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing"],
-                "status": {"Housing": {"general": "homeless"}},
+                "status": {"Housing": {"general": {"value": "homeless"}}},
             },
         )
         pid = resp.json["_id"]
 
         resp = client.put(
             f"/people/{pid}/milestones",
-            json={"milestones": {"Housing": "shelter"}},
+            json={"program": "Housing", "type": "general", "milestone": "shelter"},
         )
         assert resp.status_code == 200
-        assert resp.json["status"]["Housing"]["general"] == "shelter"
+        assert resp.json["status"]["Housing"]["general"]["value"] == "shelter"

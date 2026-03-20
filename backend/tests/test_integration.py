@@ -10,7 +10,7 @@ def test_person_workflow():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing"],
-                "status": {"Housing": {"general": "homeless"}},
+                "status": {"Housing": {"general": {"value": "homeless"}}},
             },
         )
         assert resp.status_code == 201
@@ -26,7 +26,7 @@ def test_person_workflow():
                 "firstname": "Jane",
                 "lastname": "Doe",
                 "programs": ["Housing"],
-                "status": {"Housing": {"general": "homeless"}},
+                "status": {"Housing": {"general": {"value": "homeless"}}},
             },
         )
         assert resp.status_code == 200
@@ -34,10 +34,10 @@ def test_person_workflow():
 
         resp = client.put(
             f"/people/{pid}/milestones",
-            json={"milestones": {"Housing": "shelter"}},
+            json={"program": "Housing", "type": "general", "milestone": "shelter"},
         )
         assert resp.status_code == 200
-        assert resp.json["status"]["Housing"]["general"] == "shelter"
+        assert resp.json["status"]["Housing"]["general"]["value"] == "shelter"
 
         resp = client.post(
             "/casenotes",
@@ -67,7 +67,7 @@ def test_stats_change_on_milestone_updates():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing"],
-                "status": {"Housing": {"general": "homeless"}},
+                "status": {"Housing": {"general": {"value": "homeless"}}},
             },
         )
         pid = resp.json["_id"]
@@ -80,7 +80,10 @@ def test_stats_change_on_milestone_updates():
             m["value"] for m in stats_before["Housing"]["general"] if m["milestone"] == "shelter"
         )
 
-        client.put(f"/people/{pid}/milestones", json={"milestones": {"Housing": "shelter"}})
+        client.put(
+            f"/people/{pid}/milestones",
+            json={"program": "Housing", "type": "general", "milestone": "shelter"},
+        )
 
         stats_after = client.get("/stats").json
         homeless_after = next(
