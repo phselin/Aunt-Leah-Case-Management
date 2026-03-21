@@ -1,31 +1,31 @@
-import { Fragment, useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import { Autocomplete, TextField } from "@mui/material";
+import axios from "axios";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import PhoneInput from "react-phone-number-input/input";
+import { useNavigate } from "react-router-dom";
 import api from "../../../api";
-import axios from "axios";
 
+import type {
+  FormFieldConfig,
+  FormGroupConfig,
+  FormSectionConfig,
+  IntakeFormConfig,
+  Person,
+  SelectionWithDetails,
+} from "../person";
 import {
+  ClientGrid,
   ErrorBox,
-  FullRow,
-  FormRow,
-  Label,
-  Input,
   FormActions,
+  FormRow,
+  FullRow,
+  Input,
+  Label,
   PrimaryBtn,
   Select,
   TextArea,
-  ClientGrid,
 } from "./clientElement";
-import type {
-  Person,
-  SelectionWithDetails,
-  IntakeFormConfig,
-  FormFieldConfig,
-  FormSectionConfig,
-  FormGroupConfig,
-} from "../person";
 
 const HOUSING_INTAKE_LAYOUT = "housing_intake_pdf";
 
