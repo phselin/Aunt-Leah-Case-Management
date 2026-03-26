@@ -114,6 +114,9 @@ export const EventItemCard = styled.li`
 export const EventTitle = styled.strong`
   display: block;
   font-size: 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 `;
 
 export const EventTime = styled.div`
