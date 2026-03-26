@@ -87,6 +87,18 @@ def seed_db():
         }
     )
 
+    res = db.staff.insert_one(
+        {
+            "firstname": faker.first_name(),
+            "lastname": faker.last_name(),
+            "role": "staff",
+            "phone": faker.numerify(text="+1$#########"),
+            "email": "caseworker@auntleah.org",
+            "password_hash": hash_pwd("12345"),
+            "programs": ["Education"],
+        }
+    )
+
     for _ in range(NUM_STAFF):
         staff_member = {
             "firstname": faker.first_name(),
