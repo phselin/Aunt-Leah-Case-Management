@@ -95,7 +95,7 @@ def seed_db():
             "phone": faker.numerify(text="+1$#########"),
             "email": "caseworker@auntleah.org",
             "password_hash": hash_pwd("12345"),
-            "programs": ["Education"],
+            "programs": ["Education", "Housing"],
         }
     )
 
