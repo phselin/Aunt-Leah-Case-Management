@@ -5,6 +5,7 @@ from flask import Flask
 
 from backend_app.auth_init import bcrypt
 from backend_app.db import db
+from backend_app.intake_form import GENDER_OPTIONS
 
 NUM_PEOPLE = 500
 NOTES_PER_PERSON = 10
@@ -81,9 +82,9 @@ def seed_db():
 
     for _ in range(NUM_PEOPLE):
         enrolled_programs = random.sample(PROGRAMS, k=random.randint(1, 3))
-        status = {}
+        programMilestones = {}
         for enrolled_program in enrolled_programs:
-            status[enrolled_program] = {
+            programMilestones[enrolled_program] = {
                 "general": {
                     "value": random.choice(GENERAL_MILESTONES[enrolled_program]),
                     "lastUpdateDate": faker.date_between(
@@ -98,15 +99,16 @@ def seed_db():
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
             "dob": faker.date_of_birth(minimum_age=18, maximum_age=60).strftime("%Y-%m-%d"),
-            "gender": random.choice(["male", "female", "non-binary", "prefer not to say"]),
+            "gender": random.choice(GENDER_OPTIONS),
             "programs": enrolled_programs,
+            "active": random.choice([True, False]),
             "phone": faker.numerify(text="+1$#########"),
-            "address": faker.address(),
+            "housing": {"address": {"city": "Vancouver", "province": "BC"}},
             "email": faker.free_email(),
-            "referralDate": faker.date_between(start_date="-5y", end_date="now").strftime(
-                "%Y-%m-%d"
-            ),
-            "status": status,
+            # "referralDate": faker.date_between(start_date="-5y", end_date="now").strftime(
+            #     "%Y-%m-%d"
+            # ),
+            "programMilestones": programMilestones,
         }
 
         res = db.people.insert_one(person)
@@ -118,7 +120,7 @@ def seed_db():
                 "personid": person_id,
                 "program": program_name,
                 "type": "general",
-                "status": random.choice(GENERAL_MILESTONES.get(program_name, [])),
+                "programMilestones": random.choice(GENERAL_MILESTONES.get(program_name, [])),
                 "detail": faker.paragraph(nb_sentences=2),
                 "due": faker.date_between(start_date="+30d", end_date="+3y").strftime("%Y-%m-%d"),
             }

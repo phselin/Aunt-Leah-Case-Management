@@ -9,7 +9,8 @@ import { ClientTitle } from "../components/client/modal/clientElement";
 import Details from "../components/client/modal/Details";
 import CaseNotes from "../components/client/modal/CaseNotes";
 import Progress from "../components/client/modal/Progress";
-import type { Person } from "../components/client/person";
+import type { IntakeFormConfig, Person } from "../components/client/person";
+import { ChevronLeft } from "lucide-react";
 import api from "../api";
 
 const SelectedView = {
@@ -27,9 +28,9 @@ const ClientModal = () => {
   const navigate = useNavigate();
   const isNew = id === "new";
 
-  const { setErrMsg, availablePrograms } = useOutletContext<{
+  const { setErrMsg, formConfig } = useOutletContext<{
     setErrMsg: (msg: string) => void;
-    availablePrograms: string[];
+    formConfig: IntakeFormConfig | null;
   }>();
 
   const [curView, setCurView] = useState<SelectedViewType>(SelectedView.Details);
@@ -75,18 +76,26 @@ const ClientModal = () => {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 6,
+            gap: 4,
             background: "none",
-            border: `1.5px solid ${palette.deepRed}`,
-            borderRadius: 8,
+            border: "none",
             cursor: "pointer",
-            color: palette.deepRed,
-            fontSize: 13,
+            color: "#6B7280", // Default muted grey
+            fontSize: 14,
             fontWeight: 500,
-            padding: "6px 12px",
+            marginBottom: 16,
+            padding: 0, // No extra box around the text
+            transition: "color 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            // Only change the text/icon color to the brand red
+            e.currentTarget.style.color = "#D16B7B";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#6B7280";
           }}
         >
-          ← Back to Clients
+          <ChevronLeft size={18} /> Back to Clients
         </button>
       </div>
 
@@ -132,7 +141,7 @@ const ClientModal = () => {
               id={id}
               isNew={isNew}
               initialData={clientData}
-              availablePrograms={availablePrograms}
+              formConfig={formConfig}
               onSave={(updated: Person) => setClientData(updated)}
             />
           </TabPanel>

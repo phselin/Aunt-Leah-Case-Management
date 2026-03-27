@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Outlet, useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -7,10 +7,40 @@ import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
 import type { Person } from "../components/client/person";
 import api from "../api";
+import styled from "styled-components";
+
+const PageContainer = styled.div`
+  background-color: #F9FAFB;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ContentArea = styled.div`
+  width: 100%;
+  margin: 0 auto;
+  /* 0 bottom padding to keep footer tight to table */
+  padding: 32px 4rem 0 4rem; 
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Ensures this area grows to fill space */
+
+  @media screen and (max-width: 850px) {
+    padding: 24px 1.5rem 0;
+  }
+`;
+
+const TableSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+  margin-bottom: 0px; 
+`;
 
 const Client = () => {
   const navigate = useNavigate();
-  const errRef = useRef<HTMLParagraphElement>(null);
 
   const [query, setQuery] = useState("");
   const { id } = useParams();
@@ -18,8 +48,7 @@ const Client = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [availablePrograms, setAvailablePrograms] = useState([]);
-
+  const [formConfig, setFormConfig] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,14 +70,14 @@ const Client = () => {
   }, [errMsg]);
 
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const fetchFormConfig = async () => {
       try {
-        setAvailablePrograms((await api.get("/programNames")).data);
+        setFormConfig((await api.get("/people/intake")).data);
       } catch {
-        setErrMsg("Failed to load program names");
+        setErrMsg("Failed to load form config");
       }
     };
-    fetchPrograms();
+    fetchFormConfig();
   }, []);
 
   useEffect(() => {
@@ -96,38 +125,54 @@ const Client = () => {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    try {
-      if (!window.confirm(`Are you sure you want to delete client ${name}?`)) return;
-      await api.delete(`/people/${id}`);
-      setPeople((before) => before.filter((p) => p._id != id))
-    } catch {
-      setErrMsg("Failed to delete client");
-    }
-  };
+  // return (
+  //   <div className="clientPage">
+  //     {errMsg && (
+  //       <div className="clientErrorBox" ref={errRef}>
+  //         {errMsg}
+  //       </div>
+  //     )}
+  //     {id ? (
+  //       <Outlet context={{ setErrMsg, formConfig }} />
+  //     ) : (
+  //       <>
+  //         <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
+  //         <ClientSearchBar query={query} setQuery={setQuery} />
+  //         <ClientTable
+  //           people={people}
+  //           onClick={(pid) => navigate(`/client/${pid}`)}
+  //           onError={(msg: string) => setErrMsg(msg)}
+  //           onDelete={(pid, pname) => handleDelete(pid, pname)} />
+  //       </>
+  //     )}
 
+  //   </div>
+  // );
+
+  if (id) {
+    return (
+      <PageContainer>
+        <Outlet context={{ setErrMsg, formConfig }} />
+      </PageContainer>
+    );
+  }
+
+  // If we are on the main list page
   return (
-    <div className="clientPage">
-      {errMsg && (
-        <div className="clientErrorBox" ref={errRef}>
-          {errMsg}
-        </div>
-      )}
-      {id ? (
-        <Outlet context={{ setErrMsg, availablePrograms }} />
-      ) : (
-        <>
-          <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
+    <PageContainer>
+      <ContentArea>
+        <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
+
+        <TableSection>
           <ClientSearchBar query={query} setQuery={setQuery} />
+
           <ClientTable
             people={people}
             onClick={(pid) => navigate(`/client/${pid}`)}
-            onError={(msg: string) => setErrMsg(msg)}
-            onDelete={(pid, pname) => handleDelete(pid, pname)} />
-        </>
-      )}
-
-    </div>
+          />
+        </TableSection>
+      </ContentArea>
+    </PageContainer>
   );
 };
 

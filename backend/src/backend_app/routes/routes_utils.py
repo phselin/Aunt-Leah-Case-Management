@@ -17,3 +17,14 @@ def get_programs_structure():
         return formatted_programs_structure
     except Exception:
         return {}
+
+
+def remove_empty(data):
+    if isinstance(data, dict):
+        cleaned = {k: remove_empty(v) for k, v in data.items()}
+        cleaned = {k: v for k, v in cleaned.items() if v is not None}
+        return cleaned or None
+    if isinstance(data, list):
+        cleaned = [remove_empty(item) for item in data if item is not None]
+        return cleaned or None
+    return data

@@ -4,130 +4,138 @@ import { palette } from '../../theme/palette'
 
 export const Nav = styled.nav`
     background: ${palette.magentaPink};
-    height: 80px;
-    position: relative;
+    height: 70px; /* Thinner but substantial bar */
+    position: sticky;
+    top: 0;
     display: flex;
-    justify-content: space-between;
-    padding: 0 2rem;
-    z-index:10;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0 4rem; /* Nudges the entire navbar content right */
+    z-index: 10;
     width: 100%;
+
+    @media screen and (max-width: 850px) {
+        padding: 0 1.5rem;
+    }
 `
 
 export const Logo = styled.div`
-    color: #fff;
     display: flex;
     align-items: center;
-    text-decoration: none;
-    padding: 0 1rem;
     height: 100%;
+    
+    /* BIGGER GAP: Separates branding from the navigation group */
+    margin-right: 60px; 
+    
+    img {
+        height: 24px; /* Small, sleek logo */
+        width: auto;
+    }
 ` 
 
+export const NavMenu = styled.div`
+    display: flex;
+    align-items: center;
+    height: 100%;
+    
+    /* SMALLER GAP: Keeps the navigation titles grouped together */
+    gap: 28px; 
+
+    @media screen and (max-width: 850px) {
+        display: none;
+    }
+`
+
 export const NavLink = styled(Link)`
-    color: #fff;
+    /* Grayed out inactive state */
+    color: rgba(255, 255, 255, 0.6); 
     display: flex;
     align-items: center;
     text-decoration: none;
-    padding: 0 1rem;
+    padding: 0 4px; /* Minimal padding so the NavMenu gap controls spacing */
     height: 100%;
     cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    
+    /* NO BOLDING: Weight stays consistent at 500 */
+    font-weight: 500; 
+    
+    /* VERTICAL NUDGE: Aligns text optically with the logo center */
+    transform: translateY(2px); 
+    
+    transition: color 0.2s ease-in-out;
     
     &.active {
-        text-decoration: underline;
+        /* Active page pops in bright white */
+        color: #ffffff;
+        text-decoration: none;
     }
     
     &:hover {
-        color: ${palette.deepRed}
+        color: #ffffff;
     }
 
     @media screen and (max-width: 850px) {
         width: 100%;
         height: auto;
         padding: 12px 0;
-        justify-content: flex-start;
+        color: #fff;
+        transform: none;
     }
 ` 
+
+export const NavBtn = styled.div`
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+
+    @media screen and (max-width: 850px) {
+        display: none;
+    }
+`
+
+export const NavBtnLink = styled.button`
+    border-radius: 4px;
+    background: ${palette.deepRed};
+    padding: 8px 20px;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s ease;
+
+    &:hover {
+        background: #fff;
+        color: ${palette.deepRed};
+    }
+`
 
 export const MenuToggle = styled.button`
     display: none;
     background: transparent;
     border: none;
     color: #fff;
-    padding: 0;
-    margin-left: auto;
-    width: 44px;
-    height: 44px;
-    align-items: center;
-    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
 
     @media screen and (max-width: 850px) {
-        display: inline-flex;
-    }
-`
-
-export const NavMenu = styled.div`
-    display: flex;
-    align-items: center;
-    margin-right: -24px;
-
-    @media screen and (max-width: 850px) {
-        display: none;
-    }
-`
-
-export const NavBtn = styled.nav`
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-    margin-right: 24px;
-
-    @media screen and (max-width: 850px) {
-        display: none;
+        display: block;
+        margin-left: auto;
     }
 `
 
 export const MobileMenu = styled.div<{ $open: boolean }>`
-    display: none;
-
-    @media screen and (max-width: 850px) {
-        display: ${({ $open }) => ($open ? 'flex' : 'none')};
-        flex-direction: column;
-        gap: 8px;
-        position: absolute;
-        top: 80px;
-        left: 0;
-        right: 0;
-        background: ${palette.magentaPink};
-        padding: 12px 16px 16px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-        z-index: 20;
-
-        a,
-        button {
-            width: 100%;
-        }
-    }
-`
-
-export const NavBtnLink = styled.button`
-border-radius: 4px;
-background: ${palette.deepRed};
-padding: 10px 22px;
-color: #fff;
-border: none;
-outline: none;
-cursor: pointer;
-transition: all 0.2s ease-in-out;
-text-decoration: none;
-
-&:hover {
-    transition: all 0.2s ease-in-out;
-    background: #fff;
-    color: ${palette.deepRed};
-}
-
-@media screen and (max-width: 850px) {
-    width: 100%;
-    text-align: left;
-}
+    display: ${({ $open }) => ($open ? 'flex' : 'none')};
+    flex-direction: column;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background: ${palette.magentaPink};
+    padding: 16px;
+    z-index: 20;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 `

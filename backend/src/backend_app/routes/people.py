@@ -9,12 +9,20 @@ from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
+from backend_app import intake_form
 from backend_app.auth_init import limiter
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_programs_structure
+from backend_app.routes.routes_utils import (
+    get_programs_structure,
+    remove_empty,
+)
 from backend_app.schemas.person import Person
 
 people_bp = Blueprint("people", __name__)
+
+
+def _validation_errors_json(e: ValidationError):
+    return e.errors(include_context=False, include_input=False, include_url=False)
 
 
 @people_bp.get("/people")
@@ -108,26 +116,22 @@ def update_person(id):
             jsonify(
                 {
                     "detail": "Validation error",
-                    "errors": {
-                        str(err["loc"][0]): err["msg"].replace("Value error, ", "")
-                        for err in e.errors()
-                        if err.get("loc")
-                    },
+                    "errors": _validation_errors_json(e),
                 }
             ),
             400,
         )
 
-    person_json = person.model_dump(exclude_none=True, mode="json")
-    query = {"$set": person_json}
+    person_json_with_null = person.model_dump(mode="json")
+    person_json = remove_empty(person.model_dump(exclude_none=True, mode="json"))
 
-    person_in_db = db.people.find_one({"_id": oid})
-    if not person_in_db:
-        return jsonify({"detail": "Client not found"}), 404
+    unset_fields = {field: "" for field in person_json_with_null if field not in person_json}
 
-    remove_programs = set(person_in_db.get("status", {}).keys()) - set(person.programs)
-    if remove_programs:
-        query["$unset"] = {f"status.{p}": "" for p in remove_programs}
+    query = {}
+    if person_json:
+        query["$set"] = person_json
+    if unset_fields:
+        query["$unset"] = unset_fields
 
     res = db.people.find_one_and_update({"_id": oid}, query, return_document=ReturnDocument.AFTER)
 
@@ -154,11 +158,7 @@ def create_person():
             jsonify(
                 {
                     "detail": "Validation error",
-                    "errors": {
-                        str(err["loc"][0]): err["msg"].replace("Value error, ", "")
-                        for err in e.errors()
-                        if err.get("loc")
-                    },
+                    "errors": _validation_errors_json(e),
                 }
             ),
             400,
@@ -219,18 +219,20 @@ def update_milestones(id):
     if program not in person.get("programs", []):
         return jsonify({"detail": f"Client is not enrolled in {program}"}), 400
 
-    milestone_in_db = person.get("status", {}).get(program, {}).get(type)
+    milestone_in_db = person.get("programMilestones", {}).get(program, {}).get(type)
 
+    milestone_payload = {
+        "value": milestone,
+        "lastUpdateDate": datetime.now(UTC),
+        "startDate": (
+            milestone_in_db["startDate"]
+            if milestone_in_db and milestone_in_db.get("startDate")
+            else datetime.now(UTC)
+        ),
+    }
     milestone_update = {
-        f"status.{program}.{type}": {
-            "value": milestone,
-            "lastUpdateDate": datetime.now(UTC),
-            "startDate": (
-                milestone_in_db["startDate"]
-                if milestone_in_db and milestone_in_db.get("startDate")
-                else datetime.now(UTC)
-            ),
-        }
+        f"programMilestones.{program}.{type}": milestone_payload,
+        f"status.{program}.{type}": milestone_payload,
     }
 
     res = db.people.find_one_and_update(
@@ -241,3 +243,9 @@ def update_milestones(id):
 
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
+
+
+@people_bp.get("/people/intake")
+@jwt_required()
+def get_intake_form():
+    return jsonify(intake_form.form)

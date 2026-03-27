@@ -25,6 +25,7 @@ def create_flask_app() -> Flask:
         app,
         origins=[
             "http://localhost:5173",
+            "http://localhost:5174",
             "https://aunt-leah-content-management-system.vercel.app",
         ],
         supports_credentials=True,

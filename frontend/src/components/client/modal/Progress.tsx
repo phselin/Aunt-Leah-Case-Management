@@ -19,7 +19,7 @@ type MilestoneInfo = {
     startDate: string | null;
 };
 
-type Status = Record<string, Record<string, MilestoneInfo>>;
+type ProgramMilestones = Record<string, Record<string, MilestoneInfo>>;
 type ProgramsStructure = Record<string, Record<string, string[]>>;
 
 type ProgressProps = {
@@ -28,7 +28,7 @@ type ProgressProps = {
 
 const Progress = ({ personId }: ProgressProps) => {
     const [programs, setPrograms] = useState<string[]>([]);
-    const [status, setStatus] = useState<Status>({});
+    const [programMilestones, setProgramMilestones] = useState<ProgramMilestones>({});
     const [structure, setStructure] = useState<ProgramsStructure>({});
     const [loading, setLoading] = useState(true);
     const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -40,7 +40,7 @@ const Progress = ({ personId }: ProgressProps) => {
                 api.get("/programs/structure"),
             ]);
             setPrograms(personRes.data.programs ?? []);
-            setStatus(personRes.data.status ?? {});
+            setProgramMilestones(personRes.data.programMilestones ?? {});
             setStructure(structureRes.data ?? {});
         } catch (err) {
             console.error("Failed to load milestone data", err);
@@ -67,7 +67,7 @@ const Progress = ({ personId }: ProgressProps) => {
                 type: type,
                 milestone: value,
             });
-            setStatus(res.data.status ?? {});
+            setProgramMilestones(res.data.programMilestones ?? {});
         } catch (err) {
             console.error("Failed to update milestone", err);
         } finally {
@@ -160,7 +160,7 @@ const Progress = ({ personId }: ProgressProps) => {
 
                             {types.map((type, idx) => {
                                 const milestones = structure[program][type] ?? [];
-                                const milestoneInfo = status?.[program]?.[type];
+                                const milestoneInfo = programMilestones?.[program]?.[type];
                                 const milestone = milestoneInfo?.value;
                                 const { current, total } = getProgress(
                                     program,

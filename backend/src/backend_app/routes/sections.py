@@ -215,7 +215,9 @@ def get_stats():
                     {
                         "milestone": milestone,
                         "value": db.people.count_documents(
-                            {f"status.{program_name}.{milestone_tree_type}.value": milestone}
+                            {
+                                f"programMilestones.{program_name}.{milestone_tree_type}.value": milestone  # noqa: E501
+                            }
                         ),
                     }
                 )
