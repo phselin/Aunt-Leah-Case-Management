@@ -35,10 +35,9 @@ def get_intake_form():
 @jwt_required()
 def get_people():
     person = request.args.get("person", "").strip()
-    query = get_program_filter()  # comment this for less strict RBAC
-    if not is_admin():
-        query["active"] = True
-
+    # query = {}
+    # uncomment this if we want to prevent unauthorized client searches
+    query = get_program_filter()
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
@@ -236,21 +235,21 @@ def create_person():
     return jsonify(person_json), 201
 
 
-@people_bp.delete("/people/<id>")
-@jwt_required()
-def delete_person(id):
-    try:
-        oid = ObjectId(id)
-    except InvalidId:
-        return jsonify({"detail": "Invalid client ID format"}), 400
+# @people_bp.delete("/people/<id>")
+# @jwt_required()
+# def delete_person(id):
+#     try:
+#         oid = ObjectId(id)
+#     except InvalidId:
+#         return jsonify({"detail": "Invalid client ID format"}), 400
 
-    if not is_admin():
-        return jsonify({"detail": "Access denied"}), 403
+#     if not is_admin():
+#         return jsonify({"detail": "Access denied"}), 403
 
-    res = db.people.delete_one({"_id": oid})
-    if res.deleted_count == 0:
-        return jsonify({"detail": "Client not found"}), 404
-    return jsonify({"detail": "Client deleted successfully"}), 200
+#     res = db.people.delete_one({"_id": oid})
+#     if res.deleted_count == 0:
+#         return jsonify({"detail": "Client not found"}), 404
+#     return jsonify({"detail": "Client deleted successfully"}), 200
 
 
 @people_bp.put("/people/<id>/milestones")
