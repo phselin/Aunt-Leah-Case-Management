@@ -35,9 +35,9 @@ def get_intake_form():
 @jwt_required()
 def get_people():
     person = request.args.get("person", "").strip()
-    # query = {}
+    query = {}
     # uncomment this if we want to prevent unauthorized client searches
-    query = get_program_filter()
+    # query = get_program_filter()
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
