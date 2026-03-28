@@ -15,7 +15,6 @@ from backend_app.db import db
 from backend_app.routes.routes_utils import (
     get_current_user_programs,
     get_formatted_error,
-    get_program_filter,
     get_programs_structure,
     is_admin,
     remove_empty,
