@@ -71,6 +71,13 @@ export type ClientIntake = {
   departmentSpecific?: IntakeDepartmentSpecific;
 };
 
+/** Stored milestone state per program and goal type (e.g. general). */
+export type ProgramMilestoneInfo = {
+  value: string;
+  lastUpdateDate: string | null;
+  startDate: string | null;
+};
+
 export type Person = {
   _id?: string;
   firstname: string;
@@ -86,7 +93,7 @@ export type Person = {
   housing?: Housing;
   referral?: Referral;
   intake?: ClientIntake;
-  programMilestones?: Record<string, Record<string, any>>;
+  programMilestones?: Record<string, Record<string, ProgramMilestoneInfo>>;
 };
 
 export type FormFieldConfig = {

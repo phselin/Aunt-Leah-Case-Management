@@ -137,10 +137,15 @@ function PieChart({
   );
 }
 
+/** Row from GET /stats for one milestone value under a goal type (e.g. general). */
+type MilestoneCountRow = { milestone: string; value: number };
+
+/** Per program: goal type → list of milestone counts (see backend get_stats). */
+type ProgramGoalStats = Record<string, MilestoneCountRow[]>;
+
 type StatsResponse = {
   clients?: Record<string, number>;
-  [program: string]: any;
-};
+} & Record<string, ProgramGoalStats | Record<string, number> | undefined>;
 
 function formatMilestone(program: string, milestone: string): string {
   if (program === "Drug Rehabilitation" && /^\d+$/.test(milestone)) return `${milestone} days`;
