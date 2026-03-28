@@ -137,10 +137,8 @@ function PieChart({
   );
 }
 
-/** Row from GET /stats for one milestone value under a goal type (e.g. general). */
 type MilestoneCountRow = { milestone: string; value: number };
 
-/** Per program: goal type → list of milestone counts (see backend get_stats). */
 type ProgramGoalStats = Record<string, MilestoneCountRow[]>;
 
 type StatsResponse = {

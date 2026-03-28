@@ -71,7 +71,6 @@ export type ClientIntake = {
   departmentSpecific?: IntakeDepartmentSpecific;
 };
 
-/** Stored milestone state per program and goal type (e.g. general). */
 export type ProgramMilestoneInfo = {
   value: string;
   lastUpdateDate: string | null;
