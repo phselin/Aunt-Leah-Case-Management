@@ -16,7 +16,10 @@ faker
 pandas
 openpyxl
 pyotp
+<<<<<<< HEAD
 password-strength
+=======
+>>>>>>> bf3e84a (Implement MFA)
 
 # dev/test
 pytest
