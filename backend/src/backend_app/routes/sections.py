@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
+from backend_app.routes.routes_utils import is_admin
 
 # ideally we want seperate blueprints for casenotes, goals and users but since everything has one
 # endpoint i am adding it all here
@@ -202,6 +203,8 @@ def get_staff():
 @sections_bp.get("/stats")
 @jwt_required()
 def get_stats():
+    if not is_admin():
+        return jsonify({"detail": "Access denied"}), 403
     stats = {}
     stats["clients"] = {"total": db.people.count_documents({})}
     for program in db.programs.find({}):

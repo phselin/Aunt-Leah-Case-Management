@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_program_names, get_programs_structure
+from backend_app.routes.routes_utils import get_program_names, get_programs_structure, is_admin
 
 programs_bp = Blueprint("programs", __name__)
 
@@ -23,10 +23,8 @@ def programs_structure():
 @jwt_required()
 def add_program():
     body = request.get_json(silent=True) or {}
-    # only super admin can add programs
-    # commented out for now because we don't have a super admin role yet
-    # if not g.user["role"] == "superadmin":
-    #     return jsonify({"detail": "Unauthorized"}), 403
+    if not is_admin():
+        return jsonify({"detail": "Access denied"}), 403
     res = db.programs.insert_one(
         {
             "name": body.get("name"),

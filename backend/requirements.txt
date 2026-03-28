@@ -15,9 +15,10 @@ uvicorn[standard]
 faker
 pandas
 openpyxl
+pyotp
+password-strength
 
 # dev/test
 pytest
 ruff==0.15.1
 mongomock
-

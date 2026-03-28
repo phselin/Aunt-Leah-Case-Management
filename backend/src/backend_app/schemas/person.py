@@ -1,30 +1,28 @@
 import re
-from datetime import date, datetime
+from datetime import date
 
-from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
-from backend_app.intake_form import (
+from backend_app.intake_form_options import (
+    BACKGROUND_AREAS_OF_NEED_OPTIONS,
+    BACKGROUND_EXISTING_ID_OPTIONS,
+    BACKGROUND_PERSONAL_OPTIONS,
     CONTACT_METHOD_OPTIONS,
+    DEPT_REFERRAL_EDUCATION_OPTIONS,
+    DEPT_REFERRAL_EMPLOYMENT_OPTIONS,
+    DEPT_REFERRAL_HOUSING_OPTIONS,
+    DEPT_REFERRAL_LIFE_SKILLS_OPTIONS,
     GENDER_OPTIONS,
     HOUSING_STATUS_OPTIONS,
     LOCATION_OPTIONS,
     REFERRAL_CONNECTION_OPTIONS,
 )
-from backend_app.intake_form_options import (
-    BACKGROUND_AREAS_OF_NEED_OPTIONS,
-    BACKGROUND_EXISTING_ID_OPTIONS,
-    BACKGROUND_PERSONAL_OPTIONS,
-    DEPT_REFERRAL_EDUCATION_OPTIONS,
-    DEPT_REFERRAL_EMPLOYMENT_OPTIONS,
-    DEPT_REFERRAL_HOUSING_OPTIONS,
-    DEPT_REFERRAL_LIFE_SKILLS_OPTIONS,
-)
 
 
 class Milestone(BaseModel):
     value: str
-    lastUpdateDate: datetime | None = None
-    startDate: datetime | None = None
+    lastUpdateDate: date | None = None
+    startDate: date | None = None
 
 
 class Address(BaseModel):
@@ -205,7 +203,6 @@ class Person(BaseModel):
     email: EmailStr | None = None
     preferredContactMethod: str | None = None
     programs: list[str] = Field(default_factory=list)
-    status: dict[str, dict[str, Milestone]] | None = None
     programMilestones: dict[str, dict[str, Milestone]] | None = None
     housing: Housing | None = None
     referral: Referral | None = None
@@ -214,7 +211,15 @@ class Person(BaseModel):
     @field_validator("firstname", "lastname")
     @classmethod
     def sanitize_name(cls, value: str) -> str:
-        return value.strip().title()
+        value = value.strip().title()
+        if not value:
+            raise ValueError("name cannot be empty")
+        if len(value) > 100:
+            raise ValueError("name is too long")
+        # special char ai-gen, i don't know which characters to allow
+        if not re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$").match(value):
+            raise ValueError("Name contains invalid characters")
+        return value
 
     @field_validator("gender")
     @classmethod
@@ -294,42 +299,3 @@ class Person(BaseModel):
                         f"Invalid milestone {milestone.value} for {program} {milestone_tree_type}"
                     )
         return value
-
-    @field_validator("status")
-    @classmethod
-    def validate_status(
-        cls, value: dict[str, dict[str, Milestone]], info: ValidationInfo
-    ) -> dict[str, dict[str, Milestone]] | None:
-        if value is None:
-            return value
-
-        programs = info.data.get("programs", [])
-        valid_programs_structure = (
-            info.context.get("valid_programs_structure", {}) if info.context else {}
-        )
-
-        for program, milestone_trees in value.items():
-            if program not in programs:
-                raise ValueError(f"Client doesn't belong to {program} program")
-            if program not in valid_programs_structure:
-                raise ValueError(f"{program} program doesn't have any milestones")
-
-            valid_milestone_trees = valid_programs_structure.get(program, {})
-
-            for milestone_tree_type, milestone in milestone_trees.items():
-                if milestone_tree_type not in valid_milestone_trees:
-                    raise ValueError(f"Invalid milestoneTree {milestone_tree_type} for {program}")
-                valid_milestones = valid_milestone_trees.get(milestone_tree_type, [])
-                if milestone.value not in valid_milestones:
-                    raise ValueError(
-                        f"Invalid milestone {milestone.value} for {program} {milestone_tree_type}"
-                    )
-        return value
-
-    @model_validator(mode="after")
-    def sync_legacy_status_fields(self):
-        if self.programMilestones is None and self.status is not None:
-            self.programMilestones = self.status
-        if self.status is None and self.programMilestones is not None:
-            self.status = self.programMilestones
-        return self

@@ -56,8 +56,6 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
 
 const VALID_TIME_RE = /^\d{1,2}:\d{2}\s*(AM|PM)$/i;
 
-const MAX_EVENT_TITLE_CHARS = 100;
-
 const Itinerary = ({ value }: ItineraryProps) => {
 
   const selectedDate = useMemo(() => {
@@ -149,11 +147,6 @@ const Itinerary = ({ value }: ItineraryProps) => {
       return;
     }
 
-    if (cleanTitle.length > MAX_EVENT_TITLE_CHARS) {
-      alert(`Event title must be at most ${MAX_EVENT_TITLE_CHARS} characters.`);
-      return;
-    }
-
     if (!VALID_TIME_RE.test(cleanTime)) {
       alert("Please enter a valid time (e.g., 10:00 AM).");
       return;
@@ -206,13 +199,8 @@ const Itinerary = ({ value }: ItineraryProps) => {
       {isFormOpen ? (
         <div>
           <FormRow>
-            <Label>Title (100 chars max.)</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Client Meeting"
-              maxLength={MAX_EVENT_TITLE_CHARS}
-            />
+            <Label>Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Client Meeting" />
           </FormRow>
 
           <FormRow>
@@ -272,7 +260,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
           eventsForDay.map((e) => (
             <EventItemCard key={e.id}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
+                <div>
                   <EventTitle>{e.title}</EventTitle>
                   <EventTime>{e.time}</EventTime>
                   {e.notes ? <EventNotes>{e.notes}</EventNotes> : null}

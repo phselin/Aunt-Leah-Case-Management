@@ -77,3 +77,28 @@ YES_NO_DROPDOWN = [
     {"value": "yes", "label": "Yes"},
     {"value": "no", "label": "No"},
 ]
+
+GENDER_OPTIONS = ["Male", "Female", "Non Binary", "Prefer not to say"]
+
+CONTACT_METHOD_OPTIONS = ["Phone", "Email", "Text"]
+
+LOCATION_OPTIONS = ["New Westminster", "Seymour", "Flexible"]
+
+HOUSING_STATUS_OPTIONS = [
+    {"value": "sleepingRough", "label": "Sleeping Rough"},
+    {"value": "shelter", "label": "Shelter"},
+    {"value": "hiddenHomelessness", "label": "Hidden Homelessness"},
+    {"value": "privateMarket", "label": "Private Market"},
+    {"value": "subsidizedHousing", "label": "Subsidized Housing"},
+    {"value": "singleRoomOccupancy", "label": "Single Room Occupancy"},
+    {"value": "supportiveHousing", "label": "Supportive Housing"},
+    {"value": "transitionalHousing", "label": "Transitional Housing"},
+    {"value": "other", "label": "Other"},
+]
+
+REFERRAL_CONNECTION_OPTIONS = [
+    "Current Participant",
+    "Former Participant",
+    "New Referral",
+    "Guest of current participant",
+]

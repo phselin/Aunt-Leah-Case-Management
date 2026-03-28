@@ -1,6 +1,8 @@
 import re
+import secrets
 from datetime import UTC, datetime, timedelta
 
+import pyotp
 from bson import ObjectId, json_util
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
@@ -13,13 +15,15 @@ from flask_jwt_extended import (
     set_access_cookies,
     unset_jwt_cookies,
 )
+from password_strength import PasswordPolicy
+from pymongo.synchronous.collection import ReturnDocument
 
 from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.db import db, redis_client
 
 auth_bp = Blueprint("auth", __name__)
 
-# TODO replace direct field access [] with .get()
+policy = PasswordPolicy.from_names(length=8, uppercase=1, numbers=1, special=1)
 
 
 @jwt.user_lookup_error_loader
@@ -34,7 +38,7 @@ def user_lookup(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
 
     try:
-        cached_user = redis_client.get(identity)
+        cached_user = redis_client.get(f"user:{identity}")
         if cached_user:
             return json_util.loads(cached_user)
     except Exception as e:
@@ -49,7 +53,7 @@ def user_lookup(_jwt_header, jwt_data):
     if user:
         try:
             redis_client.setex(
-                name=identity, time=timedelta(minutes=15), value=json_util.dumps(user)
+                name=f"user:{identity}", time=timedelta(minutes=15), value=json_util.dumps(user)
             )
         except Exception as e:
             print(e)
@@ -73,7 +77,7 @@ Helper for making sure email is formatted correctly and sanitized
 
 
 def sanitizeEmail(email):
-    email = email.strip()
+    email = email.lower().strip()
     emailPattern = r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"
 
     if re.match(emailPattern, email, re.IGNORECASE) is None:
@@ -101,29 +105,127 @@ def login():
     if not user:
         return jsonify({"detail": "Invalid credentials"}), 401
 
-    if "password_hash" not in user or not bcrypt.check_password_hash(
-        user["password_hash"], password
-    ):
+    if "passwordHash" not in user or not bcrypt.check_password_hash(user["passwordHash"], password):
         return jsonify({"detail": "Invalid credentials"}), 401
 
-    access_token = create_access_token(identity=str(user["_id"]))
+    mfa_session = secrets.token_urlsafe(32)
 
-    resp = jsonify(
-        {
-            "detail": "Login successful",
-            "user": {
-                "email": user["email"],
-                "role": user["role"],
-                "id": str(user["_id"]),
-                "firstname": user["firstname"],
-                "lastname": user["lastname"],
-            },
-        }
+    redis_client.setex(
+        name=f"mfaSession:{mfa_session}",
+        time=timedelta(minutes=10),
+        value=str(user["_id"]),
     )
 
-    set_access_cookies(resp, access_token)
+    if not user.get("mfaEnabled"):
+        return jsonify(
+            {
+                "setupRequired": True,
+                "mfaSession": mfa_session,
+                "detail": "Please set up MFA and change your password",
+            }
+        ), 200
 
-    return resp
+    return jsonify({"mfaRequired": True, "mfaSession": mfa_session, "detail": "OTP required"})
+
+
+@auth_bp.post("/login/mfa")
+def login_mfa():
+    data = request.get_json()
+    session = data.get("mfaSession")
+    otp = data.get("otp")
+    id = redis_client.get(f"mfaSession:{session}")
+
+    user = db.staff.find_one({"_id": ObjectId(id)})
+    if not user:
+        return jsonify({"detail": "User not found"}), 404
+
+    totp = pyotp.TOTP(user["mfaSecret"])
+    if totp.verify(otp):
+        access_token = create_access_token(identity=str(user["_id"]))
+        resp = jsonify(
+            {
+                "detail": "Login successful",
+                "user": {
+                    "email": user["email"],
+                    "role": user["role"],
+                    "id": str(user["_id"]),
+                    "firstname": user["firstname"],
+                    "lastname": user["lastname"],
+                },
+            }
+        )
+        set_access_cookies(resp, access_token)
+        redis_client.delete(f"mfaSession:{session}")
+        return resp
+
+    return jsonify({"detail": "Invalid OTP Code"}), 401
+
+
+@auth_bp.post("/mfa/setup")
+@limiter.limit("5 per minute")
+def setup_mfa():
+    data = request.get_json()
+    session = data.get("mfaSession")
+    id = redis_client.get(f"mfaSession:{session}")
+    secret = pyotp.random_base32()
+    staff = db.staff.find_one_and_update(
+        {"_id": ObjectId(id)},
+        {"$set": {"mfaSecret": secret, "mfaEnabled": False}},
+        return_document=ReturnDocument.AFTER,
+    )
+    totp = pyotp.TOTP(secret)
+    provisioning_url = totp.provisioning_uri(name=staff["email"], issuer_name="AuntLeahs")
+    return jsonify({"uri": provisioning_url})
+
+
+@auth_bp.post("/mfa/confirm")
+@limiter.limit("5 per minute")
+def confirm_mfa():
+    data = request.get_json()
+    session = data.get("mfaSession")
+    otp = data.get("otp")
+    pwd = data.get("password")
+
+    id = redis_client.get(f"mfaSession:{session}")
+
+    user = db.staff.find_one({"_id": ObjectId(id)})
+
+    # uncomment this for a stricted password check
+    # if policy.test(pwd) != []:
+    #     return jsonify(
+    #         {
+    #             "detail": "Password must be at least 8 characters long with an uppercase letter, number and symbol"  # noqa: E501
+    #         }
+    #     ), 400
+
+    totp = pyotp.TOTP(user["mfaSecret"])
+    if totp.verify(otp):
+        db.staff.update_one(
+            {"_id": user["_id"]},
+            {
+                "$set": {
+                    "mfaEnabled": True,
+                    "passwordHash": bcrypt.generate_password_hash(pwd).decode("utf-8"),
+                }
+            },
+        )
+        access_token = create_access_token(identity=str(user["_id"]))
+        resp = jsonify(
+            {
+                "detail": "MFA enabled and new password set",
+                "user": {
+                    "email": user["email"],
+                    "role": user["role"],
+                    "id": str(user["_id"]),
+                    "firstname": user["firstname"],
+                    "lastname": user["lastname"],
+                },
+            }
+        )
+        set_access_cookies(resp, access_token)
+        redis_client.delete(f"mfaSession:{session}")
+        return resp
+    return jsonify({"detail": "Invalid OTP Code"}), 400
 
 
 @auth_bp.post("/logout")

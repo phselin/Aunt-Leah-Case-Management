@@ -8,9 +8,10 @@ import ClientTable from "../components/client/search/clientTable";
 import type { Person } from "../components/client/person";
 import api from "../api";
 import styled from "styled-components";
+import { ErrorBox } from "../components/client/modal/clientElement";
 
 const PageContainer = styled.div`
-  background-color: #F9FAFB;
+  background-color: #f9fafb;
   min-height: 100vh;
   width: 100%;
   display: flex;
@@ -21,7 +22,7 @@ const ContentArea = styled.div`
   width: 100%;
   margin: 0 auto;
   /* 0 bottom padding to keep footer tight to table */
-  padding: 32px 4rem 0 4rem; 
+  padding: 32px 4rem 0 4rem;
   display: flex;
   flex-direction: column;
   flex: 1; /* Ensures this area grows to fill space */
@@ -36,7 +37,7 @@ const TableSection = styled.div`
   flex-direction: column;
   gap: 16px;
   margin-top: 24px;
-  margin-bottom: 0px; 
+  margin-bottom: 0px;
 `;
 
 const Client = () => {
@@ -103,13 +104,13 @@ const Client = () => {
   }, [debounceQuery, id]);
 
   const handleExport = async () => {
-    setExporting(true)
-    setErrMsg("")
+    setExporting(true);
+    setErrMsg("");
 
     try {
       const res = await api.get("/people/export", {
         withCredentials: true,
-        responseType: "blob"
+        responseType: "blob",
       });
 
       const url = window.URL.createObjectURL(res.data);
@@ -118,8 +119,12 @@ const Client = () => {
       link.download = "clients.xlsx";
       link.click();
       window.URL.revokeObjectURL(url);
-    } catch {
-      setErrMsg("Failed to export clients. Try again after some time.");
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setErrMsg("You do not have permission to export clients");
+      } else {
+        setErrMsg("Failed to export clients. Try again after some time.");
+      }
     } finally {
       setExporting(false);
     }
@@ -161,14 +166,22 @@ const Client = () => {
   return (
     <PageContainer>
       <ContentArea>
-        <ClientHeader onAdd={() => { navigate("/client/new") }} onExport={handleExport} exporting={exporting} />
+        <ClientHeader
+          onAdd={() => {
+            navigate("/client/new");
+          }}
+          onExport={handleExport}
+          exporting={exporting}
+        />
 
         <TableSection>
+          {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
           <ClientSearchBar query={query} setQuery={setQuery} />
 
           <ClientTable
             people={people}
             onClick={(pid) => navigate(`/client/${pid}`)}
+            onError={(msg) => setErrMsg(msg)}
           />
         </TableSection>
       </ContentArea>

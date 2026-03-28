@@ -12,6 +12,7 @@ import Progress from "../components/client/modal/Progress";
 import type { IntakeFormConfig, Person } from "../components/client/person";
 import { ChevronLeft } from "lucide-react";
 import api from "../api";
+import axios from "axios";
 
 const SelectedView = {
   Details: "Client Information",
@@ -33,7 +34,9 @@ const ClientModal = () => {
     formConfig: IntakeFormConfig | null;
   }>();
 
-  const [curView, setCurView] = useState<SelectedViewType>(SelectedView.Details);
+  const [curView, setCurView] = useState<SelectedViewType>(
+    SelectedView.Details,
+  );
   const [clientData, setClientData] = useState<Person | null>(null);
 
   useEffect(() => {
@@ -43,8 +46,14 @@ const ClientModal = () => {
       try {
         const res = await api.get(`/people/${id}`);
         setClientData(res.data);
-      } catch {
-        setErrMsg("Unable to find client details");
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 403) {
+          setErrMsg(
+            "You do not have permission to view this client's information",
+          );
+        } else {
+          setErrMsg("Unable to find client details");
+        }
         navigate("/client");
       }
     };
@@ -100,7 +109,9 @@ const ClientModal = () => {
       </div>
 
       <div style={{ padding: "8px 32px 0" }}>
-        <ClientTitle style={{ fontSize: 28, fontWeight: 700 }}>{title}</ClientTitle>
+        <ClientTitle style={{ fontSize: 28, fontWeight: 700 }}>
+          {title}
+        </ClientTitle>
       </div>
 
       <TabContext value={curView}>
@@ -136,7 +147,7 @@ const ClientModal = () => {
         )}
 
         <div style={{ flex: 1, overflowY: "auto", padding: "0 32px" }}>
-          <TabPanel value={SelectedView.Details} sx={{ p: 0, pt: 2 }}>
+          <TabPanel value={SelectedView.Details} sx={{ p: 0 }}>
             <Details
               id={id}
               isNew={isNew}

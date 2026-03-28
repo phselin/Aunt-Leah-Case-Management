@@ -14,3 +14,5 @@ backend/.gitignore
 backend/.gitignore.example
 node_modules/
 .vscode
+backend/.zed
+backend/pyrightconfig.json

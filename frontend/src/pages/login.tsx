@@ -1,10 +1,12 @@
-import { useRef, useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import AuthContext from '../context/AuthProvider';
-import axios from 'axios';
-import { palette } from '../theme/palette';
+import { useRef, useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import AuthContext from "../context/AuthProvider";
+import axios from "axios";
+import { palette } from "../theme/palette";
 import api from "../api";
+import QRCode from "react-qr-code";
+import OtpInput from "react-otp-input";
 
 const LoginLayout = styled.div`
   display: flex;
@@ -43,7 +45,7 @@ const FormHeading = styled.h1`
   font-size: 1.75rem;
   font-weight: 600;
   color: ${palette.deepRed};
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
 `;
 
@@ -52,7 +54,7 @@ const FormSubheading = styled.p`
   font-size: 0.9375rem;
   font-weight: 400;
   color: ${palette.seafoamGreen};
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 `;
 
 const Form = styled.form`
@@ -73,7 +75,7 @@ const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
   color: ${palette.deepRed};
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 `;
 
 const Input = styled.input`
@@ -107,7 +109,7 @@ const LoginButton = styled.button`
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   align-self: flex-start;
   min-width: 120px;
 
@@ -130,48 +132,77 @@ const ErrorAlert = styled.p<{ $visible: boolean }>`
   background: ${palette.white};
   border: 1px solid red;
   border-radius: 10px;
-  font-family: 'Poppins', sans-serif;
-  visibility: ${(p) => (p.$visible ? 'visible' : 'hidden')};
-  position: ${(p) => (p.$visible ? 'relative' : 'absolute')};
-  left: ${(p) => (p.$visible ? 'auto' : '-9999px')};
-  width: ${(p) => (p.$visible ? 'auto' : '1px')};
-  height: ${(p) => (p.$visible ? 'auto' : '1px')};
+  font-family: "Poppins", sans-serif;
+  visibility: ${(p) => (p.$visible ? "visible" : "hidden")};
+  position: ${(p) => (p.$visible ? "relative" : "absolute")};
+  left: ${(p) => (p.$visible ? "auto" : "-9999px")};
+  width: ${(p) => (p.$visible ? "auto" : "1px")};
+  height: ${(p) => (p.$visible ? "auto" : "1px")};
   overflow: hidden;
-  clip: ${(p) => (p.$visible ? 'auto' : 'rect(0,0,0,0)')};
+  clip: ${(p) => (p.$visible ? "auto" : "rect(0,0,0,0)")};
 `;
 
 const Login = () => {
   const { setAuth } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const userRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const errRef = useRef<HTMLParagraphElement>(null);
 
-  const [user, setUser] = useState('');
-  const [pwd, setPwd] = useState('');
-  const [errMsg, setErrMsg] = useState('');
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [errMsg, setErrMsg] = useState("");
+
+  const [step, setStep] = useState<"LOGIN" | "MFA" | "SETUP">("LOGIN");
+  const [mfaSession, setMfaSession] = useState("");
+  const [otp, setOTP] = useState("");
+  const [qrURI, setQrURI] = useState("");
+  const [newPwd, setNewPwd] = useState("");
 
   useEffect(() => {
-    userRef.current?.focus();
-  }, []);
-
-  const clearError = () => setErrMsg('');
+    inputRef.current?.focus();
+  }, [step]);
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrMsg("");
 
     try {
-      const response = await api.post(
-        '/login',
-        { email: user, password: pwd }
-      );
-      setAuth({ user: response.data.user });
-      navigate('/home');
+      if (step === "LOGIN") {
+        const res = await api.post("/login", { email: email, password: pwd });
+        const session = res.data.mfaSession;
+        setMfaSession(session);
+        console.log(mfaSession);
+        if (res.data.setupRequired) {
+          const setupRes = await api.post("/mfa/setup", {
+            mfaSession: session,
+          });
+          setQrURI(setupRes.data.uri);
+          setStep("SETUP");
+        } else if (res.data.mfaRequired) {
+          setStep("MFA");
+        }
+      } else if (step === "MFA") {
+        const res = await api.post("/login/mfa", {
+          mfaSession: mfaSession,
+          otp: otp,
+        });
+        setAuth({ user: res.data.user });
+        navigate("/home");
+      } else if (step === "SETUP") {
+        const res = await api.post("/mfa/confirm", {
+          mfaSession: mfaSession,
+          otp: otp,
+          password: newPwd,
+        });
+        setAuth({ user: res.data.user });
+        navigate("/home");
+      }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        setErrMsg(err.response.data?.detail ?? 'Login failed');
+        setErrMsg(err.response.data?.detail ?? "Login failed");
       } else {
-        setErrMsg('Unable to connect to server');
+        setErrMsg("Unable to connect to server");
       }
       errRef.current?.focus();
     }
@@ -180,54 +211,109 @@ const Login = () => {
   return (
     <LoginLayout>
       <LeftPanel>
-        <LogoImage
-          src="/auntleahslogo.svg"
-          alt="Aunt Leah's"
-        />
+        <LogoImage src="/auntleahslogo.svg" alt="Aunt Leah's" />
       </LeftPanel>
       <RightPanel>
-        <FormHeading>Welcome Back</FormHeading>
-        <FormSubheading>Please login to your account</FormSubheading>
-        <ErrorAlert
-          ref={errRef}
-          $visible={!!errMsg}
-          aria-live="assertive"
-        >
+        <FormHeading>
+          {step === "LOGIN"
+            ? "Welcome Back"
+            : step === "MFA"
+              ? "Verification"
+              : "MFA Setup"}
+        </FormHeading>
+        <FormSubheading>
+          {step === "LOGIN"
+            ? "Please login to your account"
+            : step === "MFA"
+              ? "Please enter the 6-digit code from your authenticator app"
+              : "Scan the QR code and set a new password"}
+        </FormSubheading>
+        <ErrorAlert ref={errRef} $visible={!!errMsg} aria-live="assertive">
           {errMsg}
         </ErrorAlert>
         <Form onSubmit={handleSubmit}>
-          <FieldGroup>
-            <Label htmlFor="username">Email</Label>
-            <Input
-              type="email"
-              id="username"
-              ref={userRef}
-              autoComplete="username"
-              placeholder="Enter your email"
-              onChange={(e) => {
-                setUser(e.target.value);
-                clearError();
+          {step === "LOGIN" && (
+            <>
+              <FieldGroup>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  ref={inputRef}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={pwd}
+                  onChange={(e) => setPwd(e.target.value)}
+                  required
+                />
+              </FieldGroup>
+            </>
+          )}
+          {step === "SETUP" && (
+            // https://www.npmjs.com/package/react-qr-code
+            <div
+              style={{
+                height: "auto",
+                maxWidth: 256,
+                width: "100%",
               }}
-              value={user}
-              required
-            />
-          </FieldGroup>
-          <FieldGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              autoComplete="current-password"
-              onChange={(e) => {
-                setPwd(e.target.value);
-                clearError();
-              }}
-              value={pwd}
-              required
-            />
-          </FieldGroup>
-          <LoginButton type="submit">Login</LoginButton>
+            >
+              <QRCode
+                size={256}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                value={qrURI}
+                viewBox={`0 0 256 256`}
+              />
+            </div>
+          )}
+          {(step === "MFA" || step === "SETUP") && (
+            <FieldGroup>
+              <Label>Authenticator Code</Label>
+              <OtpInput
+                value={otp}
+                onChange={setOTP}
+                numInputs={6}
+                renderInput={(props) => <input {...props} />}
+                inputStyle={{
+                  width: "3rem",
+                  height: "3rem",
+                  fontSize: "1.25rem",
+                  borderRadius: 10,
+                  border: `1px solid ${palette.seafoamGreen}`,
+                  textAlign: "center",
+                  fontFamily: "inherit",
+                }}
+                containerStyle={{ gap: 8 }}
+                shouldAutoFocus={step === "MFA"}
+              />
+            </FieldGroup>
+          )}
+          {step === "SETUP" && (
+            <FieldGroup>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                ref={inputRef}
+                value={newPwd}
+                onChange={(e) => setNewPwd(e.target.value)}
+                required
+                minLength={8}
+              />
+            </FieldGroup>
+          )}
+          <LoginButton type="submit">
+            {step === "LOGIN"
+              ? "Login"
+              : step === "MFA"
+                ? "Verify & Login"
+                : "Update Password & Login"}
+          </LoginButton>
         </Form>
       </RightPanel>
     </LoginLayout>

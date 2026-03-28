@@ -13,7 +13,10 @@ from backend_app import intake_form
 from backend_app.auth_init import limiter
 from backend_app.db import db
 from backend_app.routes.routes_utils import (
+    get_current_user_programs,
+    get_formatted_error,
     get_programs_structure,
+    is_admin,
     remove_empty,
 )
 from backend_app.schemas.person import Person
@@ -21,8 +24,10 @@ from backend_app.schemas.person import Person
 people_bp = Blueprint("people", __name__)
 
 
-def _validation_errors_json(e: ValidationError):
-    return e.errors(include_context=False, include_input=False, include_url=False)
+@people_bp.get("/people/intake")
+@jwt_required()
+def get_intake_form():
+    return jsonify(intake_form.form)
 
 
 @people_bp.get("/people")
@@ -30,6 +35,8 @@ def _validation_errors_json(e: ValidationError):
 def get_people():
     person = request.args.get("person", "").strip()
     query = {}
+    # uncomment this if we want to prevent unauthorized client searches
+    # query = get_program_filter()
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
@@ -59,6 +66,8 @@ def get_people():
 @limiter.limit("5 per minute")
 @jwt_required()
 def export_people():
+    if not is_admin():
+        return jsonify({"detail": "Access denied"}), 403
     try:
         data = list(db.people.find({}, {"_id": 0}))
         if not data:
@@ -90,6 +99,15 @@ def get_person(id):
 
     if not person:
         return jsonify({"detail": "Client not found"}), 404
+
+    # uncomment this if we want to prevent staff members from viewing
+    # if (
+    #     not is_admin()
+    #     and person.get("programs")
+    #     and not any(p in person.get("programs", []) for p in get_current_user_programs())
+    # ):
+    #     return jsonify({"detail": "Access denied"}), 403
+
     person["_id"] = str(person["_id"])
     return jsonify(person), 200
 
@@ -104,6 +122,10 @@ def update_person(id):
 
     body = request.get_json(silent=True) or {}
 
+    person_in_db = db.people.find_one({"_id": oid})
+    if not person_in_db:
+        return jsonify({"detail": "Client not found"}), 404
+
     try:
         person = Person.model_validate(
             body,
@@ -116,7 +138,7 @@ def update_person(id):
             jsonify(
                 {
                     "detail": "Validation error",
-                    "errors": _validation_errors_json(e),
+                    "errors": get_formatted_error(e),
                 }
             ),
             400,
@@ -124,6 +146,36 @@ def update_person(id):
 
     person_json_with_null = person.model_dump(mode="json")
     person_json = remove_empty(person.model_dump(exclude_none=True, mode="json"))
+
+    if not is_admin() and person_in_db.get("programs"):
+        # definitely a better way to do this
+        current_user_programs = set(get_current_user_programs())
+        db_milestone_programs = set(person_in_db.get("programMilestones", {}).keys())
+        new_milestone_programs = set((person_json_with_null.get("programMilestones") or {}).keys())
+        db_programs = set(person_in_db.get("programs", []))
+        new_programs = set(person_json_with_null.get("programs", []))
+        changed = new_programs != db_programs
+        removed = db_programs - new_programs
+        added = new_programs - db_programs
+        changed_milestone_programs = new_milestone_programs != db_programs
+        removed_milestone_programs = db_milestone_programs - new_milestone_programs
+        added_milestone_programs = new_milestone_programs - db_milestone_programs
+        if (
+            not any(p in person_in_db.get("programs", []) for p in current_user_programs)
+            or person_in_db.get("active") != person_json_with_null.get("active")
+            or (
+                changed
+                and not (removed <= current_user_programs and added <= current_user_programs)
+            )
+            or (
+                changed_milestone_programs
+                and not (
+                    removed_milestone_programs <= current_user_programs
+                    and added_milestone_programs <= current_user_programs
+                )
+            )
+        ):
+            return jsonify({"detail": "Access denied"}), 403
 
     unset_fields = {field: "" for field in person_json_with_null if field not in person_json}
 
@@ -137,6 +189,7 @@ def update_person(id):
 
     if not res:
         return jsonify({"detail": "Client not found"}), 404
+
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
 
@@ -158,28 +211,36 @@ def create_person():
             jsonify(
                 {
                     "detail": "Validation error",
-                    "errors": _validation_errors_json(e),
+                    "errors": get_formatted_error(e),
                 }
             ),
             400,
         )
 
     person_json = person.model_dump(exclude_none=True, mode="json")
+    programMilestones = person_json.get("programMilestones")
+    if not is_admin():
+        current_user_programs = get_current_user_programs()
+
+        if any(p not in current_user_programs for p in person_json.get("programs", [])) or (
+            programMilestones and any(p not in current_user_programs for p in programMilestones)
+        ):
+            return jsonify({"detail": "Access denied"}), 403
     res = db.people.insert_one(person_json)
     person_json["_id"] = str(res.inserted_id)
     return jsonify(person_json), 201
 
 
-@people_bp.delete("/people/<id>")
-@jwt_required()
-def delete_person(id):
-    try:
-        oid = ObjectId(id)
-    except InvalidId:
-        return jsonify({"detail": "Invalid client ID format"}), 400
+# @people_bp.delete("/people/<id>")
+# @jwt_required()
+# def delete_person(id):
+#     try:
+#         oid = ObjectId(id)
+#     except InvalidId:
+#         return jsonify({"detail": "Invalid client ID format"}), 400
 
-    db.people.delete_one({"_id": oid})
-    return jsonify({"detail": "Client deleted successfully"}), 200
+#     db.people.delete_one({"_id": oid})
+#     return jsonify({"detail": "Client deleted successfully"}), 200
 
 
 @people_bp.put("/people/<id>/milestones")
@@ -195,6 +256,9 @@ def update_milestones(id):
     program = body.get("program")
     type = body.get("type")
     milestone = body.get("milestone")
+
+    if not is_admin() and program not in get_current_user_programs():
+        return jsonify({"detail": "Access denied"}), 403
 
     if program is None or type is None or milestone is None:
         return jsonify({"detail": "Missing fields"}), 400
@@ -221,18 +285,16 @@ def update_milestones(id):
 
     milestone_in_db = person.get("programMilestones", {}).get(program, {}).get(type)
 
-    milestone_payload = {
-        "value": milestone,
-        "lastUpdateDate": datetime.now(UTC),
-        "startDate": (
-            milestone_in_db["startDate"]
-            if milestone_in_db and milestone_in_db.get("startDate")
-            else datetime.now(UTC)
-        ),
-    }
     milestone_update = {
-        f"programMilestones.{program}.{type}": milestone_payload,
-        f"status.{program}.{type}": milestone_payload,
+        f"programMilestones.{program}.{type}": {
+            "value": milestone,
+            "lastUpdateDate": datetime.now(UTC),
+            "startDate": (
+                milestone_in_db["startDate"]
+                if milestone_in_db and milestone_in_db.get("startDate")
+                else datetime.now(UTC)
+            ),
+        }
     }
 
     res = db.people.find_one_and_update(
@@ -243,9 +305,3 @@ def update_milestones(id):
 
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
-
-
-@people_bp.get("/people/intake")
-@jwt_required()
-def get_intake_form():
-    return jsonify(intake_form.form)

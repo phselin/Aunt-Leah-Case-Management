@@ -51,21 +51,36 @@ def seed_db():
         {
             "firstname": faker.first_name(),
             "lastname": faker.last_name(),
-            "role": "admin",
+            "role": "super-admin",
             "phone": faker.numerify(text="+1$#########"),
             "email": "admin@auntleah.org",
-            "password_hash": hash_pwd("password"),
+            "passwordHash": hash_pwd("password"),
+            "mfaEnabled": False,
         }
     )
 
-    res = db.staff.insert_one(
+    db.staff.insert_one(
         {
             "firstname": "Gregor",
             "lastname": "Kiczales",
             "role": "admin",
             "phone": faker.numerify(text="+1$#########"),
             "email": "GKiczales@auntleah.org",
-            "password_hash": hash_pwd("trustTheNaturalRecursion"),
+            "passwordHash": hash_pwd("trustTheNaturalRecursion"),
+            "mfaEnabled": False,
+        }
+    )
+
+    db.staff.insert_one(
+        {
+            "firstname": faker.first_name(),
+            "lastname": faker.last_name(),
+            "role": "staff",
+            "phone": faker.numerify(text="+1$#########"),
+            "email": "caseworker@auntleah.org",
+            "passwordHash": hash_pwd("12345"),
+            "programs": ["Education", "Housing"],
+            "mfaEnabled": False,
         }
     )
 
@@ -77,6 +92,7 @@ def seed_db():
             "phone": faker.numerify(text="+1$#########"),
             "email": faker.free_email(),
             "programs": random.sample(PROGRAMS, k=random.randint(1, 2)),
+            "mfaEnabled": False,
         }
         db.staff.insert_one(staff_member)
 
@@ -101,13 +117,15 @@ def seed_db():
             "dob": faker.date_of_birth(minimum_age=18, maximum_age=60).strftime("%Y-%m-%d"),
             "gender": random.choice(GENDER_OPTIONS),
             "programs": enrolled_programs,
-            "active": random.choice([True, False]),
+            "active": random.random() < 0.9,
             "phone": faker.numerify(text="+1$#########"),
             "housing": {"address": {"city": "Vancouver", "province": "BC"}},
             "email": faker.free_email(),
-            # "referralDate": faker.date_between(start_date="-5y", end_date="now").strftime(
-            #     "%Y-%m-%d"
-            # ),
+            "referral": {
+                "referralDate": faker.date_between(start_date="-5y", end_date="now").strftime(
+                    "%Y-%m-%d"
+                )
+            },
             "programMilestones": programMilestones,
         }
 

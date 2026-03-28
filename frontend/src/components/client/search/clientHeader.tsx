@@ -1,11 +1,13 @@
 import styled from "styled-components";
 import { PrimaryBtn, SecondaryBtn } from "../modal/clientElement";
+import { useContext } from "react";
+import AuthContext from "../../../context/AuthProvider";
 
 const HeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 4px; 
+  margin-bottom: 4px;
 `;
 
 const TitleArea = styled.div`
@@ -15,10 +17,15 @@ const TitleArea = styled.div`
 `;
 
 const MainTitle = styled.h1`
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  font-weight: 500; 
+  font-weight: 500;
   font-size: 32px;
   color: #111827;
   letter-spacing: -0.02em;
@@ -27,12 +34,18 @@ const MainTitle = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   font-weight: 400;
-  font-size: 15px; 
-  color: #6B7280;
+  font-size: 15px;
+  color: #6b7280;
   margin-top: 8px;
-  letter-spacing: 0.01em; 
+  letter-spacing: 0.01em;
   line-height: 1.5;
   margin: 5;
 `;
@@ -50,6 +63,7 @@ type Props = {
 };
 
 const ClientHeader = ({ onAdd, onExport, exporting }: Props) => {
+  const { auth } = useContext(AuthContext);
   return (
     <HeaderRow>
       <TitleArea>
@@ -57,12 +71,12 @@ const ClientHeader = ({ onAdd, onExport, exporting }: Props) => {
         <Subtitle>Manage and view all client information</Subtitle>
       </TitleArea>
       <ButtonGroup>
-        <SecondaryBtn onClick={onExport} disabled={exporting}>
-          Export Clients
-        </SecondaryBtn>
-        <PrimaryBtn onClick={onAdd}>
-          + Add Client
-        </PrimaryBtn>
+        {auth.user?.role != "staff" && (
+          <SecondaryBtn onClick={onExport} disabled={exporting}>
+            Export Clients
+          </SecondaryBtn>
+        )}
+        <PrimaryBtn onClick={onAdd}>+ Add Client</PrimaryBtn>
       </ButtonGroup>
     </HeaderRow>
   );

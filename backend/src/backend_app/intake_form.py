@@ -2,38 +2,18 @@ from backend_app.intake_form_options import (
     BACKGROUND_AREAS_OF_NEED_OPTIONS,
     BACKGROUND_EXISTING_ID_OPTIONS,
     BACKGROUND_PERSONAL_OPTIONS,
+    CONTACT_METHOD_OPTIONS,
     DEPT_REFERRAL_EDUCATION_OPTIONS,
     DEPT_REFERRAL_EMPLOYMENT_OPTIONS,
     DEPT_REFERRAL_HOUSING_OPTIONS,
     DEPT_REFERRAL_LIFE_SKILLS_OPTIONS,
+    GENDER_OPTIONS,
+    HOUSING_STATUS_OPTIONS,
+    LOCATION_OPTIONS,
+    REFERRAL_CONNECTION_OPTIONS,
     YES_NO_DROPDOWN,
 )
 from backend_app.routes.routes_utils import get_program_names
-
-GENDER_OPTIONS = ["Male", "Female", "Non Binary", "Prefer not to say"]
-
-CONTACT_METHOD_OPTIONS = ["Phone", "Email", "Text"]
-
-LOCATION_OPTIONS = ["New Westminster", "Seymour", "Flexible"]
-
-HOUSING_STATUS_OPTIONS = [
-    {"value": "sleepingRough", "label": "Sleeping Rough"},
-    {"value": "shelter", "label": "Shelter"},
-    {"value": "hiddenHomelessness", "label": "Hidden Homelessness"},
-    {"value": "privateMarket", "label": "Private Market"},
-    {"value": "subsidizedHousing", "label": "Subsidized Housing"},
-    {"value": "singleRoomOccupancy", "label": "Single Room Occupancy"},
-    {"value": "supportiveHousing", "label": "Supportive Housing"},
-    {"value": "transitionalHousing", "label": "Transitional Housing"},
-    {"value": "other", "label": "Other"},
-]
-
-REFERRAL_CONNECTION_OPTIONS = [
-    "Current Participant",
-    "Former Participant",
-    "New Referral",
-    "Guest of current participant",
-]
 
 participant_information = {
     "label": "Participant Information",
