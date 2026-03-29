@@ -19,6 +19,26 @@ GENERAL_MILESTONES = {
 
 ADMIN_EMAIL = "admin@test.com"
 ADMIN_PASSWORD = "test"
+ADMIN_MFA_SECRET = "JBSWY3DPEHPK3PXP"
+
+
+def complete_test_login(client):
+    """Password login + MFA so JWT cookies are set (matches production flow)."""
+    import pyotp
+
+    resp = client.post("/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+    assert resp.status_code == 200
+    body = resp.get_json()
+    if body.get("mfaRequired"):
+        totp = pyotp.TOTP(ADMIN_MFA_SECRET)
+        resp = client.post(
+            "/login/mfa",
+            json={"mfaSession": body["mfaSession"], "otp": totp.now()},
+        )
+        assert resp.status_code == 200, resp.get_json()
+    elif body.get("setupRequired"):
+        raise AssertionError("Test admin must have mfaEnabled and mfaSecret (see insert_admin)")
+    return resp
 
 
 def reset_db():
@@ -34,10 +54,12 @@ def insert_admin(app):
         db.staff.insert_one(
             {
                 "email": ADMIN_EMAIL,
-                "password_hash": bcrypt.generate_password_hash(ADMIN_PASSWORD).decode("utf-8"),
+                "passwordHash": bcrypt.generate_password_hash(ADMIN_PASSWORD).decode("utf-8"),
                 "firstname": "Test",
                 "lastname": "Admin",
                 "role": "admin",
+                "mfaEnabled": True,
+                "mfaSecret": ADMIN_MFA_SECRET,
             }
         )
 
@@ -120,8 +142,7 @@ def auth_client():
     app = create_flask_app()
     insert_admin(app)
     client = app.test_client()
-    resp = client.post("/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
-    assert resp.status_code == 200
+    complete_test_login(client)
     yield client
     client.post("/logout")
     reset_db()
@@ -135,8 +156,7 @@ def seeded_client(num_people=10):
     seed_programs()
     seed_people(num_people)
     client = app.test_client()
-    resp = client.post("/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
-    assert resp.status_code == 200
+    complete_test_login(client)
     yield client
     client.post("/logout")
     reset_db()

@@ -1,4 +1,10 @@
-from test_utils import ADMIN_EMAIL, ADMIN_PASSWORD, auth_client, unauth_client
+from test_utils import (
+    ADMIN_EMAIL,
+    ADMIN_PASSWORD,
+    auth_client,
+    complete_test_login,
+    unauth_client,
+)
 
 
 def test_logout():
@@ -12,9 +18,10 @@ def test_logout():
 def test_login_success():
     with auth_client() as client:
         client.post("/logout")
-        resp = client.post("/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+        complete_test_login(client)
+        resp = client.get("/me")
         assert resp.status_code == 200
-        test_me()
+        assert resp.json["user"]["email"] == ADMIN_EMAIL
 
 
 def test_login_failure():

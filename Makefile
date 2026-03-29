@@ -1,4 +1,7 @@
-.PHONY: build test lint up down logs clean
+.PHONY: build test lint up down logs clean install
+
+install:
+	$(MAKE) -C backend install
 
 build:
 	$(MAKE) -C backend build

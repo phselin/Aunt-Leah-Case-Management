@@ -1,4 +1,4 @@
-.PHONY: build up down logs test lint clean
+.PHONY: build up down logs test lint clean install
 
 COMPOSE ?= docker compose -f compose.yaml
 PYTHON ?= python3
@@ -16,6 +16,9 @@ $(VENV_BIN)/python:
 $(VENV_MARK): requirements.txt | $(VENV_BIN)/python
 	$(PIP) install -r requirements.txt
 	touch $(VENV_MARK)
+
+install: $(VENV_MARK)
+	@echo "Dependencies installed in $(VENV). Example: MONGO_URI=mongomock://localhost/auntleah PYTHONPATH=src $(PYTEST) -q"
 
 build:
 ifeq ($(DOCKER_OK),yes)

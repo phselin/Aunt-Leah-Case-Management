@@ -32,8 +32,8 @@ def get_clients():
             return ""
 
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=datetime.UTC)
-        return dt.astimezone(datetime.UTC).isoformat().replace("+00:00", "Z")
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt.astimezone(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
     def person_uuid(person: dict[str, Any]) -> str:
         raw = person.get("id") or person.get("uuid")

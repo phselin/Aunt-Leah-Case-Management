@@ -1,18 +1,19 @@
 from test_utils import auth_client, seed_programs, seeded_client
 
 
+def _housing_person_json(firstname: str, lastname: str):
+    return {
+        "firstname": firstname,
+        "lastname": lastname,
+        "programs": ["Housing"],
+        "programMilestones": {"Housing": {"general": {"value": "homeless"}}},
+    }
+
+
 def test_person_workflow():
     with auth_client() as client:
         seed_programs()
-        resp = client.post(
-            "/people",
-            json={
-                "firstname": "John",
-                "lastname": "Doe",
-                "programs": ["Housing"],
-                "status": {"Housing": {"general": {"value": "homeless"}}},
-            },
-        )
+        resp = client.post("/people", json=_housing_person_json("John", "Doe"))
         assert resp.status_code == 201
         pid = resp.json["_id"]
 
@@ -22,12 +23,7 @@ def test_person_workflow():
 
         resp = client.put(
             f"/people/{pid}",
-            json={
-                "firstname": "Jane",
-                "lastname": "Doe",
-                "programs": ["Housing"],
-                "status": {"Housing": {"general": {"value": "homeless"}}},
-            },
+            json=_housing_person_json("Jane", "Doe"),
         )
         assert resp.status_code == 200
         assert resp.json["firstname"] == "Jane"
@@ -37,15 +33,15 @@ def test_person_workflow():
             json={"program": "Housing", "type": "general", "milestone": "shelter"},
         )
         assert resp.status_code == 200
-        assert resp.json["status"]["Housing"]["general"]["value"] == "shelter"
+        assert resp.json["programMilestones"]["Housing"]["general"]["value"] == "shelter"
 
         resp = client.post(
-            "/casenotes",
-            json={"personid": pid, "date": "2025-03-15", "content": "Moved to shelter"},
+            f"/people/{pid}/casenotes",
+            json={"date": "2025-03-15", "content": "Moved to shelter"},
         )
         assert resp.status_code == 200
 
-        resp = client.get(f"/casenotes?person={pid}")
+        resp = client.get(f"/people/{pid}/casenotes")
         assert resp.status_code == 200
         assert len(resp.json) == 1
 
@@ -61,15 +57,7 @@ def test_person_workflow():
 
 def test_stats_change_on_milestone_updates():
     with seeded_client(num_people=50) as client:
-        resp = client.post(
-            "/people",
-            json={
-                "firstname": "John",
-                "lastname": "Doe",
-                "programs": ["Housing"],
-                "status": {"Housing": {"general": {"value": "homeless"}}},
-            },
-        )
+        resp = client.post("/people", json=_housing_person_json("John", "Doe"))
         pid = resp.json["_id"]
 
         stats_before = client.get("/stats").json

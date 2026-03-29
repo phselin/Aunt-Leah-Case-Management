@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
 import pandas
@@ -231,16 +231,21 @@ def create_person():
     return jsonify(person_json), 201
 
 
-# @people_bp.delete("/people/<id>")
-# @jwt_required()
-# def delete_person(id):
-#     try:
-#         oid = ObjectId(id)
-#     except InvalidId:
-#         return jsonify({"detail": "Invalid client ID format"}), 400
+@people_bp.delete("/people/<id>")
+@jwt_required()
+def delete_person(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
 
-#     db.people.delete_one({"_id": oid})
-#     return jsonify({"detail": "Client deleted successfully"}), 200
+    if not is_admin():
+        return jsonify({"detail": "Access denied"}), 403
+
+    res = db.people.delete_one({"_id": oid})
+    if res.deleted_count == 0:
+        return jsonify({"detail": "Client not found"}), 404
+    return jsonify({"detail": "Client deleted successfully"}), 200
 
 
 @people_bp.put("/people/<id>/milestones")
@@ -288,11 +293,11 @@ def update_milestones(id):
     milestone_update = {
         f"programMilestones.{program}.{type}": {
             "value": milestone,
-            "lastUpdateDate": datetime.now(UTC),
+            "lastUpdateDate": datetime.now(timezone.utc),
             "startDate": (
                 milestone_in_db["startDate"]
                 if milestone_in_db and milestone_in_db.get("startDate")
-                else datetime.now(UTC)
+                else datetime.now(timezone.utc)
             ),
         }
     }

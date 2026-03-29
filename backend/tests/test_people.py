@@ -16,7 +16,10 @@ def test_create_person():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing", "Education"],
-                "status": {"Housing": {"general": {"value": "homeless"}}},
+                "programMilestones": {
+                    "Housing": {"general": {"value": "homeless"}},
+                    "Education": {"general": {"value": "F"}},
+                },
             },
         )
         assert resp.status_code == 201
@@ -54,7 +57,9 @@ def test_create_person_invalid_status():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Education"],
-                "status": {"Housing": {"general": "homeless"}},
+                "programMilestones": {
+                    "Education": {"general": {"value": "not_a_valid_milestone"}},
+                },
             },
         )
         assert resp.status_code == 400
@@ -64,7 +69,9 @@ def test_create_person_invalid_status():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Education"],
-                "status": {"Education": {"general": "highschool"}},  # not a valid milestone
+                "programMilestones": {
+                    "Education": {"general": {"value": "highschool"}},
+                },
             },
         )
         assert resp.status_code == 400
@@ -131,7 +138,9 @@ def test_update_milestones():
                 "firstname": "John",
                 "lastname": "Doe",
                 "programs": ["Housing"],
-                "status": {"Housing": {"general": {"value": "homeless"}}},
+                "programMilestones": {
+                    "Housing": {"general": {"value": "homeless"}},
+                },
             },
         )
         pid = resp.json["_id"]
@@ -141,4 +150,4 @@ def test_update_milestones():
             json={"program": "Housing", "type": "general", "milestone": "shelter"},
         )
         assert resp.status_code == 200
-        assert resp.json["status"]["Housing"]["general"]["value"] == "shelter"
+        assert resp.json["programMilestones"]["Housing"]["general"]["value"] == "shelter"

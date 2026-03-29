@@ -1,6 +1,6 @@
 import re
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pyotp
 from bson import ObjectId, json_util
@@ -16,7 +16,6 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
 )
 from password_strength import PasswordPolicy
-from pymongo.synchronous.collection import ReturnDocument
 
 from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.db import db, redis_client
@@ -86,6 +85,20 @@ def sanitizeEmail(email):
     return email
 
 
+def _normalize_otp(raw) -> str:
+    """Digits only; authenticators send 6-digit codes (see frontend OtpInput)."""
+    if raw is None:
+        return ""
+    return "".join(c for c in str(raw) if c.isdigit())
+
+
+def _verify_totp(totp: pyotp.TOTP, otp_raw) -> bool:
+    code = _normalize_otp(otp_raw)
+    if len(code) != 6:
+        return False
+    return bool(totp.verify(code, valid_window=1))
+
+
 @auth_bp.post("/login")
 @limiter.limit("5 per minute")
 def login():
@@ -134,13 +147,21 @@ def login_mfa():
     session = data.get("mfaSession")
     otp = data.get("otp")
     id = redis_client.get(f"mfaSession:{session}")
+    if not session or not id:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
 
-    user = db.staff.find_one({"_id": ObjectId(id)})
+    user = db.staff.find_one({"_id": oid})
     if not user:
         return jsonify({"detail": "User not found"}), 404
+    if not user.get("mfaSecret"):
+        return jsonify({"detail": "MFA not configured"}), 400
 
     totp = pyotp.TOTP(user["mfaSecret"])
-    if totp.verify(otp):
+    if _verify_totp(totp, otp):
         access_token = create_access_token(identity=str(user["_id"]))
         resp = jsonify(
             {
@@ -167,12 +188,26 @@ def setup_mfa():
     data = request.get_json()
     session = data.get("mfaSession")
     id = redis_client.get(f"mfaSession:{session}")
-    secret = pyotp.random_base32()
-    staff = db.staff.find_one_and_update(
-        {"_id": ObjectId(id)},
-        {"$set": {"mfaSecret": secret, "mfaEnabled": False}},
-        return_document=ReturnDocument.AFTER,
-    )
+    if not session or not id:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
+
+    staff = db.staff.find_one({"_id": oid})
+    if not staff:
+        return jsonify({"detail": "User not found"}), 404
+
+    if staff.get("mfaSecret") and not staff.get("mfaEnabled"):
+        secret = staff["mfaSecret"]
+    else:
+        secret = pyotp.random_base32()
+        db.staff.update_one(
+            {"_id": staff["_id"]},
+            {"$set": {"mfaSecret": secret, "mfaEnabled": False}},
+        )
+
     totp = pyotp.TOTP(secret)
     provisioning_url = totp.provisioning_uri(name=staff["email"], issuer_name="AuntLeahs")
     return jsonify({"uri": provisioning_url})
@@ -187,8 +222,18 @@ def confirm_mfa():
     pwd = data.get("password")
 
     id = redis_client.get(f"mfaSession:{session}")
+    if not session or not id:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "MFA session expired or invalid"}), 401
 
-    user = db.staff.find_one({"_id": ObjectId(id)})
+    user = db.staff.find_one({"_id": oid})
+    if not user:
+        return jsonify({"detail": "User not found"}), 404
+    if not user.get("mfaSecret"):
+        return jsonify({"detail": "MFA not configured"}), 400
 
     # uncomment this for a stricted password check
     # if policy.test(pwd) != []:
@@ -199,7 +244,7 @@ def confirm_mfa():
     #     ), 400
 
     totp = pyotp.TOTP(user["mfaSecret"])
-    if totp.verify(otp):
+    if _verify_totp(totp, otp):
         db.staff.update_one(
             {"_id": user["_id"]},
             {
@@ -264,7 +309,7 @@ def me():
 def refresh_expiring_jwt(response):
     try:
         exp = get_jwt()["exp"]
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
 
         if datetime.timestamp(now + timedelta(minutes=10)) > exp:
             access_token = create_access_token(identity=get_jwt_identity())
