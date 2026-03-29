@@ -1,4 +1,3 @@
-import re
 from datetime import date
 
 from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
@@ -16,6 +15,11 @@ from backend_app.intake_form_options import (
     HOUSING_STATUS_OPTIONS,
     LOCATION_OPTIONS,
     REFERRAL_CONNECTION_OPTIONS,
+)
+from backend_app.schemas.utils import (
+    validate_name_util,
+    validate_phone_util,
+    validate_programs_util,
 )
 
 
@@ -210,16 +214,8 @@ class Person(BaseModel):
 
     @field_validator("firstname", "lastname")
     @classmethod
-    def sanitize_name(cls, value: str) -> str:
-        value = value.strip().title()
-        if not value:
-            raise ValueError("name cannot be empty")
-        if len(value) > 100:
-            raise ValueError("name is too long")
-        # special char ai-gen, i don't know which characters to allow
-        if not re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$").match(value):
-            raise ValueError("Name contains invalid characters")
-        return value
+    def validate_name(cls, value: str) -> str:
+        return validate_name_util(cls, value)
 
     @field_validator("gender")
     @classmethod
@@ -235,32 +231,15 @@ class Person(BaseModel):
             raise ValueError(f"'{value}' is not a valid contact method")
         return value
 
-    # very strict right now, only accepts canadian numbers
     @field_validator("phone")
     @classmethod
-    def sanitize_phone(cls, value: str | None) -> str | None:
-        if not value:
-            return None
-
-        digits = re.sub(r"\D", "", value)
-
-        if len(digits) == 11:
-            if digits[0] != "1":
-                raise ValueError("Invalid phone number. Wrong country code")
-            return f"+{digits}"
-
-        raise ValueError("Invalid phone number")
+    def validate_phone(cls, value: str | None) -> str | None:
+        return validate_phone_util(cls, value)
 
     @field_validator("programs")
     @classmethod
     def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
-        valid_programs_structure = (
-            info.context.get("valid_programs_structure", []) if info.context else []
-        )
-        for program in value:
-            if program not in valid_programs_structure:
-                raise ValueError(f"{program} is not a valid program")
-        return value
+        return validate_programs_util(cls, value, info)
 
     @field_validator("programMilestones")
     @classmethod

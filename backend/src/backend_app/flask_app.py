@@ -16,6 +16,7 @@ from backend_app.routes.pdf import pdf_bp
 from backend_app.routes.people import people_bp
 from backend_app.routes.programs import programs_bp
 from backend_app.routes.sections import sections_bp
+from backend_app.routes.staff import staff_bp
 
 
 def create_flask_app() -> Flask:
@@ -54,6 +55,7 @@ def create_flask_app() -> Flask:
     app.register_blueprint(casenotes_bp)
     app.register_blueprint(sections_bp)
     app.register_blueprint(programs_bp)
+    app.register_blueprint(staff_bp)
 
     return app
 
