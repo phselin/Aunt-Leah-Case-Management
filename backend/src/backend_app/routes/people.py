@@ -8,7 +8,6 @@ from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
-from flask import request
 
 from backend_app import intake_form
 from backend_app.auth_init import limiter
@@ -70,7 +69,7 @@ def get_people():
 def export_people():
     if not is_admin():
         return jsonify({"detail": "Access denied"}), 403
-    
+
     try:
         # 1. Pull the filter strings from the request URL
         programs_raw = request.args.get("programs", "")
@@ -89,7 +88,7 @@ def export_people():
         if search_query:
             mongo_filter["$or"] = [
                 {"firstname": {"$regex": search_query, "$options": "i"}},
-                {"lastname": {"$regex": search_query, "$options": "i"}}
+                {"lastname": {"$regex": search_query, "$options": "i"}},
             ]
 
         # 5. Pass the filter into the find() method
