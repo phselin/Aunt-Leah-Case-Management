@@ -67,7 +67,7 @@ const ActionButton = styled.button<{ $clientActive?: boolean }>`
   font-family: "Inter", sans-serif;
   font-size: 13px;
   font-weight: 600;
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid
     ${(props) => (props.$clientActive ? "#FCA5A5" : "#6EE7B7")};
@@ -79,6 +79,7 @@ const ActionButton = styled.button<{ $clientActive?: boolean }>`
   background: ${(props) =>
     props.$clientActive ? "#FEE2E2" : "#E1FCEF"};
   transition: background 0.2s ease;
+
   &:hover {
     background: ${(props) =>
       props.$clientActive ? "#FECACA" : "#D1FAE5"};

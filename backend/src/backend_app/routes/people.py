@@ -15,6 +15,7 @@ from backend_app.db import db
 from backend_app.routes.routes_utils import (
     get_current_user_programs,
     get_formatted_error,
+    get_program_filter,
     get_programs_structure,
     is_admin,
     remove_empty,
@@ -34,9 +35,10 @@ def get_intake_form():
 @jwt_required()
 def get_people():
     person = request.args.get("person", "").strip()
-    query = {}
-    # uncomment this if we want to prevent unauthorized client searches
-    # query = get_program_filter()
+    query = get_program_filter()  # comment this for less strict RBAC
+    if not is_admin():
+        query["active"] = True
+
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
@@ -100,13 +102,15 @@ def get_person(id):
     if not person:
         return jsonify({"detail": "Client not found"}), 404
 
-    # uncomment this if we want to prevent staff members from viewing
-    # if (
-    #     not is_admin()
-    #     and person.get("programs")
-    #     and not any(p in person.get("programs", []) for p in get_current_user_programs())
-    # ):
-    #     return jsonify({"detail": "Access denied"}), 403
+    # comment this for less strict RBAC but still check for active or not
+    if not is_admin() and (
+        (
+            person.get("programs")
+            and not any(p in person.get("programs", []) for p in get_current_user_programs())
+        )
+        or not person.get("active")
+    ):
+        return jsonify({"detail": "Access denied"}), 403
 
     person["_id"] = str(person["_id"])
     return jsonify(person), 200
@@ -308,6 +312,35 @@ def update_milestones(id):
         {"$set": milestone_update},
         return_document=ReturnDocument.AFTER,
     )
+
+    res["_id"] = str(res["_id"])
+    return jsonify(res), 200
+
+
+@people_bp.patch("/people/<id>/active")
+@jwt_required()
+def update_person_active(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    if not is_admin():
+        return jsonify({"detail": "Access denied"}), 403
+
+    body = request.get_json(silent=True) or {}
+
+    if "active" not in body or not isinstance(body["active"], bool):
+        return jsonify({"detail": "active should be boolean"}), 400
+
+    res = db.people.find_one_and_update(
+        {"_id": oid},
+        {"$set": {"active": body["active"]}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+    if not res:
+        return jsonify({"detail": "Client not found"}), 404
 
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
