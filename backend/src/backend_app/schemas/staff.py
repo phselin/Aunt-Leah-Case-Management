@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, ValidationError, ValidationInfo, field_validator
+from pydantic import BaseModel, EmailStr, Field, ValidationInfo, field_validator
 
 from backend_app.schemas.utils import (
     validate_email_util,
@@ -16,40 +16,26 @@ class Staff(BaseModel):
     role: Literal["admin", "super-admin", "staff"]
     phone: str | None = None
     email: EmailStr
-    activate: bool = True
+    active: bool = True
     programs: list[str] = Field(default_factory=list)
     mfaEnabled: bool = False
-    mfaSecret: str | None = None
 
+    @field_validator("firstname", "lastname")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        return validate_name_util(value)
 
-@field_validator("firstname", "lastname")
-@classmethod
-def validate_name(cls, value: str) -> str:
-    return validate_name_util(cls, value)
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value: str | None) -> str | None:
+        return validate_phone_util(value)
 
+    @field_validator("programs")
+    @classmethod
+    def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
+        return validate_programs_util(value, info)
 
-@field_validator("phone")
-@classmethod
-def validate_phone(cls, value: str | None) -> str | None:
-    return validate_phone_util(value)
-
-
-@field_validator("programs")
-@classmethod
-def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
-    return validate_programs_util(value, info)
-
-
-@field_validator("email")
-@classmethod
-def validate_email(cls, value: EmailStr) -> EmailStr:
-    return validate_email_util(value)
-
-
-@field_validator("mfaSecret")
-@classmethod
-def validate_mfa_secret(cls, value: str | None, info: ValidationInfo) -> str | None:
-    mfa_enabled = info.data.get("mfaEnabled")
-    if mfa_enabled and not value:
-        return ValidationError("mfaSecret is required when mfaEnabled is true")
-    return value
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: EmailStr) -> EmailStr:
+        return validate_email_util(value)

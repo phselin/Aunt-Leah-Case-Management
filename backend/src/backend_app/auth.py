@@ -114,7 +114,7 @@ def login():
     except ValueError:
         return jsonify({"detail": "Invalid email format"}), 400
 
-    user = db.staff.find_one({"email": email})
+    user = db.staff.find_one({"email": email, "active": True})
     if not user:
         return jsonify({"detail": "Invalid credentials"}), 401
 
@@ -154,7 +154,7 @@ def login_mfa():
     except InvalidId:
         return jsonify({"detail": "MFA session expired or invalid"}), 401
 
-    user = db.staff.find_one({"_id": oid})
+    user = db.staff.find_one({"_id": oid, "active": True})
     if not user:
         return jsonify({"detail": "User not found"}), 404
     if not user.get("mfaSecret"):
@@ -229,7 +229,7 @@ def confirm_mfa():
     except InvalidId:
         return jsonify({"detail": "MFA session expired or invalid"}), 401
 
-    user = db.staff.find_one({"_id": oid})
+    user = db.staff.find_one({"_id": oid, "active": True})
     if not user:
         return jsonify({"detail": "User not found"}), 404
     if not user.get("mfaSecret"):
