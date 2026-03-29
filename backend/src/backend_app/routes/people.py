@@ -147,7 +147,7 @@ def update_person(id):
     person_json_with_null = person.model_dump(mode="json")
     person_json = remove_empty(person.model_dump(exclude_none=True, mode="json"))
 
-    if not is_admin() and person_in_db.get("programs"):
+    if not is_admin():
         # definitely a better way to do this
         current_user_programs = set(get_current_user_programs())
         db_milestone_programs = set(person_in_db.get("programMilestones", {}).keys())
@@ -157,11 +157,12 @@ def update_person(id):
         changed = new_programs != db_programs
         removed = db_programs - new_programs
         added = new_programs - db_programs
-        changed_milestone_programs = new_milestone_programs != db_programs
+        changed_milestone_programs = new_milestone_programs != db_milestone_programs
         removed_milestone_programs = db_milestone_programs - new_milestone_programs
         added_milestone_programs = new_milestone_programs - db_milestone_programs
         if (
-            not any(p in person_in_db.get("programs", []) for p in current_user_programs)
+            (not db_programs and not (added <= current_user_programs))
+            or (db_programs and not any(p in db_programs for p in current_user_programs))
             or person_in_db.get("active") != person_json_with_null.get("active")
             or (
                 changed
