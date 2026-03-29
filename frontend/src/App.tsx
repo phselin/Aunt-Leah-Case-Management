@@ -1,18 +1,18 @@
-import Navbar from "./components/Navbar";
-import { Route, Routes, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
-import GlobalStyle from "./GlobalStyles";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AppContainer } from "./AppElement";
+import Navbar from "./components/Navbar";
 import AuthContext from "./context/AuthProvider";
+import GlobalStyle from "./GlobalStyles";
 import muiTheme from "./theme/muiTheme";
 
-import Home from "./pages/index";
-import Client from "./pages/client";
-import Report from "./pages/report";
-import Login from "./pages/login";
 import { useContext } from "react";
-import ClientModal from "./pages/clientModal";
 import Admin from "./pages/admin";
+import Client from "./pages/client";
+import ClientModal from "./pages/clientModal";
+import Home from "./pages/index";
+import Login from "./pages/login";
+import Report from "./pages/report";
 
 function App() {
   const { auth } = useContext(AuthContext);

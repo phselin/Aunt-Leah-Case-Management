@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Outlet, useParams } from "react-router-dom";
 import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 
+import styled from "styled-components";
+import api from "../api";
+import { ErrorBox } from "../components/client/modal/clientElement";
+import type { Person } from "../components/client/person";
 import ClientHeader from "../components/client/search/clientHeader";
 import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
-import type { Person } from "../components/client/person";
-import api from "../api";
-import styled from "styled-components";
-import { ErrorBox } from "../components/client/modal/clientElement";
+import AuthContext from "../context/AuthProvider";
 
 const PageContainer = styled.div`
   background-color: #f9fafb;
@@ -42,7 +43,7 @@ const TableSection = styled.div`
 
 const Client = () => {
   const navigate = useNavigate();
-
+  const {auth} = useContext(AuthContext)
   const [query, setQuery] = useState("");
   const { id } = useParams();
   const [debounceQuery, setDebounceQuery] = useState("");
@@ -130,6 +131,15 @@ const Client = () => {
     }
   };
 
+  const handleToggleActive = async (id: string, active: boolean) => {
+  try {
+    // backend endpoint
+    setPeople(prev => prev.map(p => p._id === id ? { ...p, active: active } : p));
+  } catch (err) {
+    setErrMsg("Failed to update status")
+  }
+};
+
   // return (
   //   <div className="clientPage">
   //     {errMsg && (
@@ -180,8 +190,10 @@ const Client = () => {
 
           <ClientTable
             people={people}
+            auth={auth}
             onClick={(pid) => navigate(`/client/${pid}`)}
             onError={(msg) => setErrMsg(msg)}
+            onToggleActive={(pid, active) => handleToggleActive(pid, active)}
           />
         </TableSection>
       </ContentArea>

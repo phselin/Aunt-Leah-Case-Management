@@ -56,6 +56,7 @@ def seed_db():
             "email": "admin@auntleah.org",
             "passwordHash": hash_pwd("password"),
             "mfaEnabled": False,
+            "active": True,
         }
     )
 
@@ -68,6 +69,7 @@ def seed_db():
             "email": "gkiczales@auntleah.org",
             "passwordHash": hash_pwd("trustTheNaturalRecursion"),
             "mfaEnabled": False,
+            "active": True,
         }
     )
 
@@ -81,6 +83,7 @@ def seed_db():
             "passwordHash": hash_pwd("12345"),
             "programs": ["Education", "Housing"],
             "mfaEnabled": False,
+            "active": True,
         }
     )
 
@@ -93,6 +96,7 @@ def seed_db():
             "email": faker.free_email(),
             "programs": random.sample(PROGRAMS, k=random.randint(1, 2)),
             "mfaEnabled": False,
+            "active": True,
         }
         db.staff.insert_one(staff_member)
 

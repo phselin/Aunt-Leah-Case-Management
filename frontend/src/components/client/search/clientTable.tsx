@@ -1,6 +1,6 @@
 import styled from "styled-components";
-import type { Person } from "../person";
 import { Label } from "../modal/clientElement";
+import type { Person } from "../person";
 
 const TableContainer = styled.div`
   border: 1px solid #e5e7eb;
@@ -10,12 +10,16 @@ const TableContainer = styled.div`
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 `;
 
-const TableRow = styled.div<{ $isHeader?: boolean }>`
+const TableRow = styled.div<{ $isHeader?: boolean; $hasActions?: boolean }>`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.5fr;
+  grid-template-columns: ${(props) =>
+    props.$hasActions
+      ? "1fr 1fr 1fr 1fr 1fr 0.7fr 0.5fr"
+      : "1fr 1fr 1fr 1fr 1fr 0.7fr"};
   gap: 16px;
   padding: 12px 24px;
   align-items: center;
+  justify-items: start;
   background: ${(props) => (props.$isHeader ? "#FDFDFD" : "#FFFFFF")};
   border-bottom: 1px solid #f3f4f6;
 
@@ -59,13 +63,39 @@ const StatusChip = styled.span<{ active?: boolean }>`
   width: fit-content;
 `;
 
+const ActionButton = styled.button<{ $clientActive?: boolean }>`
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid
+    ${(props) => (props.$clientActive ? "#FCA5A5" : "#6EE7B7")};
+  cursor: pointer;
+  width: 110px;            
+  text-align: center;     
+  color: ${(props) =>
+    props.$clientActive ? "#991B1B" : "#14532D"};
+  background: ${(props) =>
+    props.$clientActive ? "#FEE2E2" : "#E1FCEF"};
+  transition: background 0.2s ease;
+  &:hover {
+    background: ${(props) =>
+      props.$clientActive ? "#FECACA" : "#D1FAE5"};
+  }
+`;
+
 type Props = {
   people: Person[];
+  auth: { user?: { role?: string } }; 
   onClick: (id: string) => void;
   onError: (msg: string) => void;
+  onToggleActive: (id: string, active: boolean) => void; 
 };
 
-const ClientTable = ({ people, onClick, onError }: Props) => {
+const ClientTable = ({ people, auth, onClick, onError, onToggleActive }: Props) => {
+  const isSuperAdmin = auth?.user?.role === "super-admin";
+
   const nameOf = (p: Person) =>
     `${p.firstname ?? ""} ${p.lastname ?? ""}`.trim();
 
@@ -86,18 +116,20 @@ const ClientTable = ({ people, onClick, onError }: Props) => {
 
   return (
     <TableContainer>
-      <TableRow $isHeader>
+      <TableRow $isHeader $hasActions={isSuperAdmin}>
         <Label>Name</Label>
         <Label>Email</Label>
         <Label>Phone</Label>
         <Label>Location</Label>
         <Label>Referral Date</Label>
         <Label>Status</Label>
+        {isSuperAdmin && <Label>Action</Label>}
       </TableRow>
 
       {people.map((p) => (
         <TableRow
           key={p._id}
+          $hasActions={isSuperAdmin}
           onClick={(e) => {
             if (!p._id) {
               return onError("No such client exists");
@@ -117,6 +149,19 @@ const ClientTable = ({ people, onClick, onError }: Props) => {
           <StatusChip active={p.active}>
             {p.active ? "Active" : "InActive"}
           </StatusChip>
+          
+          {isSuperAdmin && (
+            <ActionButton
+              $clientActive={p.active}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!p._id) return onError("No such client exists");
+                onToggleActive?.(p._id, !p.active); 
+              }}
+            >
+              {p.active ? "Deactivate" : "Activate"}
+            </ActionButton>
+          )}
         </TableRow>
       ))}
     </TableContainer>
