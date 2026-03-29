@@ -17,6 +17,7 @@ from backend_app.intake_form_options import (
     REFERRAL_CONNECTION_OPTIONS,
 )
 from backend_app.schemas.utils import (
+    validate_email_util,
     validate_name_util,
     validate_phone_util,
     validate_programs_util,
@@ -215,7 +216,7 @@ class Person(BaseModel):
     @field_validator("firstname", "lastname")
     @classmethod
     def validate_name(cls, value: str) -> str:
-        return validate_name_util(cls, value)
+        return validate_name_util(value)
 
     @field_validator("gender")
     @classmethod
@@ -234,12 +235,17 @@ class Person(BaseModel):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: str | None) -> str | None:
-        return validate_phone_util(cls, value)
+        return validate_phone_util(value)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: EmailStr) -> EmailStr:
+        return validate_email_util(value)
 
     @field_validator("programs")
     @classmethod
     def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
-        return validate_programs_util(cls, value, info)
+        return validate_programs_util(value, info)
 
     @field_validator("programMilestones")
     @classmethod

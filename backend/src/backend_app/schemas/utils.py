@@ -1,9 +1,9 @@
 import re
 
-from pydantic import ValidationInfo
+from pydantic import EmailStr, ValidationInfo
 
 
-def validate_name_util(cls, value: str) -> str:
+def validate_name_util(value: str) -> str:
     value = value.strip().title()
     if not value:
         raise ValueError("name cannot be empty")
@@ -16,7 +16,7 @@ def validate_name_util(cls, value: str) -> str:
 
 
 # very strict right now, only accepts canadian numbers
-def validate_phone_util(cls, value: str | None) -> str | None:
+def validate_phone_util(value: str | None) -> str | None:
     if not value:
         return None
 
@@ -30,7 +30,7 @@ def validate_phone_util(cls, value: str | None) -> str | None:
     raise ValueError("Invalid phone number")
 
 
-def validate_programs_util(cls, value: list[str], info: ValidationInfo) -> list[str]:
+def validate_programs_util(value: list[str], info: ValidationInfo) -> list[str]:
     valid_programs_structure = (
         info.context.get("valid_programs_structure", []) if info.context else []
     )
@@ -38,3 +38,7 @@ def validate_programs_util(cls, value: list[str], info: ValidationInfo) -> list[
         if program not in valid_programs_structure:
             raise ValueError(f"{program} is not a valid program")
     return value
+
+
+def validate_email_util(value: EmailStr) -> EmailStr:
+    return EmailStr(value.strip().lower())

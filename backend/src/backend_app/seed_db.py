@@ -65,7 +65,7 @@ def seed_db():
             "lastname": "Kiczales",
             "role": "admin",
             "phone": faker.numerify(text="+1$#########"),
-            "email": "GKiczales@auntleah.org",
+            "email": "gkiczales@auntleah.org",
             "passwordHash": hash_pwd("trustTheNaturalRecursion"),
             "mfaEnabled": False,
         }

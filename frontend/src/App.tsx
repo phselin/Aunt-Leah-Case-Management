@@ -12,6 +12,7 @@ import Report from "./pages/report";
 import Login from "./pages/login";
 import { useContext } from "react";
 import ClientModal from "./pages/clientModal";
+import Admin from "./pages/admin";
 
 function App() {
   const { auth } = useContext(AuthContext);
@@ -38,7 +39,8 @@ function App() {
           {auth.user?.role != "staff" && (
             <Route path="/report" element={<Report />} />
           )}
-          <Route path="*" element={<Navigate to="/home"></Navigate>} />
+          {auth.user?.role == "super-admin" && <Route path="/admin" element={<Admin />} />}
+          <Route path="*" element={<Navigate to="/home"></Navigate>} /> 
         </Routes>
       </AppContainer>
     </ThemeProvider>

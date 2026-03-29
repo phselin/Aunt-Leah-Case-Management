@@ -45,6 +45,7 @@ const Navbar = () => {
         <NavLink to="/home">Home</NavLink>
         <NavLink to="/client">Client</NavLink>
         {auth.user?.role != "staff" && <NavLink to="/report">Report</NavLink>}
+        {auth.user?.role == "super-admin" && <NavLink to="/admin">Admin</NavLink>}
       </NavMenu>
 
       <NavBtn>
@@ -63,6 +64,7 @@ const Navbar = () => {
             Report
           </NavLink>
         )}
+        {auth.user?.role == "super-admin" && <NavLink to="/admin">Admin</NavLink>}
         <NavBtnLink onClick={handleLogout} style={{ marginTop: "10px" }}>
           Log Out
         </NavBtnLink>
