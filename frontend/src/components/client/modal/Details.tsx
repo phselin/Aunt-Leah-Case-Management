@@ -217,6 +217,40 @@ const Details = ({
         return (
           <FormRow key={path}>
             <Label>{label}</Label>
+            <Controller
+              name={path as any}
+              control={control}
+              render={({ field: { value, onChange, ...rest } }) => (
+                <Select value={value ?? ""} onChange={onChange} {...rest}>
+                  <option value="">Select</option>
+                  {isObjectOptions
+                    ? objectOpts.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))
+                    : (options as string[]).map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                </Select>
+              )}
+            />
+            <FieldError msg={fieldError(path)} />
+          </FormRow>
+        );
+      }
+
+      case "dropdown2": {
+        const objectOpts = isObjectOptions
+          ? (options as { value: string; label: string }[]).filter(
+              (o) => o.value !== "",
+            )
+          : [];
+        return (
+          <FormRow key={path}>
+            <Label>{label}</Label>
             <Select {...register(path as any)}>
               <option value="" disabled hidden>
                 Select
