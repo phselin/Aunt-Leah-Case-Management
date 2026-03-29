@@ -33,7 +33,7 @@ def get_staff():
         return jsonify({"detail": "Access denied"}), 403
 
     staff = request.args.get("staff", "").strip()
-    query = {}
+    query = {"_id": {"$ne": current_user["_id"]}}
     if staff:
         s = staff.replace(" ", "")
         query["$expr"] = {
