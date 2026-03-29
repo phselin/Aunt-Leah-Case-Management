@@ -76,7 +76,7 @@ const ClientModal = () => {
         display: "flex",
         flexDirection: "column",
         minHeight: "calc(100vh - 80px)",
-        backgroundColor: palette.offWhite,
+        backgroundColor: "#f9fafb",
       }}
     >
       <div style={{ padding: "16px 32px 0" }}>

@@ -14,6 +14,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { palette } from "../../../theme/palette";
 import api from "../../../api";
 import { ChevronLeft, Plus, Eye, Edit2 } from "lucide-react";
+import { PrimaryBtn, SecondaryBtn,FormActions } from "../modal/clientElement";
 
 interface CaseNote {
   _id: string;
@@ -131,25 +132,26 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
   };
 
   return (
-    <div style={{ width: "100%", padding: "20px 0" }}>
-      <button
-        onClick={handleAddNote} // TODO: Swap for a modal open handler if you add a form modal
-        style={{
-          backgroundColor: "#D16B7C",
-          color: "white",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          border: "none",
-          cursor: "pointer",
-          fontWeight: 600,
-          marginBottom: "24px",
-        }}
-      >
-        <Plus size={18} /> Add New Case Note
-      </button>
+    <div style={{ width: "100%"}}>
+        <div style={{ width: "100%"}}> {/* Changed bottom padding to 0 */}
+        <FormActions 
+            style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', // Pushes button to the far right
+                marginTop: '0px',          // Space between the last card and the button
+                paddingBottom: '0px',       // Removes internal bottom spacing
+                marginBottom: '0px'         // Removes external bottom spacing
+            }}
+    >
+   
+        <PrimaryBtn
+            onClick={handleAddNote} // TODO: Swap for a modal open handler if you add a form modal
+            style={{ marginBottom: '16px' }}
+        >
+            <Plus size={18} /> Add New Case Note
+        </PrimaryBtn>
+       </FormActions>
+       </div>
 
       <div
         style={{
@@ -173,7 +175,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
                 backgroundColor: "#FAFAFA",
               }}
             >
-              {["Date", "Category", "Program", "Author", "Actions"].map((h) => (
+              {["Date", "Category", "Program", "Author","Last Updated By", "Actions"].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -183,6 +185,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
                     color: "#9CA3AF",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
+                    textAlign: "left"
                   }}
                 >
                   {h}
@@ -257,11 +260,14 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
                     >
                       {note.author ?? "Unknown"}
                     </td>
+                    <td style={{ padding: "20px 24px", fontSize: "14px", color: "#9CA3AF" }}>
+                        {note.lastupdatedby ?? "Unknown"}
+                    </td>
                     <td style={{ padding: "20px 24px", textAlign: "right" }}>
                       <div
                         style={{
                           display: "flex",
-                          justifyContent: "flex-end",
+                          justifyContent: "flex-start",
                           gap: "16px",
                           color: "#D1D5DB",
                         }}

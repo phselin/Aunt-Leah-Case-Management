@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import PhoneInput from "react-phone-number-input/input";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 import api from "../../../api";
 
 import type {
@@ -28,6 +29,8 @@ import {
 } from "./clientElement";
 
 const HOUSING_INTAKE_LAYOUT = "housing_intake_pdf";
+
+
 
 function renderHousingIntakeSection(
   section: FormSectionConfig,
@@ -62,6 +65,15 @@ type DetailsProps = {
   formConfig: IntakeFormConfig | null;
   onSave?: (data: Person) => void;
 };
+
+const SectionCard = styled.div`
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
 
 const Details = ({
   id,
@@ -365,7 +377,7 @@ const Details = ({
       {localErr && <ErrorBox>{localErr}</ErrorBox>}
       <form onSubmit={handleSubmit(onSubmit)}>
         {formConfig.sections.map((section, i) => (
-          <div key={i}>
+            <SectionCard key={i}>
             <SectionHeader title={section.label} />
             {section.description ? (
               <p
@@ -414,7 +426,7 @@ const Details = ({
                 </>
               )}
             </ClientGrid>
-          </div>
+           </SectionCard>
         ))}
         <FormActions>
           <PrimaryBtn type="submit" disabled={isSubmitting}>
