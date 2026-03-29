@@ -20,11 +20,31 @@ def get_staff():
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
-    staff = list(db.staff.find())
-    for s in staff:
-        s["_id"] = str(s["_id"])
-
-    return jsonify(staff), 200
+    staff = request.args.get("staff", "").strip()
+    query = {}
+    if staff:
+        s = staff.replace(" ", "")
+        query["$expr"] = {
+            "$or": [
+                {
+                    "$regexMatch": {
+                        "input": {"$concat": ["$firstname", "$lastname"]},
+                        "regex": s,
+                        "options": "i",
+                    }
+                },
+                {
+                    "$regexMatch": {
+                        "input": {"$concat": ["$lastname", "$firstname"]},
+                        "regex": s,
+                        "options": "i",
+                    }
+                },
+            ]
+        }
+    return jsonify(
+        [{**s, "_id": str(s["_id"])} for s in list(db.staff.find(query).sort("_id", -1).limit(10))]
+    ), 200
 
 
 @staff_bp.get("/staff/<id>")
