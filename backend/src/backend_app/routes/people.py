@@ -15,6 +15,7 @@ from backend_app.db import db
 from backend_app.routes.routes_utils import (
     get_current_user_programs,
     get_formatted_error,
+    get_program_filter,
     get_programs_structure,
     is_admin,
     remove_empty,
@@ -34,9 +35,9 @@ def get_intake_form():
 @jwt_required()
 def get_people():
     person = request.args.get("person", "").strip()
-    query = {}
-    # uncomment this if we want to prevent unauthorized client searches
-    # query = get_program_filter()
+    # query = {}
+    # comment this if we want to prevent unauthorized client searches
+    query = get_program_filter()
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
