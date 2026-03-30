@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
+from flask import request
 
 from backend_app import intake_form
 from backend_app.auth_init import limiter
@@ -69,10 +70,33 @@ def get_people():
 def export_people():
     if not is_admin():
         return jsonify({"detail": "Access denied"}), 403
+    
     try:
-        data = list(db.people.find({}, {"_id": 0}))
+        # 1. Pull the filter strings from the request URL
+        programs_raw = request.args.get("programs", "")
+        search_query = request.args.get("search", "").strip()
+
+        # 2. Start with an empty filter (find all)
+        mongo_filter = {}
+
+        # 3. Add Program filter if it exists
+        if programs_raw:
+            program_list = programs_raw.split(",")
+            # Matches people who have ALL selected programs in their list
+            mongo_filter["programs"] = {"$all": program_list}
+
+        # 4. Add Search filter if it exists (using your LOWERCASE keys)
+        if search_query:
+            mongo_filter["$or"] = [
+                {"firstname": {"$regex": search_query, "$options": "i"}},
+                {"lastname": {"$regex": search_query, "$options": "i"}}
+            ]
+
+        # 5. Pass the filter into the find() method
+        data = list(db.people.find(mongo_filter, {"_id": 0}))
+
         if not data:
-            return jsonify({"detail": "No data"}), 404
+            return jsonify({"detail": "No data matching filters"}), 404
 
         df = pandas.json_normalize(data)
         for col in df.columns:

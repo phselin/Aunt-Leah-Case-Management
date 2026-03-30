@@ -140,8 +140,12 @@ const Client = () => {
 
     try {
       const res = await api.get("/people/export", {
-        withCredentials: true,
-        responseType: "blob",
+      params: { 
+        programs: selectedPrograms.join(','), 
+        search: debounceQuery 
+      },
+      withCredentials: true,
+      responseType: "blob",
       });
 
       const url = window.URL.createObjectURL(res.data);
