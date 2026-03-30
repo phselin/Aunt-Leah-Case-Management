@@ -1,3 +1,5 @@
+from datetime import date as date_type
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
@@ -7,12 +9,9 @@ from pymongo import ReturnDocument
 from backend_app.db import db
 from backend_app.routes.routes_utils import (
     get_current_user_programs,
-    get_formatted_error,
     get_programs_structure,
     is_admin,
-    remove_empty,
 )
-from backend_app.schemas.casenotes import CaseNote
 
 casenotes_bp = Blueprint("casenotes", __name__)
 
@@ -37,7 +36,7 @@ def get_casenotes(id):
         return jsonify({"detail": "Invalid Object ID"}), 400
 
     query = {"personid": person_oid}
-    # comment this for less strict RBAC
+
     if not is_admin():
         current_user_programs = get_current_user_programs()
         query["programs"] = {"$in": current_user_programs}
@@ -46,11 +45,10 @@ def get_casenotes(id):
 
     if date:
         query["date"] = date
-        casenotes = list(casenote_to_string(casenote) for casenote in db.casenotes.find(query))
+        casenotes = list(casenote_to_string(cn) for cn in db.casenotes.find(query))
     else:
         casenotes = list(
-            casenote_to_string(casenote)
-            for casenote in db.casenotes.find(query).sort("date", -1).limit(20)
+            casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1).limit(20)
         )
     return jsonify(casenotes), 200
 
@@ -65,33 +63,48 @@ def save_casenote(id):
     except InvalidId:
         return jsonify({"detail": "Invalid Object ID"}), 400
 
-    try:
-        casenote = CaseNote.model_validate(
-            body,
-            context={
-                "valid_programs_structure": get_programs_structure(),
-            },
-        )
-    except Exception as e:
-        return jsonify({"detail": "Validation error", "errors": get_formatted_error(e)}), 400
+    content = body.get("content")
+    date_str = body.get("date")
 
-    casenote_json = casenote.model_dump(exclude_none=True, mode="json")
+    if not content or not date_str:
+        return jsonify({"detail": "date and content are required"}), 400
+
+    try:
+        date_val = date_type.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        return jsonify({"detail": "invalid date format"}), 400
+
+    program = body.get("program")
+    if program and program not in get_programs_structure():
+        return jsonify({"detail": f"Program {program} doesn't exist"}), 400
+
+    category = body.get("category")
+
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        if (
-            not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}})
-            or body.get("program") not in current_user_programs
-        ):
+        if not db.people.find_one(
+            {"_id": person_oid, "programs": {"$in": current_user_programs}}
+        ) or (program and program not in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
     author = f"{current_user.get('firstname')} {current_user.get('lastname')}"
-    casenote_json["author"] = author
-    casenote_json["lastUpdatedBy"] = author
 
-    res = db.casenotes.insert_one(casenote_json)
-    casenote_json["_id"] = str(res.inserted_id)
+    casenote_doc = {
+        "personid": person_oid,
+        "date": date_val.isoformat(),
+        "content": content,
+        "author": author,
+        "lastUpdatedBy": author,
+    }
+    if program:
+        casenote_doc["program"] = program
+    if category:
+        casenote_doc["category"] = category
 
-    return jsonify(casenote_to_string(casenote_json)), 201
+    res = db.casenotes.insert_one(casenote_doc)
+    casenote_doc["_id"] = res.inserted_id
+
+    return jsonify(casenote_to_string(casenote_doc)), 201
 
 
 @casenotes_bp.put("/people/<id>/casenotes/<casenoteid>")
@@ -105,30 +118,42 @@ def edit_casenote(id, casenoteid):
     except InvalidId:
         return jsonify({"detail": "Invalid Object ID"}), 400
 
-    try:
-        casenote = CaseNote.model_validate(
-            body, context={"valid_programs_structure": get_programs_structure()}
-        )
-    except Exception as e:
-        return jsonify({"detail": "Validation error", "errors": get_formatted_error(e)}), 400
+    program = body.get("program")
 
     if not is_admin():
+        current_user_programs = get_current_user_programs()
         if not db.people.find_one(
-            {"_id": person_oid, "programs": {"$in": get_current_user_programs()}}
-        ):
+            {"_id": person_oid, "programs": {"$in": current_user_programs}}
+        ) or (program and program not in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
-    casenote_json_with_null = casenote.model_dump(mode="json")
-    casenote_json = remove_empty(casenote.model_dump(exclude_none=True, mode="json"))
-    casenote_json["lastUpdatedBy"] = (
+    update_fields = {}
+
+    if program:
+        update_fields["program"] = program
+
+    content = body.get("content")
+    if content:
+        update_fields["content"] = content
+
+    category = body.get("category")
+    if category:
+        update_fields["category"] = category
+
+    update_fields["lastUpdatedBy"] = (
         f"{current_user.get('firstname')} {current_user.get('lastname')}"
     )
 
-    unset_fields = {field: "" for field in casenote_json_with_null if field not in casenote_json}
-
     query = {}
-    if casenote_json:
-        query["$set"] = casenote_json
+
+    unset_fields = {}
+    if "category" in body and not category:
+        unset_fields["category"] = ""
+    if "program" in body and not program:
+        unset_fields["program"] = ""
+
+    if update_fields:
+        query["$set"] = update_fields
     if unset_fields:
         query["$unset"] = unset_fields
 
@@ -137,6 +162,6 @@ def edit_casenote(id, casenoteid):
     )
 
     if not res:
-        return (jsonify({"detail": "Casenote not found"}),), 404
+        return jsonify({"detail": "Casenote not found"}), 404
 
     return jsonify(casenote_to_string(res)), 200

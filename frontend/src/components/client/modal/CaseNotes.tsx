@@ -197,6 +197,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         date: editForm.date,
         category: editForm.category,
         content: editForm.content,
+        program: editForm.program,
       });
       // Re-fetch to get the new note with its _id
       const res = await api.get(`/people/${personId}/casenotes`);

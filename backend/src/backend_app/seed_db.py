@@ -146,6 +146,7 @@ def seed_db():
                 "content": faker.paragraph(nb_sentences=5),
                 "program": random.choice(PROGRAMS),
                 "author": f"{faker.first_name()} {faker.last_name()}",
+                "lastUpdatedBy": f"{faker.first_name()} {faker.last_name()}",
             }
             case_notes.append(case_note)
 
