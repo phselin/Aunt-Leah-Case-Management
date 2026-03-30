@@ -1,6 +1,7 @@
 import random
 from contextlib import contextmanager
 
+import pyotp
 from faker import Faker
 
 from backend_app.auth_init import bcrypt
@@ -24,8 +25,6 @@ ADMIN_MFA_SECRET = "JBSWY3DPEHPK3PXP"
 
 def complete_test_login(client):
     """Password login + MFA so JWT cookies are set (matches production flow)."""
-    import pyotp
-
     resp = client.post("/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
     assert resp.status_code == 200
     body = resp.get_json()
@@ -47,6 +46,7 @@ def reset_db():
     db.people.delete_many({})
     db.goals.delete_many({})
     db.casenotes.delete_many({})
+    db.calendar_events.delete_many({})
 
 
 def insert_admin(app):
