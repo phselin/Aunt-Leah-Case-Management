@@ -22,6 +22,9 @@ def casenote_oid_to_string(casenote):
 @casenotes_bp.get("/people/<id>/casenotes")
 @jwt_required()
 def get_casenotes(id):
+    body = request.get_json(silent=True) or {}
+    date = body.get("date")
+
     try:
         person_oid = ObjectId(id)
     except (InvalidId, TypeError):
@@ -34,10 +37,16 @@ def get_casenotes(id):
         ):
             return jsonify({"detail": "Access denied"}), 403
 
-    casenotes = list(
-        casenote_oid_to_string(casenote)
-        for casenote in db.casenotes.find({"personid": person_oid}).sort("date", -1)
-    )
+    if date:
+        casenotes = list(
+            casenote_oid_to_string(casenote)
+            for casenote in db.casenotes.find({"personid": person_oid, "date": date})
+        )
+    else:
+        casenotes = list(
+            casenote_oid_to_string(casenote)
+            for casenote in db.casenotes.find({"personid": person_oid}).sort("date", -1).limit(20)
+        )
     return jsonify(casenotes), 200
 
 

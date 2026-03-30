@@ -1,20 +1,7 @@
-import { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  CircularProgress,
-  Divider,
-} from "@mui/material";
-import dayjs, { type Dayjs } from "dayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { palette } from "../../../theme/palette";
+import { Calendar, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../api";
-import { ChevronLeft, Plus, Eye, Edit2 } from "lucide-react";
-import { PrimaryBtn, SecondaryBtn,FormActions } from "../modal/clientElement";
+import { FormActions, PrimaryBtn } from "../modal/clientElement";
 
 interface CaseNote {
   _id: string;
@@ -32,21 +19,114 @@ interface CaseNotesProps {
   onUpdate?: () => void;
 }
 
+const MiniCalendar: React.FC<{
+  selectedDate: string | null;
+  onSelect: (d: string | null) => void;
+  dotDates: Set<string>;
+}> = ({ selectedDate, onSelect, dotDates }) => {
+  const [viewDate, setViewDate] = useState(() => {
+    const d = selectedDate ? new Date(selectedDate + "T00:00:00") : new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+
+  const days = useMemo(() => {
+    const first = new Date(viewDate.year, viewDate.month, 1);
+    const startDay = first.getDay();
+    const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate();
+    const cells: (number | null)[] = Array(startDay).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    return cells;
+  }, [viewDate]);
+
+  const fmt = (d: number) => {
+    const m = String(viewDate.month + 1).padStart(2, "0");
+    return `${viewDate.year}-${m}-${String(d).padStart(2, "0")}`;
+  };
+
+  const monthLabel = new Date(viewDate.year, viewDate.month).toLocaleString("default", { month: "long", year: "numeric" });
+
+  return (
+    <div style={{ width: 240, userSelect: "none" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <button onClick={() => setViewDate(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#6B7280" }}>‹</button>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{monthLabel}</span>
+        <button onClick={() => setViewDate(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#6B7280" }}>›</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0, textAlign: "center" }}>
+        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+          <div key={d} style={{ fontSize: 10, fontWeight: 600, color: "#9CA3AF", padding: "4px 0" }}>{d}</div>
+        ))}
+        {days.map((d, i) => {
+          if (!d) return <div key={`e${i}`} />;
+          const dateStr = fmt(d);
+          const isSelected = selectedDate === dateStr;
+          const hasDot = dotDates.has(dateStr);
+          return (
+            <div
+              key={i}
+              onClick={() => onSelect(isSelected ? null : dateStr)}
+              style={{
+                cursor: "pointer",
+                padding: "2px 0",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{
+                width: 28, height: 28, lineHeight: "28px",
+                borderRadius: "50%",
+                fontSize: 12,
+                fontWeight: isSelected || hasDot ? 600 : 400,
+                backgroundColor: isSelected ? "#D16B7C" : hasDot ? "#FDEAED" : "transparent",
+                color: isSelected ? "white" : hasDot ? "#D16B7C" : "#374151",
+              }}>
+                {d}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {selectedDate && (
+        <button onClick={() => onSelect(null)} style={{ marginTop: 6, fontSize: 11, color: "#D16B7C", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+          Clear filter
+        </button>
+      )}
+    </div>
+  );
+};
+
 const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [notes, setNotes] = useState<CaseNote[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  const [viewOpen, setViewOpen] = useState(false);
-  const [selectedNote, setSelectedNote] = useState<CaseNote | null>(null);
+  const dotDates = useMemo(() => {
+    const s = new Set<string>();
+    notes.forEach(n => { if (n.date) s.add(n.date.slice(0, 10)); });
+    return s;
+  }, [notes]);
+
+  const filteredNotes = useMemo(() => {
+    if (!selectedDate) return notes;
+    return notes.filter(n => n.date?.startsWith(selectedDate));
+  }, [notes, selectedDate]);
+
   const [editOpen, setEditOpen] = useState(false);
   const [editNote, setEditNote] = useState<CaseNote | null>(null);
   const [editForm, setEditForm] = useState({
     category: "",
     program: "",
     content: "",
+    date: "",
   });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEditOpen(false); };
+    if (editOpen) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [editOpen]);
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -64,67 +144,55 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     if (personId) loadNotes();
   }, [personId]);
 
-  const handleAddNote = async () => {
-    // try {
-    //   // TODO: Replace the placeholder payload with your actual form data
-    //   const res = await api.post(`/casenotes`, {
-    //     personid: personId,
-    //     content: "Placeholder content",   // TODO: Replace with real form field value
-    //     date: new Date().toISOString(),    // TODO: Replace with user-selected date
-    //     category: "Update",               // TODO: Replace with selected category
-    //     program: "Unknown",               // TODO: Replace with selected program
-    //     author: "Current User",           // TODO: Replace with authenticated user
-    //   });
-    //   // TODO: Decide whether to append res.data to notes or re-fetch the full list
-    //   setNotes((prev) => [res.data, ...prev]);
-    // } catch (err) {
-    //   console.error("Failed to add note", err);
-    // }
-  };
-
-  const handleViewNote = (note: CaseNote) => {
-    setSelectedNote(note);
-    setViewOpen(true);
+  const handleAddNote = () => {
+    setEditNote(null);
+    setEditForm({ category: "", program: "", content: "", date: new Date().toISOString().slice(0, 10) });
+    setEditOpen(true);
   };
 
   const handleEditNote = (note: CaseNote) => {
     setEditNote(note);
     setEditForm({
-      category: note.category ?? "",
-      program: note.program ?? "",
-      content: note.content ?? "",
+      category: note.category || "",
+      program: note.program || "",
+      content: note.content || "",
+      date: note.date?.slice(0, 10) || "",
     });
     setEditOpen(true);
   };
 
   const handleSaveChanges = async () => {
-  if (!editNote) return;
   try {
     setSaving(true);
-    await api.put(`people/${personId}/casenotes/${editNote._id}`, {
-      category: editForm.category,
-      program: editForm.program,
-      content: editForm.content,
-    });
-
-    // Update state with the form values directly — don't rely on res.data shape
-    setNotes((prev) =>
-      prev.map((n) =>
-        n._id === editNote._id
-          ? {
-              ...n,
-              category: editForm.category,
-              program: editForm.program,
-              content: editForm.content,
-            }
-          : n,
-      ),
-    );
-
+    if (editNote) {
+      // Editing existing note
+      await api.put(`people/${personId}/casenotes/${editNote._id}`, {
+        category: editForm.category,
+        program: editForm.program,
+        content: editForm.content,
+      });
+      setNotes((prev) =>
+        prev.map((n) =>
+          n._id === editNote._id
+            ? { ...n, category: editForm.category, program: editForm.program, content: editForm.content }
+            : n,
+        ),
+      );
+    } else {
+      // Creating new note
+      await api.post(`/people/${personId}/casenotes`, {
+        date: editForm.date,
+        category: editForm.category,
+        content: editForm.content,
+      });
+      // Re-fetch to get the new note with its _id
+      const res = await api.get(`/people/${personId}/casenotes`);
+      setNotes(res.data);
+    }
     if (onUpdate) onUpdate();
     setEditOpen(false);
   } catch (err) {
-    console.error("Failed to save changes", err);
+    console.error("Failed to save", err);
   } finally {
     setSaving(false);
   }
@@ -136,26 +204,53 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         return { bg: "#FEE2E2", text: "#B91C1C" };
       case "Assessment":
         return { bg: "#DBEAFE", text: "#1D4ED8" };
-      default:
+      case "Follow-up":
+        return { bg: "#EDE9FE", text: "#6D28D9" };  
+      case "Support":        
         return { bg: "#DCFCE7", text: "#15803D" };
+      default:
+        return { bg: "#F3F4F6", text: "#374151" };
     }
   };
 
   return (
     <div style={{ width: "100%"}}>
-        <div style={{ width: "100%"}}> {/* Changed bottom padding to 0 */}
+        <div style={{ width: "100%"}}> 
         <FormActions 
             style={{ 
                 display: 'flex', 
-                justifyContent: 'flex-end', // Pushes button to the far right
-                marginTop: '0px',          // Space between the last card and the button
-                paddingBottom: '0px',       // Removes internal bottom spacing
-                marginBottom: '0px'         // Removes external bottom spacing
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginTop: '0px',
+                paddingBottom: '0px',
+                marginBottom: '0px'
             }}
     >
-   
+        <div style={{ marginLeft: '28px', position: 'relative' }}>
+          <button
+            onClick={() => setCalendarOpen(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              border: '1px solid #E5E7EB', backgroundColor: selectedDate ? '#FDF2F4' : 'white',
+              cursor: 'pointer', fontSize: 15, fontWeight: 500, color: '#374151',
+            }}
+          >
+            <Calendar size={16} color="#D16B7C" />
+            {selectedDate ? new Date(selectedDate + "T00:00:00").toLocaleDateString() : "Filter by date"}
+          </button>
+          {calendarOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
+              backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12,
+              padding: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            }}>
+              <MiniCalendar selectedDate={selectedDate} onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }} dotDates={dotDates} />
+            </div>
+          )}
+        </div>
         <PrimaryBtn
-            onClick={handleAddNote} // TODO: Swap for a modal open handler if you add a form modal
+            onClick={handleAddNote}
             style={{ marginBottom: '16px',
                 marginRight: '28px'
              }}
@@ -189,7 +284,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 backgroundColor: "#FAFAFA",
               }}
             >
-              {["Date", "Category", "Program", "Author","Last Updated By", "Actions"].map((h) => (
+              {["Date", "Category", "Program", "Author","Last Updated By"].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -222,12 +317,13 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 </td>
               </tr>
             ) : (
-              notes.map((note) => {
+              filteredNotes.map((note) => {
                 const style = getCategoryStyle(note.category);
                 return (
                   <tr
                     key={note._id}
-                    style={{ borderBottom: "1px solid #F9FAFB" }}
+                    onClick={() => handleEditNote(note)}
+                    style={{ borderBottom: "1px solid #F9FAFB", cursor: "pointer" }}
                   >
                     <td
                       style={{
@@ -253,7 +349,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                           textTransform: "uppercase",
                         }}
                       >
-                        {note.category ?? "Update Required"}
+                        {note.category || "None"} 
                       </span>
                     </td>
                     <td
@@ -263,7 +359,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                         color: "#4B5563",
                       }}
                     >
-                      {note.program ?? "No Program Logged"}
+                      {note.program || "No Program Selected"}
                     </td>
                     <td
                       style={{
@@ -272,43 +368,10 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                         color: "#9CA3AF",
                       }}
                     >
-                      {note.author ?? "Unknown"}
+                      {note.author || "Unknown"}
                     </td>
                     <td style={{ padding: "20px 24px", fontSize: "14px", color: "#9CA3AF" }}>
-                        {note.lastupdatedby ?? "Unknown"}
-                    </td>
-                    <td style={{ padding: "20px 24px", textAlign: "right" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "flex-start",
-                          gap: "16px",
-                          color: "#D1D5DB",
-                        }}
-                      >
-                        <button
-                          onClick={() => handleViewNote(note)} // pass the whole note, not just the id
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "inherit",
-                          }}
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleEditNote(note)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "inherit",
-                          }}
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                      </div>
+                        {note.lastupdatedby || "Unknown"}
                     </td>
                   </tr>
                 );
@@ -317,9 +380,9 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           </tbody>
         </table>
       </div>
-      {/* View Case Note Modal */}
-      {viewOpen && selectedNote && (
+      {editOpen && (
         <div
+          onClick={() => setEditOpen(false)}
           style={{
             position: "fixed",
             inset: 0,
@@ -331,169 +394,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           }}
         >
           <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "32px",
-              width: "600px",
-              maxWidth: "90vw",
-              position: "relative",
-            }}
-          >
-            {/* Header */}
-            <button
-              onClick={() => setViewOpen(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "18px",
-                color: "#9CA3AF",
-              }}
-            >
-              ✕
-            </button>
-            <h2
-              style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              View Case Note
-            </h2>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#9CA3AF",
-                marginBottom: "24px",
-              }}
-            >
-              View the details of the selected case note.
-            </p>
-
-            {/* Category */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}
-            >
-              Category
-            </p>
-            <span
-              style={{
-                ...getCategoryStyle(selectedNote.category),
-                // reuse your existing badge style
-                backgroundColor: getCategoryStyle(selectedNote.category).bg,
-                color: getCategoryStyle(selectedNote.category).text,
-                padding: "4px 12px",
-                borderRadius: "99px",
-                fontSize: "12px",
-                fontWeight: 600,
-                display: "inline-block",
-                marginBottom: "20px",
-              }}
-            >
-              {selectedNote.category ?? "Needs update"}
-            </span>
-
-            {/* Program */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Program
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#4B5563",
-                marginBottom: "20px",
-              }}
-            >
-              {selectedNote.program ?? "Needs update"}
-            </p>
-
-            {/* Author */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Author
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#4B5563",
-                marginBottom: "20px",
-              }}
-            >
-              {selectedNote.author ?? "Needs update"}
-            </p>
-
-            {/* Last Updated By */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Last Updated By
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#4B5563",
-                marginBottom: "20px",
-              }}
-            >
-              {selectedNote.lastupdatedby ?? "Needs update"}{" "}
-              {/* TODO: replace with real lastUpdatedBy field when available */}
-            </p>
-
-            {/* Content */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Content
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#4B5563",
-                lineHeight: "1.6",
-                marginBottom: "32px",
-              }}
-            >
-              {selectedNote.content ?? "Needs update"}
-            </p>
-
-            {/* Close Button */}
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button
-                onClick={() => setViewOpen(false)}
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid #E5E7EB",
-                  backgroundColor: "white",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  color: "#374151",
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {editOpen && editNote && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: "white",
               borderRadius: "12px",
@@ -522,7 +423,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             <h2
               style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}
             >
-              Edit Case Note
+              {editNote ? "Edit Case Note" : "Add Case Note"}
             </h2>
             <p
               style={{
@@ -531,8 +432,30 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 marginBottom: "24px",
               }}
             >
-              Make changes to the case note below.
+              {editNote ? "Make changes to the case note below." : "Fill in the details for the new case note."}
             </p>
+
+            {/* Date — only for new notes */}
+            {!editNote && (
+              <>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}>Date</p>
+                <input
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, date: e.target.value }))}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid #E5E7EB",
+                    fontSize: "14px",
+                    marginBottom: "20px",
+                    backgroundColor: "#F9FAFB",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </>
+            )}
 
             {/* Category */}
             <p
@@ -593,38 +516,19 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               <option value="Mental Health">Mental Health</option>
             </select>
 
-            {/* Author — read only */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Author
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#9CA3AF",
-                marginBottom: "20px",
-              }}
-            >
-              {editNote.author ?? "Needs update"}
-            </p>
-
-            {/* Last Updated By — read only */}
-            <p
-              style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}
-            >
-              Last Updated By
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#9CA3AF",
-                marginBottom: "20px",
-              }}
-            >
-              {editNote.author ?? "Needs update"}{" "}
-              {/* TODO: replace with real lastUpdatedBy field */}
-            </p>
+            {/* Author — read only, hide for new */}
+            {editNote && (
+              <>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Author</p>
+                <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "20px" }}>
+                  {editNote.author || "Unknown"}
+                </p>
+                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Last Updated By</p>
+                <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "20px" }}>
+                  {editNote.lastupdatedby || "Unknown"}
+                </p>
+              </>
+            )}
 
             {/* Content */}
             <p
@@ -693,7 +597,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   opacity: saving ? 0.7 : 1,
                 }}
               >
-                {saving ? "Saving..." : "Save Changes"}
+                {saving ? "Saving..." : editNote ? "Save Changes" : "Add Case Note"}
               </button>
             </div>
           </div>
