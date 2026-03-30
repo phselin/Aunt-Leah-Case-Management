@@ -86,6 +86,14 @@ const ActionButton = styled.button<{ $clientActive?: boolean }>`
   }
 `;
 
+const EmptyRow = styled.div`
+  padding: 40px 24px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+`;
+
 type Props = {
   people: Person[];
   auth: { user?: { role?: string } }; 
@@ -127,7 +135,10 @@ const ClientTable = ({ people, auth, onClick, onError, onToggleActive }: Props) 
         {isSuperAdmin && <Label>Action</Label>}
       </TableRow>
 
-      {people.map((p) => (
+      {people.length === 0 ? (
+        <EmptyRow>No clients found</EmptyRow>
+      ) : (
+        people.map((p) => (
         <TableRow
           key={p._id}
           $hasActions={isSuperAdmin}
@@ -164,7 +175,8 @@ const ClientTable = ({ people, auth, onClick, onError, onToggleActive }: Props) 
             </ActionButton>
           )}
         </TableRow>
-      ))}
+      ))
+      )}
     </TableContainer>
   );
 };

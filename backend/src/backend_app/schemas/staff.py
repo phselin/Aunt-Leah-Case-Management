@@ -19,6 +19,7 @@ class Staff(BaseModel):
     active: bool = True
     programs: list[str] = Field(default_factory=list)
     mfaEnabled: bool = False
+    password: str | None = None
 
     @field_validator("firstname", "lastname")
     @classmethod
@@ -33,6 +34,8 @@ class Staff(BaseModel):
     @field_validator("programs")
     @classmethod
     def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
+        if info.data.get("role") == "admin" or info.data.get("role") == "super-admin":
+            return []
         return validate_programs_util(value, info)
 
     @field_validator("email")

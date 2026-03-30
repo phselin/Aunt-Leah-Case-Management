@@ -41,4 +41,4 @@ def validate_programs_util(value: list[str], info: ValidationInfo) -> list[str]:
 
 
 def validate_email_util(value: EmailStr) -> EmailStr:
-    return EmailStr(value.strip().lower())
+    return value.strip().lower()

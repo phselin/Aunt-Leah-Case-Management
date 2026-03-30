@@ -7,8 +7,13 @@ from flask_jwt_extended.utils import current_user
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
+from backend_app.auth_init import bcrypt
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_formatted_error, get_programs_structure
+from backend_app.routes.routes_utils import (
+    get_formatted_error,
+    get_programs_structure,
+    remove_empty,
+)
 from backend_app.schemas.staff import Staff
 
 staff_bp = Blueprint("staff", __name__)
@@ -17,8 +22,7 @@ staff_bp = Blueprint("staff", __name__)
 def sanitize_staff_mem(staff_mem):
     staff_mem["_id"] = str(staff_mem["_id"])
     staff_mem.pop("mfaSecret", None)
-    if staff_mem.get("mfaEnabled"):
-        staff_mem.pop("passwordHash", None)
+    staff_mem.pop("passwordHash", None)
     return staff_mem
 
 
@@ -29,7 +33,7 @@ def get_staff():
         return jsonify({"detail": "Access denied"}), 403
 
     staff = request.args.get("staff", "").strip()
-    query = {"_id": {"$ne": current_user["_id"]}}
+    query = {}
     if staff:
         s = staff.replace(" ", "")
         query["$expr"] = {
@@ -89,6 +93,14 @@ def insert_staff_mem():
         return jsonify({"detail": "Validation error", "errors": get_formatted_error(e)}), 400
 
     staff_mem_json = staff_mem.model_dump(exclude_none=True, mode="json")
+
+    staff_mem_json["mfaEnabled"] = False
+    if staff_mem_json.get("password"):
+        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(
+            staff_mem_json.get("password")
+        ).decode("utf-8")
+    staff_mem_json.pop("password")
+
     res = db.staff.insert_one(staff_mem_json)
     staff_mem_json["_id"] = str(res.inserted_id)
     return jsonify(sanitize_staff_mem(staff_mem_json)), 201
@@ -119,15 +131,61 @@ def update_staff_mem(id):
 
     try:
         staff_mem = Staff.model_validate(
-            body, context={"validate_programs_structure": get_programs_structure()}
+            body, context={"valid_programs_structure": get_programs_structure()}
         )
     except ValidationError as e:
         return jsonify({"detail": "Validator error", "errors": get_formatted_error(e)}), 400
 
-    staff_mem_json = staff_mem.model_dump(exclude_none=True, mode="json")
+    staff_mem_json_with_null = staff_mem.model_dump(mode="json")
+    staff_mem_json = remove_empty(staff_mem.model_dump(exclude_none=True, mode="json"))
+    unset_fields = {field: "" for field in staff_mem_json_with_null if field not in staff_mem_json}
 
-    res = db.staff.find_one_and_update(
-        {"_id": oid}, {"$set": staff_mem_json}, return_document=ReturnDocument.AFTER
-    )
+    if (
+        not staff_mem_in_db.get("mfaEnabled") or not staff_mem_json.get("mfaEnabled")
+    ) and staff_mem_json.get("password"):
+        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(
+            staff_mem_json.get("password")
+        ).decode("utf-8")
+    staff_mem_json.pop("password", None)
+
+    if staff_mem_in_db.get("mfaEnabled") and not staff_mem_json.get("mfaEnabled"):
+        unset_fields["mfaSecret"] = ""
+
+    query = {}
+    if staff_mem_json:
+        query["$set"] = staff_mem_json
+    if unset_fields:
+        query["$unset"] = unset_fields
+
+    res = db.staff.find_one_and_update({"_id": oid}, query, return_document=ReturnDocument.AFTER)
 
     return jsonify(sanitize_staff_mem(res)), 200
+
+
+@staff_bp.patch("/staff/<id>/active")
+@jwt_required()
+def update_staff_active(id):
+    if current_user.get("role") != "super-admin":
+        return jsonify({"detail": "Access denied"}), 403
+
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid staff ID format"}), 400
+
+    body = request.get_json(silent=True) or {}
+
+    if "active" not in body or not isinstance(body["active"], bool):
+        return jsonify({"detail": "Active should be boolean"}), 400
+
+    res = db.staff.find_one_and_update(
+        {"_id": oid},
+        {"$set": {"active": body["active"]}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+    if not res:
+        return jsonify({"detail": "Staff member not found"}), 404
+
+    res["_id"] = str(res["_id"])
+    return jsonify(res), 200

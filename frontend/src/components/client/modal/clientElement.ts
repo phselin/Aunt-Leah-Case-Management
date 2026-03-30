@@ -107,6 +107,16 @@ export const CloseBtn = styled.button`
   }
 `;
 
+export const SuccessBox = styled.div`
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid green;
+  background: ${palette.white};
+  color: green;
+  font-size: 13px;
+`;
+
 export const ErrorBox = styled.div`
   margin-bottom: 12px;
   padding: 10px 12px;
