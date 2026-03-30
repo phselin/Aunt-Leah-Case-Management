@@ -208,6 +208,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [errMsg, setErrMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [modalErrMsg, setModalErrMsg] = useState("");
+  const [saveBtnHover, setSaveBtnHover] = useState(false);
 
   useEffect(() => {
     if (errMsg) {
@@ -831,10 +832,12 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               <button
                 onClick={handleSaveChanges}
                 disabled={saving}
+                onMouseEnter={() => setSaveBtnHover(true)}
+                onMouseLeave={() => setSaveBtnHover(false)}
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
-                  backgroundColor: "#D16B7C",
+                  backgroundColor: saveBtnHover ? "#b95a6a" : "#D16B7C",
                   color: "white",
                   border: "none",
                   cursor: "pointer",
@@ -844,6 +847,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   alignItems: "center",
                   gap: "8px",
                   opacity: saving ? 0.7 : 1,
+                  transition: "background-color 0.2s",
                 }}
               >
                 {saving

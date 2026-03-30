@@ -1,18 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
+import type { SelectChangeEvent } from "@mui/material";
 import {
   Box,
   Card,
   CardContent,
-  Typography,
+  CircularProgress,
   MenuItem,
   Select,
-  LinearProgress,
-  CircularProgress,
+  Typography,
 } from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material";
-import { palette } from "../../../theme/palette";
-import api from "../../../api";
 import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
+import api from "../../../api";
 import { ErrorBox } from "./clientElement";
 
 type MilestoneInfo = {
@@ -122,7 +120,7 @@ const Progress = ({ personId }: ProgressProps) => {
       <Box
         sx={{ p: "20px 28px", display: "flex", alignItems: "center", gap: 1 }}
       >
-        <CircularProgress size={18} />
+        <CircularProgress size={18} sx={{ color: "#D16B7C" }} />
         <Typography variant="body2" color="text.secondary">
           Loading milestones…
         </Typography>
@@ -161,9 +159,15 @@ const Progress = ({ personId }: ProgressProps) => {
             key={program}
             variant="outlined"
             sx={{
-              borderRadius: 2.5,
-              backgroundColor: palette.white,
-              borderColor: "#e5e7eb",
+              borderRadius: 3,
+              backgroundColor: "white",
+              borderColor: "#E5E7EB",
+              overflow: "hidden",
+              "&:hover": {
+                borderColor: "#D16B7C40",
+                boxShadow: "0 2px 8px rgba(209, 107, 124, 0.08)",
+              },
+              transition: "border-color 0.2s, box-shadow 0.2s",
             }}
           >
             <CardContent
@@ -215,12 +219,18 @@ const Progress = ({ personId }: ProgressProps) => {
 
                     <Typography
                       sx={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                        textTransform: "capitalize",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#D16B7C",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.1em",
                         mt: 1.5,
                         mb: 1.5,
+                        backgroundColor: "#FDEAED",
+                        display: "inline-block",
+                        px: 1.5,
+                        py: 0.4,
+                        borderRadius: "99px",
                       }}
                     >
                       {type}
@@ -243,10 +253,19 @@ const Progress = ({ personId }: ProgressProps) => {
                           disabled={isSaving}
                           onChange={(e) => handleChange(program, type, e)}
                           sx={{
-                            backgroundColor: palette.white,
+                            backgroundColor: "white",
                             borderRadius: 2,
                             opacity: isSaving ? 0.5 : 1,
                             "& .MuiSelect-select": { py: "10px" },
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#E5E7EB",
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#D16B7C",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "#D16B7C",
+                            },
                           }}
                         >
                           {!milestone && (
@@ -266,8 +285,11 @@ const Progress = ({ personId }: ProgressProps) => {
                         sx={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: 0.5,
-                          pt: 0.5,
+                          gap: 0.75,
+                          backgroundColor: "#FDF2F4",
+                          borderRadius: 2,
+                          px: 2,
+                          py: 1.25,
                         }}
                       >
                         <Box sx={{ display: "flex", gap: 0.75 }}>
@@ -303,36 +325,138 @@ const Progress = ({ personId }: ProgressProps) => {
 
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
                         mt: 2.5,
-                        mb: 0.75,
+                        p: 2,
+                        backgroundColor: "#FAFAFA",
+                        borderRadius: 2.5,
+                        border: "1px solid #F3F4F6",
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, color: "#374151" }}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                        }}
                       >
-                        Progress
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {current} of {total}
-                      </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, color: "#374151" }}
+                        >
+                          Progress
+                        </Typography>
+                        <Box
+                          sx={{
+                            backgroundColor:
+                              pct === 100 ? "#DCFCE7" : "#FDEAED",
+                            color: pct === 100 ? "#15803D" : "#D16B7C",
+                            px: 1.5,
+                            py: 0.25,
+                            borderRadius: "99px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {current} of {total}
+                        </Box>
+                      </Box>
+
+                      {/* Segmented bar */}
+                      <Box sx={{ display: "flex", gap: "3px", mb: 1.5 }}>
+                        {Array.from({ length: total }).map((_, i) => (
+                          <Box
+                            key={i}
+                            sx={{
+                              flex: 1,
+                              height: 8,
+                              borderRadius: 4,
+                              backgroundColor:
+                                i < current ? "#D16B7C" : "#E5E7EB",
+                              transition: "background-color 0.3s ease",
+                            }}
+                          />
+                        ))}
+                      </Box>
+
+                      {/* Step labels */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0,
+                          mt: 1,
+                        }}
+                      >
+                        {milestones.map((m, i) => {
+                          const isComplete = i < current;
+                          const isCurrent = i === current - 1;
+                          return (
+                            <Box
+                              key={m}
+                              sx={{
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 22,
+                                  height: 22,
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  backgroundColor: isCurrent
+                                    ? "#D16B7C"
+                                    : isComplete
+                                      ? "#FDEAED"
+                                      : "#F3F4F6",
+                                  color: isCurrent
+                                    ? "white"
+                                    : isComplete
+                                      ? "#D16B7C"
+                                      : "#9CA3AF",
+                                  border: isCurrent
+                                    ? "2px solid #D16B7C"
+                                    : isComplete
+                                      ? "2px solid #D16B7C"
+                                      : "2px solid #E5E7EB",
+                                  transition: "all 0.3s ease",
+                                }}
+                              >
+                                {isComplete && !isCurrent ? "✓" : i + 1}
+                              </Box>
+                              <Typography
+                                sx={{
+                                  fontSize: 10,
+                                  fontWeight: isCurrent ? 700 : 500,
+                                  color: isCurrent
+                                    ? "#D16B7C"
+                                    : isComplete
+                                      ? "#374151"
+                                      : "#9CA3AF",
+                                  textAlign: "center",
+                                  lineHeight: 1.2,
+                                  maxWidth: 80,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                                title={m}
+                              >
+                                {m}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
                     </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={pct}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: "#e5e7eb",
-                        "& .MuiLinearProgress-bar": {
-                          borderRadius: 4,
-                          backgroundColor: palette.magentaPink,
-                        },
-                      }}
-                    />
                   </Box>
                 );
               })}
