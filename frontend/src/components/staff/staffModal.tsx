@@ -519,7 +519,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
             </FullRow>
 
             {/* Programs (multi-dropdown with set subtraction) */}
-            {staffData?.role == "staff" && (
+            {(staffData?.role == "staff" || isNew) && (
               <FullRow>
                 <FormRow>
                   <Label>Programs</Label>
