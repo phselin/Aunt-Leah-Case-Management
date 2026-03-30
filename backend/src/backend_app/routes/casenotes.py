@@ -1,7 +1,7 @@
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import current_user, jwt_required
 from pymongo import ReturnDocument
 
 from backend_app.db import db
@@ -84,6 +84,10 @@ def save_casenote(id):
         ):
             return jsonify({"detail": "Access denied"}), 403
 
+    author = f"{current_user.get('firstname')} {current_user.get('lastname')}"
+    casenote_json["author"] = author
+    casenote_json["lastUpdatedBy"] = author
+
     res = db.casenotes.insert_one(casenote_json)
     casenote_json["_id"] = str(res.inserted_id)
 
@@ -116,6 +120,9 @@ def edit_casenote(id, casenoteid):
 
     casenote_json_with_null = casenote.model_dump(mode="json")
     casenote_json = remove_empty(casenote.model_dump(exclude_none=True, mode="json"))
+    casenote_json["lastUpdatedBy"] = (
+        f"{current_user.get('firstname')} {current_user.get('lastname')}"
+    )
 
     unset_fields = {field: "" for field in casenote_json_with_null if field not in casenote_json}
 

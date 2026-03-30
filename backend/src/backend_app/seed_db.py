@@ -145,6 +145,7 @@ def seed_db():
                 "date": faker.date_between(start_date="-30d", end_date="now").strftime("%Y-%m-%d"),
                 "content": faker.paragraph(nb_sentences=5),
                 "program": random.choice(PROGRAMS),
+                "author": f"{faker.first_name()} {faker.last_name()}",
             }
             case_notes.append(case_note)
 

@@ -11,6 +11,8 @@ class CaseNote(BaseModel):
     personid: str = Field(...)
     program: str | None
     category: str | None
+    author: str | None
+    lastUpdatedBy: str | None
 
     @field_validator("program")
     @classmethod

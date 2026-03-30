@@ -11,7 +11,7 @@ interface CaseNote {
   category?: string;
   program?: string;
   author?: string;
-  lastupdatedby?: string;
+  lastUpdatedBy?: string;
 }
 
 interface CaseNotesProps {
@@ -100,6 +100,19 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const [modalErrMsg, setModalErrMsg] = useState("");
+
+  useEffect(() => {
+    if (errMsg) {
+      const timer = setTimeout(() => setErrMsg(""), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (modalErrMsg) {
+      const timer = setTimeout(() => setModalErrMsg(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errMsg, modalErrMsg]);
 
   const dotDates = useMemo(() => {
     const s = new Set<string>();
@@ -136,7 +149,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         // console.log(res);
         setNotes(res.data);
       } catch (err) {
-        console.error("Failed to load notes", err);
+        setErrMsg("Failed to load notes");
       } finally {
         setLoading(false);
       }
@@ -192,7 +205,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     if (onUpdate) onUpdate();
     setEditOpen(false);
   } catch (err) {
-    console.error("Failed to save", err);
+    // TODO error modal
   } finally {
     setSaving(false);
   }
@@ -371,7 +384,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                       {note.author || "Unknown"}
                     </td>
                     <td style={{ padding: "20px 24px", fontSize: "14px", color: "#9CA3AF" }}>
-                        {note.lastupdatedby || "Unknown"}
+                        {note.lastUpdatedBy || "Unknown"}
                     </td>
                   </tr>
                 );
@@ -525,7 +538,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 </p>
                 <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Last Updated By</p>
                 <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "20px" }}>
-                  {editNote.lastupdatedby || "Unknown"}
+                  {editNote.lastUpdatedBy || "Unknown"}
                 </p>
               </>
             )}
