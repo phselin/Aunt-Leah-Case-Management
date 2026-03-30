@@ -376,6 +376,15 @@ const Details = ({
     <div style={{ padding: "20px 28px 28px" }}>
       {localErr && <ErrorBox>{localErr}</ErrorBox>}
       <form onSubmit={handleSubmit(onSubmit)}>
+      <FormActions>
+        <PrimaryBtn type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Saving..."
+              : isNew
+                ? "Create Client"
+                : "Save Changes"}
+          </PrimaryBtn>
+      </FormActions>
         {formConfig.sections.map((section, i) => (
             <SectionCard key={i}>
             <SectionHeader title={section.label} />
@@ -428,15 +437,6 @@ const Details = ({
             </ClientGrid>
            </SectionCard>
         ))}
-        <FormActions>
-          <PrimaryBtn type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Saving..."
-              : isNew
-                ? "Create Client"
-                : "Save Changes"}
-          </PrimaryBtn>
-        </FormActions>
       </form>
     </div>
   );

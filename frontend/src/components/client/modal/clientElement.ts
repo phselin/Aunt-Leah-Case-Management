@@ -194,7 +194,7 @@ export const Hint = styled.div`
 `;
 
 export const FormActions = styled.div`
-  margin-top: 14px;
+  margin-bottom: 18px;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
