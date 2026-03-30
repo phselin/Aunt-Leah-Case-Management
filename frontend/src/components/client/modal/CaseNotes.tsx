@@ -100,19 +100,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
-  const [modalErrMsg, setModalErrMsg] = useState("");
-
-  useEffect(() => {
-    if (errMsg) {
-      const timer = setTimeout(() => setErrMsg(""), 3000);
-      return () => clearTimeout(timer);
-    }
-    if (modalErrMsg) {
-      const timer = setTimeout(() => setModalErrMsg(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [errMsg, modalErrMsg]);
 
   const dotDates = useMemo(() => {
     const s = new Set<string>();
@@ -134,6 +121,19 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     date: "",
   });
   const [saving, setSaving] = useState(false);
+  const [programs, setPrograms] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadPrograms = async () => {
+      try {
+        const res = await api.get("/programs/names");
+        setPrograms(res.data);
+      } catch (err) {
+        console.error("Failed to load programs", err);
+      }
+    };
+    loadPrograms();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEditOpen(false); };
@@ -149,7 +149,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         // console.log(res);
         setNotes(res.data);
       } catch (err) {
-        setErrMsg("Failed to load notes");
+        console.error("Failed to load notes", err);
       } finally {
         setLoading(false);
       }
@@ -197,7 +197,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         date: editForm.date,
         category: editForm.category,
         content: editForm.content,
-        program: editForm.program,
+        program: editForm.program
       });
       // Re-fetch to get the new note with its _id
       const res = await api.get(`/people/${personId}/casenotes`);
@@ -206,7 +206,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     if (onUpdate) onUpdate();
     setEditOpen(false);
   } catch (err) {
-    // TODO error modal
+    console.error("Failed to save", err);
   } finally {
     setSaving(false);
   }
@@ -525,9 +525,11 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               }}
             >
               <option value="">Select program</option>
-              <option value="Housing Support">Housing Support</option>
-              <option value="Employment">Employment</option>
-              <option value="Mental Health">Mental Health</option>
+              {programs.map((program) => (
+                <option key={program} value={program}>
+                  {program}
+                </option>
+              ))}
             </select>
 
             {/* Author — read only, hide for new */}
