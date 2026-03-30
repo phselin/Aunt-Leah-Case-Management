@@ -43,14 +43,9 @@ def get_casenotes(id):
         if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
             return jsonify({"detail": "Access denied"}), 403
 
-    if date:
-        query["date"] = date
-        casenotes = list(casenote_to_string(cn) for cn in db.casenotes.find(query))
-    else:
-        casenotes = list(
-            casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1).limit(20)
-        )
-    return jsonify(casenotes), 200
+    return jsonify(
+        list(casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1))
+    ), 200
 
 
 @casenotes_bp.post("/people/<id>/casenotes")
