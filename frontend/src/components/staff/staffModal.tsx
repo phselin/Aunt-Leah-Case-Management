@@ -270,8 +270,12 @@ const StaffModal = ({
         onSave(res.data);
       }
     } catch (err: any) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setLocalErr(err.response.data?.detail || "Access denied");
+      if (axios.isAxiosError(err) && err.response?.status) {
+        if (err.response.status === 403) {
+            setLocalErr(err.response.data?.detail || "Access denied");
+        } else if (err.response.status === 409) {
+            setLocalErr(err.response.data?.detail || "Staff member with this email already exists");
+        }
       } else {
         setLocalErr(`Failed to ${isNew ? "add" : "update"} staff member`);
         const backend_errors = err.response?.data?.errors;

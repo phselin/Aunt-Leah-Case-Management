@@ -100,6 +100,8 @@ def seed_db():
         }
         db.staff.insert_one(staff_member)
 
+    db.staff.create_index("email", unique=True)  # 404 :)
+
     for _ in range(NUM_PEOPLE):
         enrolled_programs = random.sample(PROGRAMS, k=random.randint(1, 3))
         programMilestones = {}

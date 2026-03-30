@@ -94,12 +94,13 @@ def insert_staff_mem():
 
     staff_mem_json = staff_mem.model_dump(exclude_none=True, mode="json")
 
+    if db.staff.find_one({"email": staff_mem_json.get("email")}):
+        return jsonify({"detail": "A staff member with this email already exists"}), 409
+
     staff_mem_json["mfaEnabled"] = False
-    if staff_mem_json.get("password"):
-        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(
-            staff_mem_json.get("password")
-        ).decode("utf-8")
-    staff_mem_json.pop("password")
+    password = staff_mem_json.pop("password", None)
+    if password:
+        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(password).decode("utf-8")
 
     res = db.staff.insert_one(staff_mem_json)
     staff_mem_json["_id"] = str(res.inserted_id)
@@ -138,15 +139,15 @@ def update_staff_mem(id):
 
     staff_mem_json_with_null = staff_mem.model_dump(mode="json")
     staff_mem_json = remove_empty(staff_mem.model_dump(exclude_none=True, mode="json"))
+
+    if db.staff.find_one({"email": staff_mem_json.get("email"), "_id": {"$ne": oid}}):
+        return jsonify({"detail": "A staff member with this email already exists"}), 409
+
     unset_fields = {field: "" for field in staff_mem_json_with_null if field not in staff_mem_json}
 
-    if (
-        not staff_mem_in_db.get("mfaEnabled") or not staff_mem_json.get("mfaEnabled")
-    ) and staff_mem_json.get("password"):
-        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(
-            staff_mem_json.get("password")
-        ).decode("utf-8")
-    staff_mem_json.pop("password", None)
+    password = staff_mem_json.pop("password", None)
+    if password and not staff_mem_in_db.get("mfaEnabled") or not staff_mem_json.get("mfaEnabled"):
+        staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(password).decode("utf-8")
 
     if staff_mem_in_db.get("mfaEnabled") and not staff_mem_json.get("mfaEnabled"):
         unset_fields["mfaSecret"] = ""
