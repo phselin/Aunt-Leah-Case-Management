@@ -17,12 +17,12 @@ def get_casenotes(id):
     except (InvalidId, TypeError):
         return jsonify({"detail": "Invalid Object ID"}), 400
 
-    # uncomment this to prevent unauthorized viewing
-    # if not is_admin():
-    #     if not db.people.find_one(
-    #         {"_id": person_oid, "programs": {"$in": get_current_user_programs()}}
-    #     ):
-    #         return jsonify({"detail": "Access denied"}), 403
+    # comment this for less strict RBAC
+    if not is_admin():
+        if not db.people.find_one(
+            {"_id": person_oid, "programs": {"$in": get_current_user_programs()}}
+        ):
+            return jsonify({"detail": "Access denied"}), 403
 
     casenotes = list(
         {
