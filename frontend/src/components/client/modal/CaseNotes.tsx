@@ -193,18 +193,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  const dotDates = useMemo(() => {
-    const s = new Set<string>();
-    notes.forEach((n) => {
-      if (n.date) s.add(n.date.slice(0, 10));
-    });
-    return s;
-  }, [notes]);
-
-  const filteredNotes = useMemo(() => {
-    if (!selectedDate) return notes;
-    return notes.filter((n) => n.date?.startsWith(selectedDate));
-  }, [notes, selectedDate]);
+  const [dotDates, setDotDates] = useState<Set<string>>(new Set());
 
   const [editOpen, setEditOpen] = useState(false);
   const [editNote, setEditNote] = useState<CaseNote | null>(null);
@@ -256,22 +245,41 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     return () => document.removeEventListener("keydown", onKey);
   }, [editOpen]);
 
+  const loadNotes = async (date?: string | null) => {
+    try {
+      setLoading(true);
+      const url = date
+        ? `/people/${personId}/casenotes?date=${date}`
+        : `/people/${personId}/casenotes`;
+      const res = await api.get(url);
+      setNotes(res.data);
+    } catch (err) {
+      console.error("Failed to load notes", err);
+      setErrMsg("Failed to load case notes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDotDates = async () => {
+    try {
+      const res = await api.get(`/people/${personId}/casenotes/dates`);
+      setDotDates(new Set((res.data as string[]).map((d) => d.slice(0, 10))));
+    } catch (err) {
+      console.error("Failed to load casenote dates", err);
+    }
+  };
+
   useEffect(() => {
-    const loadNotes = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/people/${personId}/casenotes`);
-        // console.log(res);
-        setNotes(res.data);
-      } catch (err) {
-        console.error("Failed to load notes", err);
-        setErrMsg("Failed to load case notes");
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (personId) loadNotes();
+    if (personId) {
+      loadNotes();
+      loadDotDates();
+    }
   }, [personId]);
+
+  useEffect(() => {
+    if (personId) loadNotes(selectedDate);
+  }, [selectedDate]);
 
   const handleAddNote = () => {
     setEditNote(null);
@@ -331,8 +339,8 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           program: editForm.program,
         });
         // Re-fetch to get the new note with its _id
-        const res = await api.get(`/people/${personId}/casenotes`);
-        setNotes(res.data);
+        await loadNotes(selectedDate);
+        await loadDotDates();
       }
       if (onUpdate) onUpdate();
       setEditOpen(false);
@@ -505,7 +513,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 </td>
               </tr>
             ) : (
-              filteredNotes.map((note) => {
+              notes.map((note) => {
                 const style = getCategoryStyle(note.category);
                 return (
                   <tr

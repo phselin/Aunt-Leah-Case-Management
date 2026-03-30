@@ -24,11 +24,30 @@ def casenote_to_string(casenote):
     }
 
 
+@casenotes_bp.get("/people/<id>/casenotes/dates")
+@jwt_required()
+def get_casenote_dates(id):
+    try:
+        person_oid = ObjectId(id)
+    except (InvalidId, TypeError):
+        return jsonify({"detail": "Invalid Object ID"}), 400
+
+    query = {"personid": person_oid}
+
+    if not is_admin():
+        current_user_programs = get_current_user_programs()
+        query["program"] = {"$in": current_user_programs}
+        if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
+            return jsonify({"detail": "Access denied"}), 403
+
+    dates = sorted(db.casenotes.distinct("date", query), reverse=True)
+    return jsonify(dates), 200
+
+
 @casenotes_bp.get("/people/<id>/casenotes")
 @jwt_required()
 def get_casenotes(id):
-    body = request.get_json(silent=True) or {}
-    date = body.get("date")
+    date = request.args.get("date")
 
     try:
         person_oid = ObjectId(id)
@@ -43,9 +62,14 @@ def get_casenotes(id):
         if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
             return jsonify({"detail": "Access denied"}), 403
 
-    return jsonify(
-        list(casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1))
-    ), 200
+    if date:
+        query["date"] = date
+        casenotes = list(casenote_to_string(cn) for cn in db.casenotes.find(query))
+    else:
+        casenotes = list(
+            casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1).limit(20)
+        )
+    return jsonify(casenotes), 200
 
 
 @casenotes_bp.post("/people/<id>/casenotes")

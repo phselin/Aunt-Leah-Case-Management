@@ -8,7 +8,7 @@ from backend_app.db import db
 from backend_app.intake_form import GENDER_OPTIONS
 
 NUM_PEOPLE = 500
-NOTES_PER_PERSON = 10
+NOTES_PER_PERSON = 50
 PROGRAMS = ["Housing", "Education", "Employment", "Drug Rehabilitation"]
 # we can have multiple goal types but including general only for now for simplicity
 GENERAL_MILESTONES = {
@@ -142,7 +142,7 @@ def seed_db():
         for _ in range(random.randint(1, NOTES_PER_PERSON)):
             case_note = {
                 "personid": person_id,
-                "date": faker.date_between(start_date="-30d", end_date="now").strftime("%Y-%m-%d"),
+                "date": faker.date_between(start_date="-90d", end_date="now").strftime("%Y-%m-%d"),
                 "content": faker.paragraph(nb_sentences=5),
                 "program": random.choice(PROGRAMS),
                 "author": f"{faker.first_name()} {faker.last_name()}",
