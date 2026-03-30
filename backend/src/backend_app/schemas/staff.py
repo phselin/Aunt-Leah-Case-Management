@@ -19,10 +19,7 @@ class Staff(BaseModel):
     active: bool = True
     programs: list[str] = Field(default_factory=list)
     mfaEnabled: bool = False
-<<<<<<< HEAD
     password: str | None = None
-=======
->>>>>>> 35693d7 (Fix staff endpoints)
 
     @field_validator("firstname", "lastname")
     @classmethod
@@ -37,11 +34,8 @@ class Staff(BaseModel):
     @field_validator("programs")
     @classmethod
     def validate_programs(cls, value: list[str], info: ValidationInfo) -> list[str]:
-<<<<<<< HEAD
         if info.data.get("role") == "admin" or info.data.get("role") == "super-admin":
             return []
-=======
->>>>>>> 35693d7 (Fix staff endpoints)
         return validate_programs_util(value, info)
 
     @field_validator("email")

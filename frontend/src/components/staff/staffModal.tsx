@@ -12,13 +12,13 @@ import PhoneInput from "react-phone-number-input/input";
 import styled from "styled-components";
 import api from "../../api";
 import {
-    ErrorBox,
-    FormRow,
-    Input,
-    Label,
-    PrimaryBtn,
-    SecondaryBtn,
-    Select,
+  ErrorBox,
+  FormRow,
+  Input,
+  Label,
+  PrimaryBtn,
+  SecondaryBtn,
+  Select,
 } from "../client/modal/clientElement";
 import { type StaffMember } from "./staff";
 
@@ -113,14 +113,32 @@ const EyeButton = styled.button`
 `;
 
 const EyeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const EyeOffIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
     <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
@@ -148,13 +166,7 @@ const autocompleteMultiSx = {
   },
 } as const;
 
-const StaffModal = ({
-  open,
-  isNew,
-  staffData,
-  onClose,
-  onSave,
-}: Props) => {
+const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
   const [localErr, setLocalErr] = useState("");
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
 
@@ -272,9 +284,12 @@ const StaffModal = ({
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.status) {
         if (err.response.status === 403) {
-            setLocalErr(err.response.data?.detail || "Access denied");
+          setLocalErr(err.response.data?.detail || "Access denied");
         } else if (err.response.status === 409) {
-            setLocalErr(err.response.data?.detail || "Staff member with this email already exists");
+          setLocalErr(
+            err.response.data?.detail ||
+              "Staff member with this email already exists",
+          );
         }
       } else {
         setLocalErr(`Failed to ${isNew ? "add" : "update"} staff member`);
@@ -326,7 +341,9 @@ const StaffModal = ({
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent sx={{ pt: 2, pb: 1 }}>
-          {localErr && <ErrorBox style={{ marginBottom: 16 }}>{localErr}</ErrorBox>}
+          {localErr && (
+            <ErrorBox style={{ marginBottom: 16 }}>{localErr}</ErrorBox>
+          )}
 
           <FormGrid>
             {/* First Name */}
@@ -420,43 +437,51 @@ const StaffModal = ({
             </FormRow>
 
             {/* MFA Enabled — super-admin can only disable, not enable. Staff sets up MFA on first login. */}
-            {!isNew && <FullRow>
-              <FormRow>
-                <Controller
-                  name="mfaEnabled"
-                  control={control}
-                  render={({ field: { value, onChange } }) => {
-                    const canToggle = !!staffData?.mfaEnabled;
-                    return (
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          fontSize: 14,
-                          cursor: canToggle ? "pointer" : "not-allowed",
-                          fontFamily: "Inter, sans-serif",
-                          opacity: canToggle ? 1 : 0.55,
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={!!value}
-                          disabled={!canToggle}
-                          onChange={(e) => onChange(e.target.checked)}
-                        />
-                        MFA Enabled
-                        {!canToggle && (
-                          <span style={{ fontSize: 12, color: "#9CA3AF", marginLeft: 4 }}>
-                            (set up by staff member on first login)
-                          </span>
-                        )}
-                      </label>
-                    );
-                  }}
-                />
-              </FormRow>
-            </FullRow>}
+            {!isNew && (
+              <FullRow>
+                <FormRow>
+                  <Controller
+                    name="mfaEnabled"
+                    control={control}
+                    render={({ field: { value, onChange } }) => {
+                      const canToggle = !!staffData?.mfaEnabled;
+                      return (
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            fontSize: 14,
+                            cursor: canToggle ? "pointer" : "not-allowed",
+                            fontFamily: "Inter, sans-serif",
+                            opacity: canToggle ? 1 : 0.55,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!value}
+                            disabled={!canToggle}
+                            onChange={(e) => onChange(e.target.checked)}
+                          />
+                          MFA Enabled
+                          {!canToggle && (
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: "#9CA3AF",
+                                marginLeft: 4,
+                              }}
+                            >
+                              (set up by staff member on first login)
+                            </span>
+                          )}
+                        </label>
+                      );
+                    }}
+                  />
+                </FormRow>
+              </FullRow>
+            )}
 
             {/* Password */}
             <FullRow>
@@ -472,11 +497,18 @@ const StaffModal = ({
                     <PasswordWrapper>
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder={isNew ? "Enter password" : "Enter new password (leave blank to keep current)"}
+                        placeholder={
+                          isNew
+                            ? "Enter password"
+                            : "Enter new password (leave blank to keep current)"
+                        }
                         style={{ paddingRight: "40px", width: "100%" }}
                         {...register("password")}
                       />
-                      <EyeButton type="button" onClick={() => setShowPassword((prev) => !prev)}>
+                      <EyeButton
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                      >
                         {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                       </EyeButton>
                     </PasswordWrapper>
@@ -487,32 +519,34 @@ const StaffModal = ({
             </FullRow>
 
             {/* Programs (multi-dropdown with set subtraction) */}
-            {staffData?.role == "staff" && <FullRow>
-              <FormRow>
-                <Label>Programs</Label>
-                <Controller
-                  name="programs"
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <Autocomplete
-                      multiple
-                      options={availablePrograms}
-                      value={value || []}
-                      filterSelectedOptions
-                      onChange={(_, v) => onChange(v)}
-                      sx={autocompleteMultiSx}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          placeholder="Search programs..."
-                        />
-                      )}
-                    />
-                  )}
-                />
-                <FieldError msg={errors.programs?.message} />
-              </FormRow>
-            </FullRow>}
+            {staffData?.role == "staff" && (
+              <FullRow>
+                <FormRow>
+                  <Label>Programs</Label>
+                  <Controller
+                    name="programs"
+                    control={control}
+                    render={({ field: { onChange, value } }) => (
+                      <Autocomplete
+                        multiple
+                        options={availablePrograms}
+                        value={value || []}
+                        filterSelectedOptions
+                        onChange={(_, v) => onChange(v)}
+                        sx={autocompleteMultiSx}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            placeholder="Search programs..."
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                  <FieldError msg={errors.programs?.message} />
+                </FormRow>
+              </FullRow>
+            )}
           </FormGrid>
         </DialogContent>
 
