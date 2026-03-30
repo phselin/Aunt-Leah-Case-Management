@@ -39,7 +39,7 @@ def get_casenotes(id):
 
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        query["programs"] = {"$in": current_user_programs}
+        query["program"] = {"$in": current_user_programs}
         if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
             return jsonify({"detail": "Access denied"}), 403
 

@@ -38,6 +38,7 @@ def get_people():
     # query = {}
     # comment this if we want to prevent unauthorized client searches
     query = get_program_filter()
+    query["active"] = True
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
