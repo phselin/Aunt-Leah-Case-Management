@@ -146,7 +146,7 @@ def update_staff_mem(id):
     unset_fields = {field: "" for field in staff_mem_json_with_null if field not in staff_mem_json}
 
     password = staff_mem_json.pop("password", None)
-    if password and not staff_mem_in_db.get("mfaEnabled") or not staff_mem_json.get("mfaEnabled"):
+    if password and (not staff_mem_in_db.get("mfaEnabled") or not staff_mem_json.get("mfaEnabled")):
         staff_mem_json["passwordHash"] = bcrypt.generate_password_hash(password).decode("utf-8")
 
     if staff_mem_in_db.get("mfaEnabled") and not staff_mem_json.get("mfaEnabled"):
