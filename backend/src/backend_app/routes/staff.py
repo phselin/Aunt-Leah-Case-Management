@@ -160,6 +160,9 @@ def update_staff_mem(id):
 
     res = db.staff.find_one_and_update({"_id": oid}, query, return_document=ReturnDocument.AFTER)
 
+    if not res:
+        return jsonify({"detail": "Staff member not found"}), 404
+
     return jsonify(sanitize_staff_mem(res)), 200
 
 
@@ -189,4 +192,4 @@ def update_staff_active(id):
         return jsonify({"detail": "Staff member not found"}), 404
 
     res["_id"] = str(res["_id"])
-    return jsonify(res), 200
+    return jsonify(sanitize_staff_mem(res)), 200

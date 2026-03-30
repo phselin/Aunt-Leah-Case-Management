@@ -138,26 +138,13 @@ def seed_db():
         res = db.people.insert_one(person)
         person_id = res.inserted_id
 
-        goal_ids = []
-        for program_name in enrolled_programs:
-            goal = {
-                "personid": person_id,
-                "program": program_name,
-                "type": "general",
-                "programMilestones": random.choice(GENERAL_MILESTONES.get(program_name, [])),
-                "detail": faker.paragraph(nb_sentences=2),
-                "due": faker.date_between(start_date="+30d", end_date="+3y").strftime("%Y-%m-%d"),
-            }
-            res = db.goals.insert_one(goal)
-            goal_ids.append(res.inserted_id)
-
         case_notes = []
         for _ in range(random.randint(1, NOTES_PER_PERSON)):
             case_note = {
                 "personid": person_id,
-                "goalid": random.choice(goal_ids),
                 "date": faker.date_between(start_date="-30d", end_date="now").strftime("%Y-%m-%d"),
                 "content": faker.paragraph(nb_sentences=5),
+                "program": random.choice(PROGRAMS),
             }
             case_notes.append(case_note)
 
