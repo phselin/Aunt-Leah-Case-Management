@@ -10,6 +10,7 @@ import ClientHeader from "../components/client/search/clientHeader";
 import ClientSearchBar from "../components/client/search/clientSearchBar";
 import ClientTable from "../components/client/search/clientTable";
 import AuthContext from "../context/AuthProvider";
+import ClientFilter from "./clientFilter";
 
 const PageContainer = styled.div`
   background-color: #f9fafb;
@@ -41,6 +42,14 @@ const TableSection = styled.div`
   margin-bottom: 0px;
 `;
 
+function filterByPrograms(people: Person[], selectedPrograms: string[]) {
+  if (selectedPrograms.length === 0) return people;
+
+  return people.filter((person) =>
+    selectedPrograms.every((program) => person.programs?.includes(program))
+  );
+}
+
 const Client = () => {
   const navigate = useNavigate();
   const {auth} = useContext(AuthContext)
@@ -48,9 +57,17 @@ const Client = () => {
   const { id } = useParams();
   const [debounceQuery, setDebounceQuery] = useState("");
   const [people, setPeople] = useState<Person[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [formConfig, setFormConfig] = useState(null);
+  type FormConfig = {
+  programs: string[];
+  };
+
+  const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
+
+  const [formConfig, setFormConfig] = useState<FormConfig | null>(null);
+  
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,6 +120,19 @@ const Client = () => {
       loadPeople();
     }
   }, [debounceQuery, id]);
+
+  useEffect(() => {
+  const fetchPrograms = async () => {
+    try {
+      const res = await api.get("/programs/names");
+      setAvailablePrograms(res.data);
+    } catch {
+      setErrMsg("Failed to load programs");
+    }
+  };
+
+  fetchPrograms();
+}, []);
 
   const handleExport = async () => {
     setExporting(true);
@@ -165,31 +195,53 @@ const Client = () => {
   // );
 
   if (id) {
+
     return (
       <PageContainer>
         <Outlet context={{ setErrMsg, formConfig }} />
       </PageContainer>
     );
   }
+  const filteredPeople = filterByPrograms(people, selectedPrograms);
 
   // If we are on the main list page
+  
   return (
-    <PageContainer>
-      <ContentArea>
-        <ClientHeader
-          onAdd={() => {
-            navigate("/client/new");
-          }}
-          onExport={handleExport}
-          exporting={exporting}
-        />
+  <PageContainer>
+    <ContentArea>
+      <ClientHeader
+        onAdd={() => {
+          navigate("/client/new");
+        }}
+        onExport={handleExport}
+        exporting={exporting}
+      />
 
-        <TableSection>
-          {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
-          <ClientSearchBar query={query} setQuery={setQuery} />
+      <TableSection>
+        {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
+        <div
+  style={{
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+    background: "#FFFFFF",
+    border: "1px solid #E5E7EB",
+    borderRadius: "16px",
+    padding: "16px",
+  }}
+>
+  <div style={{ flex: 1 }}>
+    <ClientSearchBar query={query} setQuery={setQuery} />
+  </div>
 
-          <ClientTable
-            people={people}
+  <ClientFilter
+    selectedPrograms={selectedPrograms}
+    setSelectedPrograms={setSelectedPrograms}
+    availablePrograms={availablePrograms}
+  />
+</div>
+        <ClientTable
+            people={filteredPeople}
             auth={auth}
             onClick={(pid) => navigate(`/client/${pid}`)}
             onError={(msg) => setErrMsg(msg)}
@@ -198,7 +250,7 @@ const Client = () => {
         </TableSection>
       </ContentArea>
     </PageContainer>
-  );
+);
 };
 
 export default Client;
