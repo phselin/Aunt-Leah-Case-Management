@@ -67,12 +67,12 @@ def save_casenote(id):
     date_str = body.get("date")
 
     if not content or not date_str:
-        return jsonify({"detail": "date and content are required"}), 400
+        return jsonify({"detail": "Date and Content are required"}), 400
 
     try:
         date_val = date_type.fromisoformat(date_str)
     except (ValueError, TypeError):
-        return jsonify({"detail": "invalid date format"}), 400
+        return jsonify({"detail": "Invalid date format"}), 400
 
     program = body.get("program")
     if program and program not in get_programs_structure():

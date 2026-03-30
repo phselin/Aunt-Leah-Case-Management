@@ -1,7 +1,13 @@
+import axios from "axios";
 import { Calendar, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import api from "../../../api";
-import { FormActions, PrimaryBtn } from "../modal/clientElement";
+import {
+  ErrorBox,
+  FormActions,
+  PrimaryBtn,
+  SuccessBox,
+} from "../modal/clientElement";
 
 interface CaseNote {
   _id: string;
@@ -32,7 +38,11 @@ const MiniCalendar: React.FC<{
   const days = useMemo(() => {
     const first = new Date(viewDate.year, viewDate.month, 1);
     const startDay = first.getDay();
-    const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate();
+    const daysInMonth = new Date(
+      viewDate.year,
+      viewDate.month + 1,
+      0,
+    ).getDate();
     const cells: (number | null)[] = Array(startDay).fill(null);
     for (let d = 1; d <= daysInMonth; d++) cells.push(d);
     return cells;
@@ -43,18 +53,81 @@ const MiniCalendar: React.FC<{
     return `${viewDate.year}-${m}-${String(d).padStart(2, "0")}`;
   };
 
-  const monthLabel = new Date(viewDate.year, viewDate.month).toLocaleString("default", { month: "long", year: "numeric" });
+  const monthLabel = new Date(viewDate.year, viewDate.month).toLocaleString(
+    "default",
+    { month: "long", year: "numeric" },
+  );
 
   return (
     <div style={{ width: 240, userSelect: "none" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <button onClick={() => setViewDate(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#6B7280" }}>‹</button>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{monthLabel}</span>
-        <button onClick={() => setViewDate(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#6B7280" }}>›</button>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        }}
+      >
+        <button
+          onClick={() =>
+            setViewDate((v) =>
+              v.month === 0
+                ? { year: v.year - 1, month: 11 }
+                : { ...v, month: v.month - 1 },
+            )
+          }
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 16,
+            color: "#6B7280",
+          }}
+        >
+          ‹
+        </button>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          {monthLabel}
+        </span>
+        <button
+          onClick={() =>
+            setViewDate((v) =>
+              v.month === 11
+                ? { year: v.year + 1, month: 0 }
+                : { ...v, month: v.month + 1 },
+            )
+          }
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 16,
+            color: "#6B7280",
+          }}
+        >
+          ›
+        </button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0, textAlign: "center" }}>
-        {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-          <div key={d} style={{ fontSize: 10, fontWeight: 600, color: "#9CA3AF", padding: "4px 0" }}>{d}</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 0,
+          textAlign: "center",
+        }}
+      >
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+          <div
+            key={d}
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: "#9CA3AF",
+              padding: "4px 0",
+            }}
+          >
+            {d}
+          </div>
         ))}
         {days.map((d, i) => {
           if (!d) return <div key={`e${i}`} />;
@@ -72,14 +145,22 @@ const MiniCalendar: React.FC<{
                 justifyContent: "center",
               }}
             >
-              <div style={{
-                width: 28, height: 28, lineHeight: "28px",
-                borderRadius: "50%",
-                fontSize: 12,
-                fontWeight: isSelected || hasDot ? 600 : 400,
-                backgroundColor: isSelected ? "#D16B7C" : hasDot ? "#FDEAED" : "transparent",
-                color: isSelected ? "white" : hasDot ? "#D16B7C" : "#374151",
-              }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  lineHeight: "28px",
+                  borderRadius: "50%",
+                  fontSize: 12,
+                  fontWeight: isSelected || hasDot ? 600 : 400,
+                  backgroundColor: isSelected
+                    ? "#D16B7C"
+                    : hasDot
+                      ? "#FDEAED"
+                      : "transparent",
+                  color: isSelected ? "white" : hasDot ? "#D16B7C" : "#374151",
+                }}
+              >
                 {d}
               </div>
             </div>
@@ -87,7 +168,18 @@ const MiniCalendar: React.FC<{
         })}
       </div>
       {selectedDate && (
-        <button onClick={() => onSelect(null)} style={{ marginTop: 6, fontSize: 11, color: "#D16B7C", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+        <button
+          onClick={() => onSelect(null)}
+          style={{
+            marginTop: 6,
+            fontSize: 11,
+            color: "#D16B7C",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
           Clear filter
         </button>
       )}
@@ -103,13 +195,15 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
 
   const dotDates = useMemo(() => {
     const s = new Set<string>();
-    notes.forEach(n => { if (n.date) s.add(n.date.slice(0, 10)); });
+    notes.forEach((n) => {
+      if (n.date) s.add(n.date.slice(0, 10));
+    });
     return s;
   }, [notes]);
 
   const filteredNotes = useMemo(() => {
     if (!selectedDate) return notes;
-    return notes.filter(n => n.date?.startsWith(selectedDate));
+    return notes.filter((n) => n.date?.startsWith(selectedDate));
   }, [notes, selectedDate]);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -122,6 +216,24 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   });
   const [saving, setSaving] = useState(false);
   const [programs, setPrograms] = useState<string[]>([]);
+  const [errMsg, setErrMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [modalErrMsg, setModalErrMsg] = useState("");
+
+  useEffect(() => {
+    if (errMsg) {
+      const timer = setTimeout(() => setErrMsg(""), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (successMsg) {
+      const timer = setTimeout(() => setSuccessMsg(""), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (modalErrMsg) {
+      const timer = setTimeout(() => setModalErrMsg(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errMsg, successMsg, modalErrMsg]);
 
   useEffect(() => {
     const loadPrograms = async () => {
@@ -130,13 +242,16 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         setPrograms(res.data);
       } catch (err) {
         console.error("Failed to load programs", err);
+        setErrMsg("Failed to load programs");
       }
     };
     loadPrograms();
   }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setEditOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditOpen(false);
+    };
     if (editOpen) document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [editOpen]);
@@ -150,6 +265,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
         setNotes(res.data);
       } catch (err) {
         console.error("Failed to load notes", err);
+        setErrMsg("Failed to load case notes");
       } finally {
         setLoading(false);
       }
@@ -159,7 +275,14 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
 
   const handleAddNote = () => {
     setEditNote(null);
-    setEditForm({ category: "", program: "", content: "", date: new Date().toISOString().slice(0, 10) });
+    setEditForm({
+      category: "",
+      program: "",
+      content: "",
+      date: new Date().toISOString().slice(0, 10),
+    });
+    setModalErrMsg("");
+    setSuccessMsg("");
     setEditOpen(true);
   };
 
@@ -171,46 +294,67 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
       content: note.content || "",
       date: note.date?.slice(0, 10) || "",
     });
+    setModalErrMsg("");
+    setSuccessMsg("");
     setEditOpen(true);
   };
 
   const handleSaveChanges = async () => {
-  try {
-    setSaving(true);
-    if (editNote) {
-      // Editing existing note
-      await api.put(`people/${personId}/casenotes/${editNote._id}`, {
-        category: editForm.category,
-        program: editForm.program,
-        content: editForm.content,
-      });
-      setNotes((prev) =>
-        prev.map((n) =>
-          n._id === editNote._id
-            ? { ...n, category: editForm.category, program: editForm.program, content: editForm.content }
-            : n,
-        ),
+    try {
+      setSaving(true);
+      setModalErrMsg("");
+      if (editNote) {
+        // Editing existing note
+        await api.put(`people/${personId}/casenotes/${editNote._id}`, {
+          category: editForm.category,
+          program: editForm.program,
+          content: editForm.content,
+        });
+        setNotes((prev) =>
+          prev.map((n) =>
+            n._id === editNote._id
+              ? {
+                  ...n,
+                  category: editForm.category,
+                  program: editForm.program,
+                  content: editForm.content,
+                }
+              : n,
+          ),
+        );
+      } else {
+        // Creating new note
+        await api.post(`/people/${personId}/casenotes`, {
+          date: editForm.date,
+          category: editForm.category,
+          content: editForm.content,
+          program: editForm.program,
+        });
+        // Re-fetch to get the new note with its _id
+        const res = await api.get(`/people/${personId}/casenotes`);
+        setNotes(res.data);
+      }
+      if (onUpdate) onUpdate();
+      setEditOpen(false);
+      setErrMsg("");
+      setSuccessMsg(
+        editNote
+          ? "Case note updated successfully"
+          : "Case note added successfully",
       );
-    } else {
-      // Creating new note
-      await api.post(`/people/${personId}/casenotes`, {
-        date: editForm.date,
-        category: editForm.category,
-        content: editForm.content,
-        program: editForm.program
-      });
-      // Re-fetch to get the new note with its _id
-      const res = await api.get(`/people/${personId}/casenotes`);
-      setNotes(res.data);
+    } catch (err) {
+      // copied from Details
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setModalErrMsg(
+          "You do not have the permission outside your assigned programs",
+        );
+      } else {
+        setModalErrMsg("Please set date and content");
+      }
+    } finally {
+      setSaving(false);
     }
-    if (onUpdate) onUpdate();
-    setEditOpen(false);
-  } catch (err) {
-    console.error("Failed to save", err);
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const getCategoryStyle = (cat?: string) => {
     switch (cat) {
@@ -219,8 +363,8 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
       case "Assessment":
         return { bg: "#DBEAFE", text: "#1D4ED8" };
       case "Follow-up":
-        return { bg: "#EDE9FE", text: "#6D28D9" };  
-      case "Support":        
+        return { bg: "#EDE9FE", text: "#6D28D9" };
+      case "Support":
         return { bg: "#DCFCE7", text: "#15803D" };
       default:
         return { bg: "#F3F4F6", text: "#374151" };
@@ -228,51 +372,79 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   };
 
   return (
-    <div style={{ width: "100%"}}>
-        <div style={{ width: "100%"}}> 
-        <FormActions 
-            style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginTop: '0px',
-                paddingBottom: '0px',
-                marginBottom: '0px'
-            }}
-    >
-        <div style={{ marginLeft: '28px', position: 'relative' }}>
-          <button
-            onClick={() => setCalendarOpen(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 14px', borderRadius: 8,
-              border: '1px solid #E5E7EB', backgroundColor: selectedDate ? '#FDF2F4' : 'white',
-              cursor: 'pointer', fontSize: 15, fontWeight: 500, color: '#374151',
-            }}
-          >
-            <Calendar size={16} color="#D16B7C" />
-            {selectedDate ? new Date(selectedDate + "T00:00:00").toLocaleDateString() : "Filter by date"}
-          </button>
-          {calendarOpen && (
-            <div style={{
-              position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
-              backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: 12,
-              padding: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            }}>
-              <MiniCalendar selectedDate={selectedDate} onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }} dotDates={dotDates} />
-            </div>
-          )}
-        </div>
-        <PrimaryBtn
-            onClick={handleAddNote}
-            style={{ marginBottom: '16px',
-                marginRight: '28px'
-             }}
+    <div style={{ width: "100%" }}>
+      <div style={{ width: "100%" }}>
+        <FormActions
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginTop: "0px",
+            paddingBottom: "0px",
+            marginBottom: "0px",
+          }}
         >
+          <div style={{ marginLeft: "28px", position: "relative" }}>
+            <button
+              onClick={() => setCalendarOpen((v) => !v)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: "1px solid #E5E7EB",
+                backgroundColor: selectedDate ? "#FDF2F4" : "white",
+                cursor: "pointer",
+                fontSize: 15,
+                fontWeight: 500,
+                color: "#374151",
+              }}
+            >
+              <Calendar size={16} color="#D16B7C" />
+              {selectedDate
+                ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+                : "Filter by date"}
+            </button>
+            {calendarOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  marginTop: 4,
+                  zIndex: 50,
+                  backgroundColor: "white",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 12,
+                  padding: 12,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
+                <MiniCalendar
+                  selectedDate={selectedDate}
+                  onSelect={(d) => {
+                    setSelectedDate(d);
+                    setCalendarOpen(false);
+                  }}
+                  dotDates={dotDates}
+                />
+              </div>
+            )}
+          </div>
+          <PrimaryBtn
+            onClick={handleAddNote}
+            style={{ marginBottom: "16px", marginRight: "28px" }}
+          >
             <Plus size={18} /> Add New Case Note
-        </PrimaryBtn>
-       </FormActions>
-       </div>
+          </PrimaryBtn>
+        </FormActions>
+      </div>
+
+      <div style={{ marginLeft: "28px", marginRight: "28px" }}>
+        {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
+        {successMsg && <SuccessBox>{successMsg}</SuccessBox>}
+      </div>
 
       <div
         style={{
@@ -281,7 +453,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           border: "1px solid #E5E7EB",
           overflow: "hidden",
           marginLeft: "28px",
-          marginRight: "28px"
+          marginRight: "28px",
         }}
       >
         <table
@@ -298,22 +470,24 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 backgroundColor: "#FAFAFA",
               }}
             >
-              {["Date", "Category", "Program", "Author","Last Updated By"].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: "16px 24px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    color: "#9CA3AF",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    textAlign: "left"
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
+              {["Date", "Category", "Program", "Author", "Last Updated By"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "16px 24px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#9CA3AF",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      textAlign: "left",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -337,7 +511,10 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   <tr
                     key={note._id}
                     onClick={() => handleEditNote(note)}
-                    style={{ borderBottom: "1px solid #F9FAFB", cursor: "pointer" }}
+                    style={{
+                      borderBottom: "1px solid #F9FAFB",
+                      cursor: "pointer",
+                    }}
                   >
                     <td
                       style={{
@@ -363,7 +540,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                           textTransform: "uppercase",
                         }}
                       >
-                        {note.category || "None"} 
+                        {note.category || "None"}
                       </span>
                     </td>
                     <td
@@ -384,8 +561,14 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                     >
                       {note.author || "Unknown"}
                     </td>
-                    <td style={{ padding: "20px 24px", fontSize: "14px", color: "#9CA3AF" }}>
-                        {note.lastUpdatedBy || "Unknown"}
+                    <td
+                      style={{
+                        padding: "20px 24px",
+                        fontSize: "14px",
+                        color: "#9CA3AF",
+                      }}
+                    >
+                      {note.lastUpdatedBy || "Unknown"}
                     </td>
                   </tr>
                 );
@@ -446,17 +629,31 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 marginBottom: "24px",
               }}
             >
-              {editNote ? "Make changes to the case note below." : "Fill in the details for the new case note."}
+              {editNote
+                ? "Make changes to the case note below."
+                : "Fill in the details for the new case note."}
             </p>
+
+            {modalErrMsg && <ErrorBox>{modalErrMsg}</ErrorBox>}
 
             {/* Date — only for new notes */}
             {!editNote && (
               <>
-                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}>Date</p>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    marginBottom: "8px",
+                  }}
+                >
+                  Date
+                </p>
                 <input
                   type="date"
                   value={editForm.date}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, date: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, date: e.target.value }))
+                  }
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -535,12 +732,40 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             {/* Author — read only, hide for new */}
             {editNote && (
               <>
-                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Author</p>
-                <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "20px" }}>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    marginBottom: "4px",
+                  }}
+                >
+                  Author
+                </p>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#9CA3AF",
+                    marginBottom: "20px",
+                  }}
+                >
                   {editNote.author || "Unknown"}
                 </p>
-                <p style={{ fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>Last Updated By</p>
-                <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "20px" }}>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    marginBottom: "4px",
+                  }}
+                >
+                  Last Updated By
+                </p>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#9CA3AF",
+                    marginBottom: "20px",
+                  }}
+                >
                   {editNote.lastUpdatedBy || "Unknown"}
                 </p>
               </>
@@ -613,7 +838,11 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   opacity: saving ? 0.7 : 1,
                 }}
               >
-                {saving ? "Saving..." : editNote ? "Save Changes" : "Add Case Note"}
+                {saving
+                  ? "Saving..."
+                  : editNote
+                    ? "Save Changes"
+                    : "Add Case Note"}
               </button>
             </div>
           </div>
