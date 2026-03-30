@@ -1,6 +1,6 @@
 import re
 
-from pydantic import EmailStr, ValidationInfo
+from pydantic import ValidationInfo
 
 
 def validate_name_util(value: str) -> str:
@@ -40,5 +40,7 @@ def validate_programs_util(value: list[str], info: ValidationInfo) -> list[str]:
     return value
 
 
-def validate_email_util(value: EmailStr) -> EmailStr:
+def validate_email_util(value: str) -> str:
+    if not value:
+        return None
     return value.strip().lower()

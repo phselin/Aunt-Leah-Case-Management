@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date
 from io import BytesIO
 
 import pandas
@@ -35,10 +35,10 @@ def get_intake_form():
 @jwt_required()
 def get_people():
     person = request.args.get("person", "").strip()
-    # query = {}
-    # comment this if we want to prevent unauthorized client searches
-    query = get_program_filter()
-    query["active"] = True
+    query = get_program_filter()  # comment this for less strict RBAC
+    if not is_admin():
+        query["active"] = True
+
     if person:
         p = person.replace(" ", "")
         query["$expr"] = {
@@ -267,12 +267,7 @@ def create_person():
 #     except InvalidId:
 #         return jsonify({"detail": "Invalid client ID format"}), 400
 
-#     if not is_admin():
-#         return jsonify({"detail": "Access denied"}), 403
-
-#     res = db.people.delete_one({"_id": oid})
-#     if res.deleted_count == 0:
-#         return jsonify({"detail": "Client not found"}), 404
+#     db.people.delete_one({"_id": oid})
 #     return jsonify({"detail": "Client deleted successfully"}), 200
 
 
@@ -321,11 +316,11 @@ def update_milestones(id):
     milestone_update = {
         f"programMilestones.{program}.{type}": {
             "value": milestone,
-            "lastUpdateDate": datetime.now(timezone.utc),
+            "lastUpdateDate": date.today().isoformat(),
             "startDate": (
                 milestone_in_db["startDate"]
                 if milestone_in_db and milestone_in_db.get("startDate")
-                else datetime.now(timezone.utc)
+                else date.today().isoformat()
             ),
         }
     }
