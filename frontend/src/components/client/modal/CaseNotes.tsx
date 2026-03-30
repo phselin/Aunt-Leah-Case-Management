@@ -29,9 +29,10 @@ interface CaseNote {
 
 interface CaseNotesProps {
   personId: string;
+  onUpdate?: () => void;
 }
 
-const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
+const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [notes, setNotes] = useState<CaseNote[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -97,28 +98,37 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
   };
 
   const handleSaveChanges = async () => {
-    if (!editNote) return;
-    try {
-      setSaving(true);
-      // TODO: Replace with your real edit endpoint once _id is returned
-      const res = await api.put(
-        `people/${personId}/casenotes/${editNote._id}`,
-        {
-          category: editForm.category,
-          program: editForm.program,
-          content: editForm.content,
-        },
-      );
-      setNotes((prev) =>
-        prev.map((n) => (n._id === editNote._id ? { ...n, ...res.data } : n)),
-      );
-      setEditOpen(false);
-    } catch (err) {
-      console.error("Failed to save changes", err);
-    } finally {
-      setSaving(false);
-    }
-  };
+  if (!editNote) return;
+  try {
+    setSaving(true);
+    await api.put(`people/${personId}/casenotes/${editNote._id}`, {
+      category: editForm.category,
+      program: editForm.program,
+      content: editForm.content,
+    });
+
+    // Update state with the form values directly — don't rely on res.data shape
+    setNotes((prev) =>
+      prev.map((n) =>
+        n._id === editNote._id
+          ? {
+              ...n,
+              category: editForm.category,
+              program: editForm.program,
+              content: editForm.content,
+            }
+          : n,
+      ),
+    );
+
+    if (onUpdate) onUpdate();
+    setEditOpen(false);
+  } catch (err) {
+    console.error("Failed to save changes", err);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const getCategoryStyle = (cat?: string) => {
     switch (cat) {
@@ -146,7 +156,9 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
    
         <PrimaryBtn
             onClick={handleAddNote} // TODO: Swap for a modal open handler if you add a form modal
-            style={{ marginBottom: '16px' }}
+            style={{ marginBottom: '16px',
+                marginRight: '28px'
+             }}
         >
             <Plus size={18} /> Add New Case Note
         </PrimaryBtn>
@@ -159,6 +171,8 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId }) => {
           borderRadius: "12px",
           border: "1px solid #E5E7EB",
           overflow: "hidden",
+          marginLeft: "28px",
+          marginRight: "28px"
         }}
       >
         <table

@@ -95,6 +95,7 @@ const ClientModal = () => {
             marginBottom: 16,
             padding: 0, // No extra box around the text
             transition: "color 0.2s ease",
+            marginLeft:"20px"
           }}
           onMouseEnter={(e) => {
             // Only change the text/icon color to the brand red
@@ -108,7 +109,7 @@ const ClientModal = () => {
         </button>
       </div>
 
-      <div style={{ padding: "8px 32px 0" }}>
+      <div style={{ padding: "8px 60px 0" }}>
         <ClientTitle style={{ fontSize: 28, fontWeight: 700 }}>
           {title}
         </ClientTitle>
@@ -116,7 +117,7 @@ const ClientModal = () => {
 
       <TabContext value={curView}>
         {!isNew && (
-          <div style={{ padding: "0 32px", borderBottom: "1px solid #e8e8e8" }}>
+          <div style={{ padding: "0 60px", borderBottom: "1px solid #e8e8e8" }}>
             <TabList
               onChange={handleTabChange}
               sx={{
@@ -136,6 +137,9 @@ const ClientModal = () => {
                   "&.Mui-selected": {
                     color: palette.deepRed,
                   },
+                  "&:first-of-type": {
+                  paddingLeft: 0,     // Perfectly aligns the first tab text to the left edge
+                },
                 },
               }}
             >
