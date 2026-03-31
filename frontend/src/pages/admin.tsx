@@ -5,6 +5,7 @@ import Tab from "@mui/material/Tab";
 import { useState } from "react";
 import styled from "styled-components";
 import { palette } from "../theme/palette";
+import ProgramManagement from "./programManagement";
 import StaffManagement from "./staffManagement";
 
 const AdminViews = {
@@ -110,17 +111,7 @@ const Admin = () => {
           </TabPanel>
 
           <TabPanel value={AdminViews.Programs} sx={{ p: 0, pt: 3 }}>
-            <div
-              style={{
-                padding: "40px 0",
-                textAlign: "center",
-                color: "#9CA3AF",
-                fontSize: 15,
-                fontFamily: '"Poppins", sans-serif',
-              }}
-            >
-              Program Management — Coming Soon
-            </div>
+            <ProgramManagement />
           </TabPanel>
         </TabContext>
       </ContentArea>

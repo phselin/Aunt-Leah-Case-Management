@@ -47,13 +47,13 @@ function filterByPrograms(people: Person[], selectedPrograms: string[]) {
   if (selectedPrograms.length === 0) return people;
 
   return people.filter((person) =>
-    selectedPrograms.every((program) => person.programs?.includes(program))
+    selectedPrograms.every((program) => person.programs?.includes(program)),
   );
 }
 
 const Client = () => {
   const navigate = useNavigate();
-  const {auth} = useContext(AuthContext)
+  const { auth } = useContext(AuthContext);
   const [query, setQuery] = useState("");
   const { id } = useParams();
   const [debounceQuery, setDebounceQuery] = useState("");
@@ -62,13 +62,12 @@ const Client = () => {
   const [errMsg, setErrMsg] = useState("");
   const [exporting, setExporting] = useState(false);
   type FormConfig = {
-  programs: string[];
+    programs: string[];
   };
 
   const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
 
   const [formConfig, setFormConfig] = useState<FormConfig | null>(null);
-  
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,7 +97,7 @@ const Client = () => {
       }
     };
     fetchFormConfig();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     const loadPeople = async () => {
@@ -123,17 +122,17 @@ const Client = () => {
   }, [debounceQuery, id]);
 
   useEffect(() => {
-  const fetchPrograms = async () => {
-    try {
-      const res = await api.get("/programs/names");
-      setAvailablePrograms(res.data);
-    } catch {
-      setErrMsg("Failed to load programs");
-    }
-  };
+    const fetchPrograms = async () => {
+      try {
+        const res = await api.get("/programs/names");
+        setAvailablePrograms(res.data);
+      } catch {
+        setErrMsg("Failed to load programs");
+      }
+    };
 
-  fetchPrograms();
-}, []);
+    fetchPrograms();
+  }, []);
 
   const handleExport = async () => {
     setExporting(true);
@@ -141,12 +140,12 @@ const Client = () => {
 
     try {
       const res = await api.get("/people/export", {
-      params: { 
-        programs: selectedPrograms.join(','), 
-        search: debounceQuery 
-      },
-      withCredentials: true,
-      responseType: "blob",
+        params: {
+          programs: selectedPrograms.join(","),
+          search: debounceQuery,
+        },
+        withCredentials: true,
+        responseType: "blob",
       });
 
       const url = window.URL.createObjectURL(res.data);
@@ -167,13 +166,15 @@ const Client = () => {
   };
 
   const handleToggleActive = async (id: string, active: boolean) => {
-  try {
-    await api.patch(`/people/${id}/active`, {active: active})
-    setPeople(prev => prev.map(p => p._id === id ? { ...p, active: active } : p));
-  } catch {
-    setErrMsg("Failed to update status")
-  }
-};
+    try {
+      await api.patch(`/people/${id}/active`, { active: active });
+      setPeople((prev) =>
+        prev.map((p) => (p._id === id ? { ...p, active: active } : p)),
+      );
+    } catch {
+      setErrMsg("Failed to update status");
+    }
+  };
 
   // return (
   //   <div className="clientPage">
@@ -200,7 +201,6 @@ const Client = () => {
   // );
 
   if (id) {
-
     return (
       <PageContainer>
         <Outlet context={{ setErrMsg, formConfig }} />
@@ -208,45 +208,45 @@ const Client = () => {
     );
   }
   const filteredPeople = filterByPrograms(people, selectedPrograms);
-  console.log(people, filteredPeople)
+  console.log(people, filteredPeople);
 
   // If we are on the main list page
-  
+
   return (
-  <PageContainer>
-    <ContentArea>
-      <ClientHeader
-        onAdd={() => {
-          navigate("/client/new");
-        }}
-        onExport={handleExport}
-        exporting={exporting}
-      />
+    <PageContainer>
+      <ContentArea>
+        <ClientHeader
+          onAdd={() => {
+            navigate("/client/new");
+          }}
+          onExport={handleExport}
+          exporting={exporting}
+        />
 
-      <TableSection>
-        {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
-        <div
-  style={{
-    display: "flex",
-    gap: "12px",
-    alignItems: "center",
-    background: "#FFFFFF",
-    border: "1px solid #E5E7EB",
-    borderRadius: "16px",
-    padding: "16px",
-  }}
->
-  <div style={{ flex: 1 }}>
-    <ClientSearchBar query={query} setQuery={setQuery} />
-  </div>
+        <TableSection>
+          {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              alignItems: "center",
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
+              borderRadius: "16px",
+              padding: "16px",
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <ClientSearchBar query={query} setQuery={setQuery} />
+            </div>
 
-  <ClientFilter
-    selectedPrograms={selectedPrograms}
-    setSelectedPrograms={setSelectedPrograms}
-    availablePrograms={availablePrograms}
-  />
-</div>
-        <ClientTable
+            <ClientFilter
+              selectedPrograms={selectedPrograms}
+              setSelectedPrograms={setSelectedPrograms}
+              availablePrograms={availablePrograms}
+            />
+          </div>
+          <ClientTable
             people={filteredPeople}
             auth={auth}
             onClick={(pid) => navigate(`/client/${pid}`)}
@@ -256,7 +256,7 @@ const Client = () => {
         </TableSection>
       </ContentArea>
     </PageContainer>
-);
+  );
 };
 
 export default Client;

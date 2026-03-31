@@ -189,7 +189,7 @@ const Progress = ({ personId }: ProgressProps) => {
                   color="text.secondary"
                   sx={{ mt: 1 }}
                 >
-                  No milestone types configured for this program.
+                  No milestone categories configured for this program.
                 </Typography>
               )}
 
