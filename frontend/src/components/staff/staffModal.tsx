@@ -181,6 +181,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
   } = useForm<StaffFormData>();
 
   const mfaEnabled = watch("mfaEnabled");
+  const selectedRole = watch("role");
   const [showPassword, setShowPassword] = useState(false);
 
   // Load available programs on mount
@@ -519,7 +520,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
             </FullRow>
 
             {/* Programs (multi-dropdown with set subtraction) */}
-            {(staffData?.role == "staff" || isNew) && (
+            {(staffData?.role == "staff" || selectedRole == "staff") && (
               <FullRow>
                 <FormRow>
                   <Label>Programs</Label>
