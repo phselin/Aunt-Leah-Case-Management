@@ -311,18 +311,6 @@ def delete_person(id):
     return jsonify({"detail": "Client deleted successfully"}), 200
 
 
-# @people_bp.delete("/people/<id>")
-# @jwt_required()
-# def delete_person(id):
-#     try:
-#         oid = ObjectId(id)
-#     except InvalidId:
-#         return jsonify({"detail": "Invalid client ID format"}), 400
-
-#     db.people.delete_one({"_id": oid})
-#     return jsonify({"detail": "Client deleted successfully"}), 200
-
-
 @people_bp.put("/people/<id>/milestones")
 @jwt_required()
 def update_milestones(id):
