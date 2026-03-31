@@ -64,7 +64,7 @@ def add_program():
     name = name.title()
 
     if db.programs.find_one({"name": name}):
-        return jsonify({"details": f"Prorgram {name} already exists"}), 409
+        return jsonify({"detail": f"Prorgram {name} already exists"}), 409
 
     milestoneTree = body.get("milestoneTree")
     milestoneTree, err = validate_milestone_tree(milestoneTree)
@@ -72,6 +72,11 @@ def add_program():
         return jsonify({"detail": err}), 400
 
     program = {"name": name, "milestoneTree": milestoneTree}
+
+    description = body.get("description")
+    if "description" in body and description:
+        program["description"] = description
+
     res = db.programs.insert_one(program)
     program["_id"] = str(res.inserted_id)
     return jsonify(program), 201
@@ -113,9 +118,15 @@ def edit_program():
             },
         )
 
+    query = {"$set": {"milestoneTree": milestoneTree}}
+
+    description = body.get("description")
+    if "description" in body and description:
+        query["$set"]["description"] = description
+
     res = db.programs.find_one_and_update(
         {"name": name},
-        {"$set": {"milestoneTree": milestoneTree}},
+        query,
         return_document=ReturnDocument.AFTER,
     )
 

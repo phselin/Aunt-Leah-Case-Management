@@ -9,9 +9,9 @@ from flask_jwt_extended import current_user, jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
-from backend_app import intake_form
 from backend_app.auth_init import limiter
 from backend_app.db import db
+from backend_app.intake_form import get_intake_form
 from backend_app.routes.routes_utils import (
     get_current_user_programs,
     get_formatted_error,
@@ -27,8 +27,8 @@ people_bp = Blueprint("people", __name__)
 
 @people_bp.get("/people/intake")
 @jwt_required()
-def get_intake_form():
-    return jsonify(intake_form.form)
+def get_form():
+    return jsonify(get_intake_form())
 
 
 @people_bp.get("/people")

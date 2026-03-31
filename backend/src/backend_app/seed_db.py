@@ -44,6 +44,7 @@ def seed_db():
         program = {
             "name": program_name,
             "milestoneTree": {"general": GENERAL_MILESTONES.get(program_name, [])},
+            "description": faker.sentence(nb_words=10),
         }
         db.programs.insert_one(program)
 

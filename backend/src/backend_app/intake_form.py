@@ -15,36 +15,39 @@ from backend_app.intake_form_options import (
 )
 from backend_app.routes.routes_utils import get_program_names
 
-participant_information = {
-    "label": "Participant Information",
-    "type": "section",
-    "fields": [
-        {"key": "firstname", "label": "First Name", "type": "text", "required": True},
-        {"key": "lastname", "label": "Last Name", "type": "text", "required": True},
-        {"key": "dob", "label": "Birth Date", "type": "date"},
-        {
-            "key": "gender",
-            "label": "Gender Identity",
-            "type": "dropdown",
-            "options": GENDER_OPTIONS,
-        },
-        {"key": "pronouns", "label": "Pronouns", "type": "text"},
-        {"key": "phone", "label": "Phone Number", "type": "phone"},
-        {"key": "email", "label": "Email Address", "type": "email"},
-        {
-            "key": "preferredContactMethod",
-            "label": "Preferred Method of Contact",
-            "type": "dropdown",
-            "options": CONTACT_METHOD_OPTIONS,
-        },
-        {
-            "key": "programs",
-            "label": "Program Enrollment",
-            "type": "multi-dropdown",
-            "options": get_program_names(),
-        },
-    ],
-}
+
+def get_participant_info():
+    return {
+        "label": "Participant Information",
+        "type": "section",
+        "fields": [
+            {"key": "firstname", "label": "First Name", "type": "text", "required": True},
+            {"key": "lastname", "label": "Last Name", "type": "text", "required": True},
+            {"key": "dob", "label": "Birth Date", "type": "date"},
+            {
+                "key": "gender",
+                "label": "Gender Identity",
+                "type": "dropdown",
+                "options": GENDER_OPTIONS,
+            },
+            {"key": "pronouns", "label": "Pronouns", "type": "text"},
+            {"key": "phone", "label": "Phone Number", "type": "phone"},
+            {"key": "email", "label": "Email Address", "type": "email"},
+            {
+                "key": "preferredContactMethod",
+                "label": "Preferred Method of Contact",
+                "type": "dropdown",
+                "options": CONTACT_METHOD_OPTIONS,
+            },
+            {
+                "key": "programs",
+                "label": "Program Enrollment",
+                "type": "multi-dropdown",
+                "options": get_program_names(),
+            },
+        ],
+    }
+
 
 address_and_housing_info = {
     "key": "housing",
@@ -383,14 +386,16 @@ department_specific_section = {
     ],
 }
 
-form = {
-    "sections": [
-        participant_information,
-        address_and_housing_info,
-        referral_info,
-        background_history_section,
-        collateral_supports_section,
-        department_receiving_referral_section,
-        department_specific_section,
-    ],
-}
+
+def get_intake_form():
+    return {
+        "sections": [
+            get_participant_info(),
+            address_and_housing_info,
+            referral_info,
+            background_history_section,
+            collateral_supports_section,
+            department_receiving_referral_section,
+            department_specific_section,
+        ],
+    }
