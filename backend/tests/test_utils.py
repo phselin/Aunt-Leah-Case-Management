@@ -58,7 +58,7 @@ def insert_admin(app):
                 "passwordHash": bcrypt.generate_password_hash(ADMIN_PASSWORD).decode("utf-8"),
                 "firstname": "Test",
                 "lastname": "Admin",
-                "role": "admin",
+                "role": "super-admin",
                 "mfaEnabled": True,
                 "mfaSecret": ADMIN_MFA_SECRET,
             }

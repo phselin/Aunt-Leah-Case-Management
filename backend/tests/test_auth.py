@@ -41,6 +41,6 @@ def test_me():
         resp = client.get("/me")
         assert resp.status_code == 200
         assert resp.json["user"]["email"] == ADMIN_EMAIL
-        assert resp.json["user"]["role"] == "admin"
+        assert resp.json["user"]["role"] == "super-admin"
         assert resp.json["user"]["firstname"] == "Test"
         assert resp.json["user"]["lastname"] == "Admin"
