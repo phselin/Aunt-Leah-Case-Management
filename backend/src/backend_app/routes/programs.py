@@ -3,7 +3,7 @@ from flask_jwt_extended import current_user, jwt_required
 from pymongo import ReturnDocument
 
 from backend_app.db import db
-from backend_app.routes.routes_utils import get_program_names, get_programs_structure, is_admin
+from backend_app.routes.routes_utils import get_program_names, get_programs_structure
 
 programs_bp = Blueprint("programs", __name__)
 
@@ -39,11 +39,22 @@ def validate_program_milestones(programMilestone):
     return sanitized, None
 
 
+@programs_bp.get("/programs")
+@jwt_required()
+def get_programs():
+    if current_user.get("role") != "super-admin":
+        return jsonify({"detail": "Access denied"}), 403
+
+    return jsonify(
+        [{**p, "_id": str(p["_id"])} for p in list(db.programs.find({}).sort("_id", -1))]
+    ), 200
+
+
 @programs_bp.post("/programs")
 @jwt_required()
 def add_program():
     body = request.get_json(silent=True) or {}
-    if not current_user.get("role") != "super-admin":
+    if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
     name = body.get("name")
@@ -74,7 +85,7 @@ def add_program():
 @jwt_required()
 def edit_program():
     body = request.get_json(silent=True) or {}
-    if not current_user.get("role") != "super-admin":
+    if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
     name = body.get("name")
@@ -99,3 +110,6 @@ def edit_program():
 
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
+
+
+# TODO delete (less priority)
