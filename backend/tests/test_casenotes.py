@@ -1,5 +1,5 @@
 from bson import ObjectId
-from test_utils import auth_client, seed_programs, seeded_client, unauth_client
+from test_utils import auth_client, seed_programs, unauth_client
 
 from backend_app.db import db
 
