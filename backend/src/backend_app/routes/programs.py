@@ -112,4 +112,23 @@ def edit_program():
     return jsonify(res), 200
 
 
-# TODO delete (less priority)
+@programs_bp.delete("/programs")
+@jwt_required()
+def delete_program():
+    name = request.args.get("name", "").strip().title()
+    if not name:
+        return jsonify({"detail": "Missing name"}), 400
+
+    if current_user.get("role") != "super-admin":
+        return jsonify({"detail": "Access denied"}), 403
+
+    db.casenotes.update_many({"program": name}, {"$unset": {"program": ""}})
+    db.people.update_many(
+        {"programs": name},
+        {"$pull": {"programs": name}, "$unset": {f"programMilestones.{name}": ""}},
+    )
+    db.staff.update_many({"programs": name}, {"$pull": {"programs": name}})
+    res = db.programs.delete_one({"name": name})
+    if res.deleted_count == 0:
+        return jsonify({"detail": f"No such program {name}"}), 400
+    return jsonify({"detail": f"Successfully deleted program {name}"}), 200
