@@ -17,15 +17,9 @@ const TitleArea = styled.div`
 `;
 
 const MainTitle = styled.h1`
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: "Poppins", sans-serif;
 
-  font-weight: 500;
+  font-weight: 600;
   font-size: 32px;
   color: #111827;
   letter-spacing: -0.02em;
@@ -34,13 +28,7 @@ const MainTitle = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 400;
   font-size: 15px;
   color: #6b7280;

@@ -18,6 +18,7 @@ const PageContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  font-family: "Poppins", sans-serif;
 `;
 
 const ContentArea = styled.div`

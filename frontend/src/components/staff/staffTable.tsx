@@ -34,14 +34,14 @@ const TableRow = styled.div<{ $isHeader?: boolean }>`
 `;
 
 const StaffName = styled.div`
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: #111827;
 `;
 
 const TableData = styled.div`
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   color: #6b7280;
   font-size: 14px;
   white-space: nowrap;
@@ -82,7 +82,7 @@ const RoleChip = styled.span<{ $role: string }>`
 `;
 
 const ActionButton = styled.button<{ $staffActive?: boolean }>`
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   font-size: 13px;
   font-weight: 600;
   padding: 8px 16px;
@@ -106,7 +106,7 @@ const EmptyRow = styled.div`
   text-align: center;
   color: #9ca3af;
   font-size: 14px;
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
 `;
 
 type Props = {

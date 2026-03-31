@@ -20,6 +20,7 @@ const PageContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  font-family: "Poppins", sans-serif;
 `;
 
 const ContentArea = styled.div`
@@ -36,9 +37,8 @@ const ContentArea = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  font-weight: 500;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
   font-size: 32px;
   color: #111827;
   letter-spacing: -0.02em;
@@ -47,8 +47,7 @@ const PageTitle = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 400;
   font-size: 15px;
   color: #6b7280;
@@ -80,6 +79,7 @@ const Admin = () => {
             <TabList
               onChange={handleTabChange}
               sx={{
+                fontFamily: '"Poppins", sans-serif',
                 minHeight: 36,
                 "& .MuiTabs-indicator": {
                   backgroundColor: palette.deepRed,
@@ -87,6 +87,7 @@ const Admin = () => {
                   borderRadius: "3px 3px 0 0",
                 },
                 "& .MuiTab-root": {
+                  fontFamily: '"Poppins", sans-serif',
                   textTransform: "none",
                   fontWeight: 600,
                   fontSize: 14,
@@ -115,6 +116,7 @@ const Admin = () => {
                 textAlign: "center",
                 color: "#9CA3AF",
                 fontSize: 15,
+                fontFamily: '"Poppins", sans-serif',
               }}
             >
               Program Management — Coming Soon

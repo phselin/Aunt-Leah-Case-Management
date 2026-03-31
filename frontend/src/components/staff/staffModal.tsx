@@ -61,7 +61,7 @@ const FieldError = ({ msg }: { msg?: string }) =>
   msg ? <span style={{ color: "red", fontSize: 12 }}>{msg}</span> : null;
 
 const PasswordMasked = styled.div`
-  font-family: "Inter", sans-serif;
+  font-family: "Poppins", sans-serif;
   font-size: 14px;
   color: #9ca3af;
   background: #f3f4f6;
@@ -327,7 +327,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "Poppins, sans-serif",
           fontWeight: 700,
           fontSize: 22,
           color: "#111827",
@@ -454,7 +454,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
                             gap: 8,
                             fontSize: 14,
                             cursor: canToggle ? "pointer" : "not-allowed",
-                            fontFamily: "Inter, sans-serif",
+                            fontFamily: "Poppins, sans-serif",
                             opacity: canToggle ? 1 : 0.55,
                           }}
                         >
