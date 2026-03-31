@@ -5,7 +5,7 @@ import pandas
 from bson import ObjectId
 from bson.errors import InvalidId
 from flask import Blueprint, jsonify, request, send_file
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import current_user, jwt_required
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
@@ -300,6 +300,9 @@ def delete_person(id):
         oid = ObjectId(id)
     except InvalidId:
         return jsonify({"detail": "Invalid client ID format"}), 400
+
+    if current_user.get("role") != "super-admin":
+        return jsonify({"detail": "Access denied"}), 403
 
     result = db.people.delete_one({"_id": oid})
     if result.deleted_count == 0:

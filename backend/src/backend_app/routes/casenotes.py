@@ -17,13 +17,11 @@ casenotes_bp = Blueprint("casenotes", __name__)
 
 
 def casenote_to_string(casenote):
-    serialized = {}
-    for key, value in casenote.items():
-        if isinstance(value, ObjectId):
-            serialized[key] = str(value)
-        else:
-            serialized[key] = value
-    return serialized
+    return {
+        **casenote,
+        "_id": str(casenote.get("_id", "")),
+        "personid": str(casenote.get("personid", "")),
+    }
 
 
 @casenotes_bp.get("/people/<id>/casenotes/dates")
@@ -110,30 +108,22 @@ def save_casenote(id):
 
     author = f"{current_user.get('firstname')} {current_user.get('lastname')}"
 
-    # Upsert semantics: one casenote per person/date; subsequent calls overwrite content.
-    base_fields = {
+    casenote_doc = {
         "personid": person_oid,
         "date": date_val.isoformat(),
-    }
-
-    set_fields = {
         "content": content,
         "author": author,
         "lastUpdatedBy": author,
     }
     if program:
-        set_fields["program"] = program
+        casenote_doc["program"] = program
     if category:
-        set_fields["category"] = category
+        casenote_doc["category"] = category
 
-    res = db.casenotes.find_one_and_update(
-        base_fields,
-        {"$set": set_fields},
-        upsert=True,
-        return_document=ReturnDocument.AFTER,
-    )
+    res = db.casenotes.insert_one(casenote_doc)
+    casenote_doc["_id"] = res.inserted_id
 
-    return jsonify(casenote_to_string(res)), 200
+    return jsonify(casenote_to_string(casenote_doc)), 201
 
 
 @casenotes_bp.put("/people/<id>/casenotes/<casenoteid>")
