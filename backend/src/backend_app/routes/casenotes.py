@@ -24,6 +24,7 @@ def casenote_to_string(casenote):
     serialized["personid"] = str(casenote.get("personid", ""))
     return serialized
 
+
 @casenotes_bp.get("/people/<id>/casenotes/dates")
 @jwt_required()
 def get_casenote_dates(id):
