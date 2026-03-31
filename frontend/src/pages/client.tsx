@@ -169,7 +169,7 @@ const Client = () => {
   try {
     await api.patch(`/people/${id}/active`, {active: active})
     setPeople(prev => prev.map(p => p._id === id ? { ...p, active: active } : p));
-  } catch (err) {
+  } catch {
     setErrMsg("Failed to update status")
   }
 };

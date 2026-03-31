@@ -55,7 +55,7 @@ const Progress = ({ personId }: ProgressProps) => {
       setPrograms(personRes.data.programs ?? []);
       setProgramMilestones(personRes.data.programMilestones ?? {});
       setStructure(structureRes.data ?? {});
-    } catch (err) {
+    } catch {
       setLocalErr("Failed to load milestone data");
     } finally {
       setLoading(false);
