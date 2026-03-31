@@ -17,12 +17,12 @@ casenotes_bp = Blueprint("casenotes", __name__)
 
 
 def casenote_to_string(casenote):
-    return {
-        **casenote,
-        "_id": str(casenote.get("_id", "")),
-        "personid": str(casenote.get("personid", "")),
-    }
-
+    serialized = {}
+    for key, value in casenote.items():
+        serialized[key] = str(value) if isinstance(value, ObjectId) else value
+    serialized["_id"] = str(casenote.get("_id", ""))
+    serialized["personid"] = str(casenote.get("personid", ""))
+    return serialized
 
 @casenotes_bp.get("/people/<id>/casenotes/dates")
 @jwt_required()

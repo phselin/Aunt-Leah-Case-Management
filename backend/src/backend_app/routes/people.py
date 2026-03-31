@@ -102,7 +102,7 @@ def get_clients():
 @limiter.limit("5 per minute")
 @jwt_required()
 def export_people():
-    if not is_admin():
+    if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
     try:
@@ -301,7 +301,7 @@ def delete_person(id):
     except InvalidId:
         return jsonify({"detail": "Invalid client ID format"}), 400
 
-    if current_user.get("role") != "super-admin":
+    if not is_admin():
         return jsonify({"detail": "Access denied"}), 403
 
     result = db.people.delete_one({"_id": oid})

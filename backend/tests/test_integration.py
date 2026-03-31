@@ -39,7 +39,7 @@ def test_person_workflow():
             f"/people/{pid}/casenotes",
             json={"date": "2025-03-15", "content": "Moved to shelter"},
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
         resp = client.get(f"/people/{pid}/casenotes")
         assert resp.status_code == 200
