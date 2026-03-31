@@ -22,10 +22,10 @@ def programs_structure():
 
 # trying golang error handling in python for fun :)
 # validation should be much stronger but this is ok for now
-def validate_program_milestones(programMilestone):
+def validate_milestone_tree(milestoneTree):
     keys = set()
     sanitized = {}
-    for k, val in programMilestone.items():
+    for k, val in milestoneTree.items():
         k = k.lower()
         if k in keys:
             return None, f"Duplicate milestone category {k}"
@@ -66,15 +66,15 @@ def add_program():
     if db.programs.find_one({"name": name}):
         return jsonify({"details": f"Prorgram {name} already exists"}), 409
 
-    programMilestones = body.get("programMilestones")
-    programMilestones, err = validate_program_milestones(programMilestones)
+    milestoneTree = body.get("milestoneTree")
+    milestoneTree, err = validate_milestone_tree(milestoneTree)
     if err:
         return jsonify({"detail": err}), 400
 
     res = db.programs.insert_one(
         {
             "name": name,
-            "milestoneTree": programMilestones,
+            "milestoneTree": milestoneTree,
         }
     )
     res["_id"] = str(res.inserted_id)
@@ -94,14 +94,14 @@ def edit_program():
 
     name = name.title()
 
-    programMilestones = body.get("programMilestones")
-    programMilestones, err = validate_program_milestones(programMilestones)
+    milestoneTree = body.get("milestoneTree")
+    milestoneTree, err = validate_milestone_tree(milestoneTree)
     if err:
         return jsonify({"detail": err}), 400
 
     res = db.programs.find_one_and_update(
         {"name": name},
-        {"programMilestones": programMilestones},
+        {"milestoneTree": milestoneTree},
         return_document=ReturnDocument.AFTER,
     )
 
