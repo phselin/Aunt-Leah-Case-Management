@@ -71,14 +71,10 @@ def add_program():
     if err:
         return jsonify({"detail": err}), 400
 
-    res = db.programs.insert_one(
-        {
-            "name": name,
-            "milestoneTree": milestoneTree,
-        }
-    )
-    res["_id"] = str(res.inserted_id)
-    return jsonify(res), 201
+    program = {"name": name, "milestoneTree": milestoneTree}
+    res = db.programs.insert_one(program)
+    program["_id"] = str(res.inserted_id)
+    return jsonify(program), 201
 
 
 @programs_bp.put("/programs")
@@ -99,14 +95,29 @@ def edit_program():
     if err:
         return jsonify({"detail": err}), 400
 
+    program_in_db = db.programs.find_one({"name": name})
+    if not program_in_db:
+        return jsonify({"detail": f"Program {name} not found"}), 404
+
+    old_categories = set((program_in_db.get("milestoneTree") or {}).keys())
+    new_categories = set(milestoneTree.keys())
+    deleted_categories = old_categories - new_categories
+
+    if deleted_categories:
+        db.people.update_many(
+            {"programs": name},
+            {
+                "$unset": {
+                    f"programMilestones.{name}.{category}": "" for category in deleted_categories
+                }
+            },
+        )
+
     res = db.programs.find_one_and_update(
         {"name": name},
-        {"milestoneTree": milestoneTree},
+        {"$set": {"milestoneTree": milestoneTree}},
         return_document=ReturnDocument.AFTER,
     )
-
-    if not res:
-        return jsonify({"detail": f"Program {name} not found"}), 404
 
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
@@ -122,13 +133,13 @@ def delete_program():
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
+    res = db.programs.delete_one({"name": name})
+    if res.deleted_count == 0:
+        return jsonify({"detail": f"No such program {name}"}), 400
     db.casenotes.update_many({"program": name}, {"$unset": {"program": ""}})
     db.people.update_many(
         {"programs": name},
         {"$pull": {"programs": name}, "$unset": {f"programMilestones.{name}": ""}},
     )
     db.staff.update_many({"programs": name}, {"$pull": {"programs": name}})
-    res = db.programs.delete_one({"name": name})
-    if res.deleted_count == 0:
-        return jsonify({"detail": f"No such program {name}"}), 400
     return jsonify({"detail": f"Successfully deleted program {name}"}), 200
