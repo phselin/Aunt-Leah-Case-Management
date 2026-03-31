@@ -64,6 +64,40 @@ def get_people():
     ), 200
 
 
+@people_bp.get("/clients")
+@jwt_required()
+def get_clients():
+    client = request.args.get("client", "").strip()
+    query = get_program_filter()
+    if not is_admin():
+        query["active"] = True
+
+    if client:
+        c = client.replace(" ", "")
+        query["$expr"] = {
+            "$or": [
+                {
+                    "$regexMatch": {
+                        "input": {"$concat": ["$firstname", "$lastname"]},
+                        "regex": c,
+                        "options": "i",
+                    }
+                },
+                {
+                    "$regexMatch": {
+                        "input": {"$concat": ["$lastname", "$firstname"]},
+                        "regex": c,
+                        "options": "i",
+                    }
+                },
+            ]
+        }
+
+    return jsonify(
+        [{**p, "_id": str(p["_id"])} for p in list(db.people.find(query).sort("_id", -1).limit(30))]
+    ), 200
+
+
 @people_bp.get("/people/export")
 @limiter.limit("5 per minute")
 @jwt_required()
@@ -257,6 +291,21 @@ def create_person():
     res = db.people.insert_one(person_json)
     person_json["_id"] = str(res.inserted_id)
     return jsonify(person_json), 201
+
+
+@people_bp.delete("/people/<id>")
+@jwt_required()
+def delete_person(id):
+    try:
+        oid = ObjectId(id)
+    except InvalidId:
+        return jsonify({"detail": "Invalid client ID format"}), 400
+
+    result = db.people.delete_one({"_id": oid})
+    if result.deleted_count == 0:
+        return jsonify({"detail": "Client not found"}), 404
+
+    return jsonify({"detail": "Client deleted successfully"}), 200
 
 
 # @people_bp.delete("/people/<id>")

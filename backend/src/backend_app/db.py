@@ -37,7 +37,31 @@ def get_mongo_client() -> MongoClient:
 
 client = get_mongo_client()
 db = client[_db_name_from_uri(settings.mongo_uri)]
-redis_client = redis.from_url(settings.redis_url, decode_responses=True)
+
+
+class _InMemoryRedis:
+    """Minimal Redis-like client for tests when using mongomock."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, str] = {}
+
+    def setex(self, name, time, value):  # type: ignore[override]
+        # TTL is ignored for tests; we only need basic key/value behaviour.
+        self._store[str(name)] = str(value)
+
+    def get(self, name):  # type: ignore[override]
+        return self._store.get(str(name))
+
+    def delete(self, name):  # type: ignore[override]
+        self._store.pop(str(name), None)
+
+
+if settings.mongo_uri.startswith("mongomock://"):
+    # When running tests against mongomock, use an in-memory Redis stub
+    # so unit tests do not require an actual Redis instance.
+    redis_client = _InMemoryRedis()
+else:
+    redis_client = redis.from_url(settings.redis_url, decode_responses=True)
 
 
 def ping_mongo() -> bool:

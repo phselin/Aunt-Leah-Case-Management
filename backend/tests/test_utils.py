@@ -54,6 +54,7 @@ def insert_admin(app):
         db.staff.insert_one(
             {
                 "email": ADMIN_EMAIL,
+                "active": True,
                 "passwordHash": bcrypt.generate_password_hash(ADMIN_PASSWORD).decode("utf-8"),
                 "firstname": "Test",
                 "lastname": "Admin",
