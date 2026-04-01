@@ -480,7 +480,7 @@ const ProgramManagement = () => {
     setNewCatMilestones([""]);
   };
 
-  const handleAddCategory = (program: Program) => {
+  const handleAddCategory = () => {
     const catName = newCatName.trim().toLowerCase();
     if (!catName) {
       setErrMsg("Category name is required");
@@ -788,7 +788,7 @@ const ProgramManagement = () => {
 
             <FormBtnRow>
               <SecondaryBtn onClick={resetCategoryForm}>Cancel</SecondaryBtn>
-              <SaveBtn onClick={() => handleAddCategory(program)}>
+              <SaveBtn onClick={() => handleAddCategory()}>
                 Add Category
               </SaveBtn>
             </FormBtnRow>
