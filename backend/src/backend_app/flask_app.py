@@ -10,6 +10,7 @@ from backend_app.auth import auth_bp
 from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.config import settings
 from backend_app.routes.casenotes import casenotes_bp
+from backend_app.routes.calendar_events import calendar_events_bp
 from backend_app.routes.example import example_bp
 from backend_app.routes.health import health_bp
 from backend_app.routes.pdf import pdf_bp
@@ -51,6 +52,7 @@ def create_flask_app() -> Flask:
     app.register_blueprint(health_bp)
     app.register_blueprint(pdf_bp)
     app.register_blueprint(example_bp)
+    app.register_blueprint(calendar_events_bp)
     app.register_blueprint(people_bp)
     app.register_blueprint(casenotes_bp)
     app.register_blueprint(programs_bp)

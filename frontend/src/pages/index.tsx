@@ -1,7 +1,8 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AuthContext from "../context/AuthProvider";
 import dayjs, { Dayjs } from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import api from "../api";
 
 dayjs.extend(isoWeek);
 
@@ -42,6 +43,16 @@ const LEGEND_DOTS: Record<AppointmentType, string> = {
 const APPOINTMENT_TYPES = Object.keys(APPOINTMENT_COLORS) as AppointmentType[];
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 8); // 8 AM – 6 PM
 const HOUR_HEIGHT = 64;
+
+const mapApiEventToCalendarEvent = (event: Record<string, string>): CalendarEvent => ({
+  id: event._id,
+  clientName: event.clientName ?? "",
+  startTime: event.startTime ?? "09:00",
+  endTime: event.endTime ?? "10:00",
+  date: event.date ?? dayjs().format("YYYY-MM-DD"),
+  type: (event.type as AppointmentType) ?? "Meeting",
+  location: event.location ?? "",
+});
 
 // ─── Event Modal ──────────────────────────────────────────────────────────────
 
@@ -449,6 +460,27 @@ const Home = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [modal, setModal]               = useState<ModalState>({ open: false, prefill: null });
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadEvents = async () => {
+      try {
+        const res = await api.get("/calendar-events");
+        if (isMounted) {
+          setEvents(res.data.map(mapApiEventToCalendarEvent));
+        }
+      } catch (error) {
+        console.error("Error loading calendar events:", error);
+      }
+    };
+
+    void loadEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const openAdd = (date: string, startTime: string) => {
     const [h] = startTime.split(":").map(Number);
     const endTime = `${String(h + 1).padStart(2, "0")}:00`;
@@ -457,19 +489,46 @@ const Home = () => {
 
   const openEdit = (evt: CalendarEvent) => setModal({ open: true, prefill: evt });
 
-  const handleSave = (evt: CalendarEvent) => {
-    setEvents(prev => {
-      const exists = prev.some(e => e.id === evt.id);
-      return exists ? prev.map(e => e.id === evt.id ? evt : e) : [...prev, evt];
-    });
-    setSelectedEvent(evt);
-    setModal({ open: false, prefill: null });
+  const handleSave = async (evt: CalendarEvent) => {
+    const payload = {
+      clientName: evt.clientName,
+      startTime: evt.startTime,
+      endTime: evt.endTime,
+      date: evt.date,
+      type: evt.type,
+      location: evt.location,
+    };
+
+    try {
+      if (modal.prefill?.id) {
+        const res = await api.put(`/calendar-events/${modal.prefill.id}`, payload);
+        const savedEvent = mapApiEventToCalendarEvent(res.data);
+        setEvents(prev => prev.map(e => e.id === savedEvent.id ? savedEvent : e));
+        setSelectedEvent(savedEvent);
+      } else {
+        const res = await api.post("/calendar-events", payload);
+        const savedEvent = mapApiEventToCalendarEvent(res.data);
+        setEvents(prev => [...prev, savedEvent]);
+        setSelectedEvent(savedEvent);
+      }
+
+      setModal({ open: false, prefill: null });
+    } catch (error: any) {
+      console.error("Error saving calendar event:", error);
+      alert(error?.response?.data?.detail ?? "Unable to save event right now.");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
-    setSelectedEvent(null);
-    setModal({ open: false, prefill: null });
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/calendar-events/${id}`);
+      setEvents(prev => prev.filter(e => e.id !== id));
+      setSelectedEvent(null);
+      setModal({ open: false, prefill: null });
+    } catch (error: any) {
+      console.error("Error deleting calendar event:", error);
+      alert(error?.response?.data?.detail ?? "Unable to delete event right now.");
+    }
   };
 
   return (

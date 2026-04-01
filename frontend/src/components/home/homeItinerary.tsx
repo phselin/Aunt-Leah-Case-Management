@@ -23,28 +23,22 @@ import {
 } from "./homeElement";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
+import api from "../../api";
 
 type EventItem = {
-  id: string;
+  _id: string;
   title: string;
   time: string;
+  date: string;
   notes?: string;
 };
-
-type EventsByDate = Record<string, EventItem[]>;
 
 type ItineraryProps = {
   value: Dayjs | null;
 };
 
-const STORAGE_KEY = "home_itinerary_events_v1";
-
 function toDateKey(d: Dayjs) {
   return d.format(`YYYY-MM-DD`);
-}
-
-function newId() {
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
@@ -64,20 +58,8 @@ const Itinerary = ({ value }: ItineraryProps) => {
 
   const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
 
-  const [eventsByDate, setEventsByDate] = useState<EventsByDate>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as EventsByDate;
-        if (parsed && typeof parsed === "object") return parsed;
-      }
-    } catch (e) {
-      console.error("Error parsing events from localStorage:", e);
-    }
-    return {};
-  });
-
-  const eventsForDay = eventsByDate[dateKey] ?? [];
+  const [eventsForDay, setEventsForDay] = useState<EventItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -106,12 +88,33 @@ const Itinerary = ({ value }: ItineraryProps) => {
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(eventsByDate));
-    } catch (error) {
-      console.error("Error saving events to localStorage:", error);
-    }
-  }, [eventsByDate]);
+    let isMounted = true;
+
+    const loadEvents = async () => {
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/calendar-events?date=${dateKey}`);
+        if (isMounted) {
+          setEventsForDay(res.data);
+        }
+      } catch (error) {
+        console.error("Error loading itinerary events:", error);
+        if (isMounted) {
+          setEventsForDay([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dateKey]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -122,7 +125,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
   };
 
   const openEdit = (e: EventItem) => {
-    setEditingId(e.id);
+    setEditingId(e._id);
     setTitle(e.title);
     setTime(e.time);
     setNotes(e.notes ?? "");
@@ -138,7 +141,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
     setTimeDropdownOpen(false);
   };
 
-  const saveEvent = () => {
+  const saveEvent = async () => {
     const cleanTitle = title.trim();
     const cleanTime = time.trim();
 
@@ -152,39 +155,39 @@ const Itinerary = ({ value }: ItineraryProps) => {
       return;
     }
 
-    setEventsByDate((prev) => {
-      const day = prev[dateKey] ?? [];
+    const payload = {
+      title: cleanTitle,
+      time: cleanTime,
+      date: dateKey,
+      notes: notes.trim() || undefined,
+    };
 
-
+    try {
       if (editingId) {
-        const updated = day.map((ev) =>
-          ev.id === editingId
-            ? { ...ev, title: cleanTitle, time: cleanTime, notes: notes.trim() || undefined }
-            : ev
+        const res = await api.put(`/calendar-events/${editingId}`, payload);
+        setEventsForDay((prev) =>
+          prev.map((event) => (event._id === editingId ? res.data : event))
         );
-        return { ...prev, [dateKey]: updated };
+      } else {
+        const res = await api.post("/calendar-events", payload);
+        setEventsForDay((prev) => [...prev, res.data]);
       }
 
-
-      const newEvent: EventItem = {
-        id: newId(),
-        title: cleanTitle,
-        time: cleanTime,
-        notes: notes.trim() || undefined,
-      };
-
-      return { ...prev, [dateKey]: [...day, newEvent] };
-    });
-
-    closeForm();
+      closeForm();
+    } catch (error: any) {
+      console.error("Error saving itinerary event:", error);
+      alert(error?.response?.data?.detail ?? "Unable to save event right now.");
+    }
   };
 
-  const deleteEvent = (id: string) => {
-    setEventsByDate((prev) => {
-      const day = prev[dateKey] ?? [];
-      const updated = day.filter((ev) => ev.id !== id);
-      return { ...prev, [dateKey]: updated };
-    });
+  const deleteEvent = async (id: string) => {
+    try {
+      await api.delete(`/calendar-events/${id}`);
+      setEventsForDay((prev) => prev.filter((event) => event._id !== id));
+    } catch (error: any) {
+      console.error("Error deleting itinerary event:", error);
+      alert(error?.response?.data?.detail ?? "Unable to delete event right now.");
+    }
   };
 
   return (
@@ -244,7 +247,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
             <SecondaryBtn type="button" onClick={closeForm}>
               Cancel
             </SecondaryBtn>
-            <AddEventBtn type="button" onClick={saveEvent}>
+            <AddEventBtn type="button" onClick={() => void saveEvent()}>
               {editingId ? "Save Changes" : "Add Event"}
             </AddEventBtn>
           </FormActions>
@@ -252,13 +255,17 @@ const Itinerary = ({ value }: ItineraryProps) => {
       ) : null}
 
       <EventList>
-        {eventsForDay.length === 0 ? (
+        {isLoading ? (
+          <EventItemCard>
+            <EventNotes>Loading events...</EventNotes>
+          </EventItemCard>
+        ) : eventsForDay.length === 0 ? (
           <EventItemCard>
             <EventNotes>No events for this day yet.</EventNotes>
           </EventItemCard>
         ) : (
           eventsForDay.map((e) => (
-            <EventItemCard key={e.id}>
+            <EventItemCard key={e._id}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
                 <div>
                   <EventTitle>{e.title}</EventTitle>
@@ -268,7 +275,7 @@ const Itinerary = ({ value }: ItineraryProps) => {
 
                 <EventActions>
                   <ActionBtn type="button" onClick={() => openEdit(e)}>✎</ActionBtn>
-                  <ActionBtn type="button" onClick={() => deleteEvent(e.id)}>🗑</ActionBtn>
+                  <ActionBtn type="button" onClick={() => void deleteEvent(e._id)}>🗑</ActionBtn>
                 </EventActions>
               </div>
             </EventItemCard>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar, Filter, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../api";
 import {
@@ -212,15 +212,17 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [notes, setNotes] = useState<CaseNote[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [filterType, setFilterType] = useState<"date" | "program" | "category">(
-    "date",
-  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [dotDates, setDotDates] = useState<Set<string>>(new Set());
+
+  // Draft values inside the filter panel (only applied on "Apply")
+  const [draftProgram, setDraftProgram] = useState<string>("");
+  const [draftCategory, setDraftCategory] = useState<string>("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -240,12 +242,17 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [modalErrMsg, setModalErrMsg] = useState("");
   const [saveBtnHover, setSaveBtnHover] = useState(false);
 
+  // Refs for closing dropdowns when clicking outside
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+
+  const andFilterActive = selectedProgram !== "" || selectedCategory !== "";
+  const andFilterCount = (selectedProgram ? 1 : 0) + (selectedCategory ? 1 : 0);
+
   const formatDateOnly = (dateStr?: string) => {
     if (!dateStr) return "—";
-
     const dateOnly = dateStr.split("T")[0];
     const [year, month, day] = dateOnly.split("-").map(Number);
-
     return new Date(year, month - 1, day).toLocaleDateString();
   };
 
@@ -279,11 +286,29 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setEditOpen(false);
+      if (e.key === "Escape") {
+        setEditOpen(false);
+        setCalendarOpen(false);
+        setFilterPanelOpen(false);
+      }
     };
-    if (editOpen) document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [editOpen]);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setCalendarOpen(false);
+      }
+      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node)) {
+        setFilterPanelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const loadNotes = async (
     date?: string | null,
@@ -333,21 +358,9 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     }
   };
 
+  // Always pass all active filters together (AND logic)
   const reloadNotes = () => {
-    loadNotes(
-      filterType === "date" ? selectedDate : null,
-      searchQuery,
-      filterType === "program" ? selectedProgram : "",
-      filterType === "category" ? selectedCategory : "",
-    );
-  };
-
-  const handleFilterTypeChange = (type: "date" | "program" | "category") => {
-    setFilterType(type);
-    setSelectedDate(null);
-    setSelectedProgram("");
-    setSelectedCategory("");
-    setCalendarOpen(false);
+    loadNotes(selectedDate, searchQuery, selectedProgram, selectedCategory);
   };
 
   const didMountRef = useRef(false);
@@ -366,7 +379,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     }
 
     reloadNotes();
-  }, [selectedDate, selectedProgram, selectedCategory, filterType]);
+  }, [selectedDate, selectedProgram, selectedCategory]);
 
   useEffect(() => {
     if (!personId) return;
@@ -383,6 +396,28 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
   }, [searchQuery]);
+
+  const handleApplyAndFilter = () => {
+    setSelectedProgram(draftProgram);
+    setSelectedCategory(draftCategory);
+    setFilterPanelOpen(false);
+  };
+
+  const handleClearAndFilter = () => {
+    setDraftProgram("");
+    setDraftCategory("");
+    setSelectedProgram("");
+    setSelectedCategory("");
+    setFilterPanelOpen(false);
+  };
+
+  const handleOpenFilterPanel = () => {
+    // Sync draft with current applied values when opening
+    setDraftProgram(selectedProgram);
+    setDraftCategory(selectedCategory);
+    setFilterPanelOpen((v) => !v);
+    setCalendarOpen(false);
+  };
 
   const handleAddNote = () => {
     setEditNote(null);
@@ -500,141 +535,310 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             marginBottom: "0px",
           }}
         >
+          {/* Left: Date filter + AND filter button */}
           <div
             style={{
               marginLeft: "28px",
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               position: "relative",
             }}
           >
-            <select
-              value={filterType}
-              onChange={(e) =>
-                handleFilterTypeChange(
-                  e.target.value as "date" | "program" | "category",
-                )
-              }
-              style={{
-                padding: "9px 14px",
-                borderRadius: 8,
-                border: "1px solid #E5E7EB",
-                backgroundColor: "white",
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#374151",
-                cursor: "pointer",
-              }}
-            >
-              <option value="date">Date</option>
-              <option value="program">Program</option>
-              <option value="category">Category</option>
-            </select>
+            {/* ── Date calendar button ── */}
+            <div ref={calendarRef} style={{ position: "relative" }}>
+              <button
+                onClick={() => {
+                  setCalendarOpen((v) => !v);
+                  setFilterPanelOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  border: selectedDate ? "1px solid #D16B7C" : "1px solid #E5E7EB",
+                  backgroundColor: selectedDate ? "#FDF2F4" : "white",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: selectedDate ? "#D16B7C" : "#374151",
+                  minWidth: "160px",
+                  transition: "all 0.15s",
+                }}
+              >
+                <Calendar size={15} color={selectedDate ? "#D16B7C" : "#9CA3AF"} />
+                {selectedDate
+                  ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+                  : "Filter by date"}
+                {selectedDate && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedDate(null);
+                    }}
+                    style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}
+                  >
+                    <X size={13} color="#D16B7C" />
+                  </span>
+                )}
+              </button>
 
-            {filterType === "date" && (
-              <div style={{ position: "relative" }}>
-                <button
-                  onClick={() => setCalendarOpen((v) => !v)}
+              {calendarOpen && (
+                <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "8px 14px",
-                    borderRadius: 8,
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    marginTop: 4,
+                    zIndex: 50,
+                    backgroundColor: "white",
                     border: "1px solid #E5E7EB",
-                    backgroundColor: selectedDate ? "#FDF2F4" : "white",
-                    cursor: "pointer",
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: "#374151",
-                    minWidth: "170px",
+                    borderRadius: 12,
+                    padding: 12,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                   }}
                 >
-                  <Calendar size={16} color="#D16B7C" />
-                  {selectedDate
-                    ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
-                    : "Filter by date"}
-                </button>
+                  <MiniCalendar
+                    selectedDate={selectedDate}
+                    onSelect={(d) => {
+                      setSelectedDate(d);
+                      setCalendarOpen(false);
+                    }}
+                    dotDates={dotDates}
+                  />
+                </div>
+              )}
+            </div>
 
-                {calendarOpen && (
-                  <div
+            {/* ── AND filter button (Program + Category) ── */}
+            <div ref={filterPanelRef} style={{ position: "relative" }}>
+              <button
+                onClick={handleOpenFilterPanel}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  border: andFilterActive ? "1px solid #D16B7C" : "1px solid #E5E7EB",
+                  backgroundColor: andFilterActive ? "#FDF2F4" : "white",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: andFilterActive ? "#D16B7C" : "#374151",
+                  transition: "all 0.15s",
+                  position: "relative",
+                }}
+              >
+                <Filter size={15} color={andFilterActive ? "#D16B7C" : "#9CA3AF"} />
+                Filter
+                {andFilterActive && (
+                  <span
                     style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      marginTop: 4,
-                      zIndex: 50,
-                      backgroundColor: "white",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: 12,
-                      padding: 12,
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      backgroundColor: "#D16B7C",
+                      color: "white",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      marginLeft: 2,
                     }}
                   >
-                    <MiniCalendar
-                      selectedDate={selectedDate}
-                      onSelect={(d) => {
-                        setSelectedDate(d);
-                        setCalendarOpen(false);
-                      }}
-                      dotDates={dotDates}
-                    />
-                  </div>
+                    {andFilterCount}
+                  </span>
                 )}
-              </div>
-            )}
+              </button>
 
-            {filterType === "program" && (
-              <select
-                value={selectedProgram}
-                onChange={(e) => setSelectedProgram(e.target.value)}
+              {filterPanelOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 6px)",
+                    left: 0,
+                    zIndex: 50,
+                    backgroundColor: "white",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: 12,
+                    padding: "16px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    minWidth: 240,
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#9CA3AF",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      marginBottom: 12,
+                    }}
+                  >
+                    Filter by
+                  </p>
+
+                  {/* Program */}
+                  <p
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#374151",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Program
+                  </p>
+                  <select
+                    value={draftProgram}
+                    onChange={(e) => setDraftProgram(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "1px solid #E5E7EB",
+                      backgroundColor: "#F9FAFB",
+                      fontSize: 13,
+                      color: "#374151",
+                      cursor: "pointer",
+                      marginBottom: 12,
+                      appearance: "none",
+                    }}
+                  >
+                    <option value="">All programs</option>
+                    {programs.map((program) => (
+                      <option key={program} value={program}>
+                        {program}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Category */}
+                  <p
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#374151",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Category
+                  </p>
+                  <select
+                    value={draftCategory}
+                    onChange={(e) => setDraftCategory(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "1px solid #E5E7EB",
+                      backgroundColor: "#F9FAFB",
+                      fontSize: 13,
+                      color: "#374151",
+                      cursor: "pointer",
+                      marginBottom: 16,
+                      appearance: "none",
+                    }}
+                  >
+                    <option value="">All categories</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Assessment">Assessment</option>
+                    <option value="Crisis">Crisis</option>
+                    <option value="Support">Support</option>
+                  </select>
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={handleClearAndFilter}
+                      style={{
+                        flex: 1,
+                        padding: "8px 0",
+                        borderRadius: 8,
+                        border: "1px solid #E5E7EB",
+                        backgroundColor: "white",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "#6B7280",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={handleApplyAndFilter}
+                      style={{
+                        flex: 1,
+                        padding: "8px 0",
+                        borderRadius: 8,
+                        border: "none",
+                        backgroundColor: "#D16B7C",
+                        color: "white",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Active filter chips (program / category) */}
+            {selectedProgram && (
+              <span
                 style={{
-                  padding: "9px 14px",
-                  borderRadius: 8,
-                  border: "1px solid #E5E7EB",
-                  backgroundColor: "white",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "#374151",
-                  cursor: "pointer",
-                  minWidth: "180px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "4px 10px",
+                  borderRadius: 99,
+                  backgroundColor: "#EDE9FE",
+                  color: "#6D28D9",
+                  fontSize: 12,
+                  fontWeight: 600,
                 }}
               >
-                <option value="">All programs</option>
-                {programs.map((program) => (
-                  <option key={program} value={program}>
-                    {program}
-                  </option>
-                ))}
-              </select>
+                {selectedProgram}
+                <X
+                  size={11}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSelectedProgram("")}
+                />
+              </span>
             )}
-
-            {filterType === "category" && (
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+            {selectedCategory && (
+              <span
                 style={{
-                  padding: "9px 14px",
-                  borderRadius: 8,
-                  border: "1px solid #E5E7EB",
-                  backgroundColor: "white",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "#374151",
-                  cursor: "pointer",
-                  minWidth: "180px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "4px 10px",
+                  borderRadius: 99,
+                  backgroundColor: "#DBEAFE",
+                  color: "#1D4ED8",
+                  fontSize: 12,
+                  fontWeight: 600,
                 }}
               >
-                <option value="">All categories</option>
-                <option value="Follow-up">Follow-up</option>
-                <option value="Assessment">Assessment</option>
-                <option value="Crisis">Crisis</option>
-                <option value="Support">Support</option>
-              </select>
+                {selectedCategory}
+                <X
+                  size={11}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setSelectedCategory("")}
+                />
+              </span>
             )}
           </div>
 
+          {/* Centre: search */}
           <div
             style={{
               flex: 1,

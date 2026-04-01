@@ -68,6 +68,7 @@ def seed_db():
     db.people.delete_many({})
     db.goals.delete_many({})
     db.casenotes.delete_many({})
+    db.calendar_events.delete_many({})
 
     for program_name in PROGRAMS:
         program = {
