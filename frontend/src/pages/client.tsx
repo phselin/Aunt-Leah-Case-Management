@@ -47,7 +47,7 @@ function filterByPrograms(people: Person[], selectedPrograms: string[]) {
   if (selectedPrograms.length === 0) return people;
 
   return people.filter((person) =>
-    selectedPrograms.every((program) => person.programs?.includes(program)),
+    selectedPrograms.some((program) => person.programs?.includes(program)),
   );
 }
 
