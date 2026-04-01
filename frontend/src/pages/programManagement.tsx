@@ -365,6 +365,7 @@ const ProgramManagement = () => {
 
   // Local editable copy of the milestone tree
   const [editTree, setEditTree] = useState<Record<string, string[]>>({});
+  const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Add category form state (inline within expanded card)
@@ -583,11 +584,13 @@ const ProgramManagement = () => {
     if (expandedId === program._id) {
       setExpandedId(null);
       setEditTree({});
+      setEditDescription("");
       setNewMilestoneInputs({});
       resetCategoryForm();
     } else {
       setExpandedId(program._id);
       setEditTree(JSON.parse(JSON.stringify(program.milestoneTree || {})));
+      setEditDescription(program.description || "");
       setNewMilestoneInputs({});
       resetCategoryForm();
     }
@@ -595,7 +598,9 @@ const ProgramManagement = () => {
 
   const hasChanges = (program: Program) => {
     return (
-      JSON.stringify(program.milestoneTree || {}) !== JSON.stringify(editTree)
+      JSON.stringify(program.milestoneTree || {}) !==
+        JSON.stringify(editTree) ||
+      (program.description || "") !== editDescription
     );
   };
 
@@ -612,13 +617,17 @@ const ProgramManagement = () => {
     try {
       const res = await api.put("/programs", {
         name: program.name,
-        description: program.description || "",
+        description: editDescription,
         milestoneTree: editTree,
       });
       setPrograms((prev) =>
         prev.map((p) =>
           p._id === program._id
-            ? { ...p, milestoneTree: res.data.milestoneTree }
+            ? {
+                ...p,
+                description: editDescription,
+                milestoneTree: res.data.milestoneTree,
+              }
             : p,
         ),
       );
@@ -645,6 +654,39 @@ const ProgramManagement = () => {
 
     return (
       <EditorArea>
+        {/* Description */}
+        <div style={{ marginBottom: 20 }}>
+          <FormLabel>Description</FormLabel>
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Add a description (optional)"
+            maxLength={300}
+            rows={2}
+            style={{
+              width: "100%",
+              fontSize: 14,
+              border: "1px solid #d1d5db",
+              borderRadius: 6,
+              padding: "8px 10px",
+              color: "#111827",
+              boxSizing: "border-box",
+              resize: "vertical",
+              fontFamily: "inherit",
+              transition: "border-color 0.15s, box-shadow 0.15s",
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = palette.deepRed;
+              e.currentTarget.style.boxShadow =
+                "0 0 0 2px rgba(185,28,28,0.08)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#d1d5db";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+        </div>
         {categories.length === 0 && !addingCategory && (
           <div
             style={{
@@ -910,6 +952,7 @@ const ProgramManagement = () => {
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="Description (optional)"
+              maxLength={300}
               rows={2}
               style={{
                 width: "100%",

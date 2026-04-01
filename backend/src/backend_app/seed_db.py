@@ -147,11 +147,14 @@ def seed_db():
                 "content": faker.paragraph(nb_sentences=5),
                 "program": random.choice(PROGRAMS),
                 "author": f"{faker.first_name()} {faker.last_name()}",
+                "category": random.choice(["Follow-up", "Assessment", "Crisis", "Support"]),
                 "lastUpdatedBy": f"{faker.first_name()} {faker.last_name()}",
             }
             case_notes.append(case_note)
 
         db.casenotes.insert_many(case_notes)
+
+    db.casenotes.create_index([("content", "text")])
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
 from pymongo import ReturnDocument
@@ -21,12 +23,15 @@ def programs_structure():
 
 
 # trying golang error handling in python for fun :)
-# validation should be much stronger but this is ok for now
+# it just makes things complicated :( but keeping it here anyways
 def validate_milestone_tree(milestone_tree):
     keys = set()
     sanitized = {}
     for k, val in milestone_tree.items():
         k = k.lower()
+        k, err = validate_alpha_chars(k)
+        if err:
+            return None, err
         if k in keys:
             return None, f"Duplicate milestone category {k}"
         keys.add(k)
@@ -35,8 +40,23 @@ def validate_milestone_tree(milestone_tree):
         val = [v.lower() for v in val]
         if len(set(val)) != len(val):
             return None, "Duplicate milestones"
+        for v in val:
+            if not isinstance(v, str):
+                return None, f"Invalid milestone {v} is not a string"
+            _, err = validate_alpha_chars(v)
+            if err:
+                return None, err
         sanitized[k] = val
     return sanitized, None
+
+
+def validate_alpha_chars(input):
+    if not re.fullmatch(r"[A-Za-z\s]+", input):
+        return (
+            None,
+            "Only letters and spaces are allowed",
+        )
+    return input, None
 
 
 @programs_bp.get("/programs")
@@ -61,10 +81,13 @@ def add_program():
     if not name:
         return jsonify({"detail": "Missing program name"}), 400
 
+    name, err = validate_alpha_chars(name)
+    if err:
+        return jsonify({"detail": err}), 400
     name = name.title()
 
     if db.programs.find_one({"name": name}):
-        return jsonify({"detail": f"Prorgram {name} already exists"}), 409
+        return jsonify({"detail": f"Program {name} already exists"}), 409
 
     milestone_tree = body.get("milestoneTree")
     milestone_tree, err = validate_milestone_tree(milestone_tree)

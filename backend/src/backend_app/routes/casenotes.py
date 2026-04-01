@@ -49,6 +49,9 @@ def get_casenote_dates(id):
 @jwt_required()
 def get_casenotes(id):
     date = request.args.get("date")
+    search = request.args.get("search")
+    program = request.args.get("program")
+    category = request.args.get("category")
 
     try:
         person_oid = ObjectId(id)
@@ -63,12 +66,22 @@ def get_casenotes(id):
         if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
             return jsonify({"detail": "Access denied"}), 403
 
+    if search:
+        query["content"] = {"$regex": search, "$options": "i"}
+
+    if program:
+        query["program"] = program
+
+    if category:
+        query["category"] = category
+
     if date:
         query["date"] = date
         casenotes = list(casenote_to_string(cn) for cn in db.casenotes.find(query))
     else:
         casenotes = list(
-            casenote_to_string(cn) for cn in db.casenotes.find(query).sort("date", -1).limit(20)
+            casenote_to_string(cn)
+            for cn in db.casenotes.find(query).sort("date", -1).sort("_id", -1).limit(20)
         )
     return jsonify(casenotes), 200
 

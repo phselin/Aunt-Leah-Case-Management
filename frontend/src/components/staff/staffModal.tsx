@@ -291,20 +291,22 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
             err.response.data?.detail ||
               "Staff member with this email already exists",
           );
+        } else {
+          setLocalErr(`Failed to ${isNew ? "add" : "update"} staff member`);
+          const backend_errors = err.response?.data?.errors;
+          if (backend_errors && Array.isArray(backend_errors)) {
+            backend_errors.forEach((item: any) => {
+              Object.entries(item).forEach(([field, msg]) => {
+                setError(field as any, {
+                  type: "server",
+                  message: String(msg),
+                });
+              });
+            });
+          }
         }
       } else {
         setLocalErr(`Failed to ${isNew ? "add" : "update"} staff member`);
-        const backend_errors = err.response?.data?.errors;
-        if (backend_errors && Array.isArray(backend_errors)) {
-          backend_errors.forEach((item: any) => {
-            Object.entries(item).forEach(([field, msg]) => {
-              setError(field as any, {
-                type: "server",
-                message: String(msg),
-              });
-            });
-          });
-        }
       }
     }
   };

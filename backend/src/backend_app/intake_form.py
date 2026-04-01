@@ -30,7 +30,7 @@ def get_participant_info():
                 "type": "dropdown",
                 "options": GENDER_OPTIONS,
             },
-            {"key": "pronouns", "label": "Pronouns", "type": "text"},
+            {"key": "pronouns", "label": "Pronouns", "type": "text", "maxLength": 20},
             {"key": "phone", "label": "Phone Number", "type": "phone"},
             {"key": "email", "label": "Email Address", "type": "email"},
             {
@@ -61,9 +61,9 @@ address_and_housing_info = {
             "label": "Current Address & Postal Code (if applicable)",
             "fields": [
                 {"key": "street", "label": "Street address", "type": "text"},
-                {"key": "city", "label": "City", "type": "text"},
-                {"key": "province", "label": "Province", "type": "text"},
-                {"key": "postalCode", "label": "Postal Code", "type": "text"},
+                {"key": "city", "label": "City", "type": "text", "maxLength": 50},
+                {"key": "province", "label": "Province", "type": "text", "maxLength": 50},
+                {"key": "postalCode", "label": "Postal Code", "type": "text", "maxLength": 20},
             ],
         },
     ],

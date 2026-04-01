@@ -10,8 +10,8 @@ def validate_name_util(value: str) -> str:
     if len(value) > 100:
         raise ValueError("name is too long")
     # special char ai-gen, i don't know which characters to allow
-    if not re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$").match(value):
-        raise ValueError("Name contains invalid characters")
+    if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ\s']+", value):
+        raise ValueError("Only letters and spaces allowed")
     return value
 
 

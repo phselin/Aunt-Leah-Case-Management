@@ -100,6 +100,7 @@ export type FormFieldConfig = {
   label: string;
   type: string;
   required?: boolean;
+  maxLength?: number;
   options?: string[] | { value: string; label: string; hasDetails?: boolean }[];
 };
 

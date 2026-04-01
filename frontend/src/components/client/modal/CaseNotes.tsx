@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Calendar, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../api";
 import {
   ErrorBox,
@@ -108,6 +108,7 @@ const MiniCalendar: React.FC<{
           ›
         </button>
       </div>
+
       <div
         style={{
           display: "grid",
@@ -129,11 +130,13 @@ const MiniCalendar: React.FC<{
             {d}
           </div>
         ))}
+
         {days.map((d, i) => {
           if (!d) return <div key={`e${i}`} />;
           const dateStr = fmt(d);
           const isSelected = selectedDate === dateStr;
           const hasDot = dotDates.has(dateStr);
+
           return (
             <div
               key={i}
@@ -148,25 +151,43 @@ const MiniCalendar: React.FC<{
               <div
                 style={{
                   width: 28,
-                  height: 28,
-                  lineHeight: "28px",
-                  borderRadius: "50%",
-                  fontSize: 12,
-                  fontWeight: isSelected || hasDot ? 600 : 400,
-                  backgroundColor: isSelected
-                    ? "#D16B7C"
-                    : hasDot
-                      ? "#FDEAED"
-                      : "transparent",
-                  color: isSelected ? "white" : hasDot ? "#D16B7C" : "#374151",
+                  minHeight: 34,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                {d}
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    lineHeight: "28px",
+                    borderRadius: "50%",
+                    fontSize: 12,
+                    fontWeight: isSelected ? 600 : 400,
+                    backgroundColor: isSelected ? "#D16B7C" : "transparent",
+                    color: isSelected ? "white" : "#374151",
+                  }}
+                >
+                  {d}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 2,
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    backgroundColor: hasDot ? "#DC2626" : "transparent",
+                  }}
+                />
               </div>
             </div>
           );
         })}
       </div>
+
       {selectedDate && (
         <button
           onClick={() => onSelect(null)}
@@ -189,11 +210,20 @@ const MiniCalendar: React.FC<{
 
 const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [notes, setNotes] = useState<CaseNote[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
+  const [filterType, setFilterType] = useState<"date" | "program" | "category">(
+    "date",
+  );
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [dotDates, setDotDates] = useState<Set<string>>(new Set());
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editNote, setEditNote] = useState<CaseNote | null>(null);
@@ -209,6 +239,15 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [successMsg, setSuccessMsg] = useState("");
   const [modalErrMsg, setModalErrMsg] = useState("");
   const [saveBtnHover, setSaveBtnHover] = useState(false);
+
+  const formatDateOnly = (dateStr?: string) => {
+    if (!dateStr) return "—";
+
+    const dateOnly = dateStr.split("T")[0];
+    const [year, month, day] = dateOnly.split("-").map(Number);
+
+    return new Date(year, month - 1, day).toLocaleDateString();
+  };
 
   useEffect(() => {
     if (errMsg) {
@@ -246,17 +285,40 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     return () => document.removeEventListener("keydown", onKey);
   }, [editOpen]);
 
-  const loadNotes = async (date?: string | null) => {
+  const loadNotes = async (
+    date?: string | null,
+    search?: string,
+    program?: string,
+    category?: string,
+  ) => {
     try {
+      if (loading) return;
       setLoading(true);
-      const url = date
-        ? `/people/${personId}/casenotes?date=${date}`
-        : `/people/${personId}/casenotes`;
+      const params = new URLSearchParams();
+
+      if (search) params.set("search", search);
+      if (date) params.set("date", date);
+      if (program) params.set("program", program);
+      if (category) params.set("category", category);
+
+      const query = params.toString();
+      const url = `/people/${personId}/casenotes${query ? `?${query}` : ""}`;
       const res = await api.get(url);
       setNotes(res.data);
     } catch (err) {
       console.error("Failed to load notes", err);
-      setErrMsg("Failed to load case notes");
+
+      if (axios.isAxiosError(err)) {
+        console.log("status:", err.response?.status);
+        console.log("data:", err.response?.data);
+
+        setErrMsg(
+          err.response?.data?.detail ||
+            `Failed to load case notes (${err.response?.status || "unknown error"})`,
+        );
+      } else {
+        setErrMsg("Failed to load case notes");
+      }
     } finally {
       setLoading(false);
     }
@@ -265,22 +327,62 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const loadDotDates = async () => {
     try {
       const res = await api.get(`/people/${personId}/casenotes/dates`);
-      setDotDates(new Set((res.data as string[]).map((d) => d.slice(0, 10))));
+      setDotDates(new Set((res.data as string[]).map((d) => d.split("T")[0])));
     } catch (err) {
       console.error("Failed to load casenote dates", err);
     }
   };
 
+  const reloadNotes = () => {
+    loadNotes(
+      filterType === "date" ? selectedDate : null,
+      searchQuery,
+      filterType === "program" ? selectedProgram : "",
+      filterType === "category" ? selectedCategory : "",
+    );
+  };
+
+  const handleFilterTypeChange = (type: "date" | "program" | "category") => {
+    setFilterType(type);
+    setSelectedDate(null);
+    setSelectedProgram("");
+    setSelectedCategory("");
+    setCalendarOpen(false);
+  };
+
+  const didMountRef = useRef(false);
+
   useEffect(() => {
-    if (personId) {
-      loadNotes();
-      loadDotDates();
-    }
+    if (!personId) return;
+    loadDotDates();
   }, [personId]);
 
   useEffect(() => {
-    if (personId) loadNotes(selectedDate);
-  }, [selectedDate]);
+    if (!personId) return;
+
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    reloadNotes();
+  }, [selectedDate, selectedProgram, selectedCategory, filterType]);
+
+  useEffect(() => {
+    if (!personId) return;
+    reloadNotes();
+  }, [personId]);
+
+  useEffect(() => {
+    if (!personId) return;
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      reloadNotes();
+    }, 350);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery]);
 
   const handleAddNote = () => {
     setEditNote(null);
@@ -288,7 +390,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
       category: "",
       program: "",
       content: "",
-      date: new Date().toISOString().slice(0, 10),
+      date: new Date().toLocaleDateString("en-CA"),
     });
     setModalErrMsg("");
     setSuccessMsg("");
@@ -312,8 +414,12 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     try {
       setSaving(true);
       setModalErrMsg("");
+      if (editForm.content.trim().split(/\s+/).length > 200) {
+        setModalErrMsg("Content cannot exceed 200 words");
+        setSaving(false);
+        return;
+      }
       if (editNote) {
-        // Editing existing note
         await api.put(`people/${personId}/casenotes/${editNote._id}`, {
           category: editForm.category,
           program: editForm.program,
@@ -331,16 +437,15 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               : n,
           ),
         );
+        await loadDotDates();
       } else {
-        // Creating new note
         await api.post(`/people/${personId}/casenotes`, {
           date: editForm.date,
           category: editForm.category,
           content: editForm.content,
           program: editForm.program,
         });
-        // Re-fetch to get the new note with its _id
-        await loadNotes(selectedDate);
+        await reloadNotes();
         await loadDotDates();
       }
       if (onUpdate) onUpdate();
@@ -352,7 +457,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           : "Case note added successfully",
       );
     } catch (err) {
-      // copied from Details
       if (axios.isAxiosError(err) && err.response?.status === 403) {
         setModalErrMsg(
           "You do not have the permission outside your assigned programs",
@@ -380,6 +484,8 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
     }
   };
 
+  const today = new Date();
+
   return (
     <div style={{ width: "100%" }}>
       <div style={{ width: "100%" }}>
@@ -388,59 +494,210 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
+            gap: "16px",
             marginTop: "0px",
             paddingBottom: "0px",
             marginBottom: "0px",
           }}
         >
-          <div style={{ marginLeft: "28px", position: "relative" }}>
-            <button
-              onClick={() => setCalendarOpen((v) => !v)}
+          <div
+            style={{
+              marginLeft: "28px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              position: "relative",
+            }}
+          >
+            <select
+              value={filterType}
+              onChange={(e) =>
+                handleFilterTypeChange(
+                  e.target.value as "date" | "program" | "category",
+                )
+              }
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
+                padding: "9px 14px",
                 borderRadius: 8,
                 border: "1px solid #E5E7EB",
-                backgroundColor: selectedDate ? "#FDF2F4" : "white",
-                cursor: "pointer",
-                fontSize: 15,
+                backgroundColor: "white",
+                fontSize: 14,
                 fontWeight: 500,
                 color: "#374151",
+                cursor: "pointer",
               }}
             >
-              <Calendar size={16} color="#D16B7C" />
-              {selectedDate
-                ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
-                : "Filter by date"}
-            </button>
-            {calendarOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: 4,
-                  zIndex: 50,
-                  backgroundColor: "white",
-                  border: "1px solid #E5E7EB",
-                  borderRadius: 12,
-                  padding: 12,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
-                <MiniCalendar
-                  selectedDate={selectedDate}
-                  onSelect={(d) => {
-                    setSelectedDate(d);
-                    setCalendarOpen(false);
+              <option value="date">Date</option>
+              <option value="program">Program</option>
+              <option value="category">Category</option>
+            </select>
+
+            {filterType === "date" && (
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setCalendarOpen((v) => !v)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                    backgroundColor: selectedDate ? "#FDF2F4" : "white",
+                    cursor: "pointer",
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "#374151",
+                    minWidth: "170px",
                   }}
-                  dotDates={dotDates}
-                />
+                >
+                  <Calendar size={16} color="#D16B7C" />
+                  {selectedDate
+                    ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
+                    : "Filter by date"}
+                </button>
+
+                {calendarOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      marginTop: 4,
+                      zIndex: 50,
+                      backgroundColor: "white",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <MiniCalendar
+                      selectedDate={selectedDate}
+                      onSelect={(d) => {
+                        setSelectedDate(d);
+                        setCalendarOpen(false);
+                      }}
+                      dotDates={dotDates}
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            {filterType === "program" && (
+              <select
+                value={selectedProgram}
+                onChange={(e) => setSelectedProgram(e.target.value)}
+                style={{
+                  padding: "9px 14px",
+                  borderRadius: 8,
+                  border: "1px solid #E5E7EB",
+                  backgroundColor: "white",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "#374151",
+                  cursor: "pointer",
+                  minWidth: "180px",
+                }}
+              >
+                <option value="">All programs</option>
+                {programs.map((program) => (
+                  <option key={program} value={program}>
+                    {program}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {filterType === "category" && (
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                style={{
+                  padding: "9px 14px",
+                  borderRadius: 8,
+                  border: "1px solid #E5E7EB",
+                  backgroundColor: "white",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "#374151",
+                  cursor: "pointer",
+                  minWidth: "180px",
+                }}
+              >
+                <option value="">All categories</option>
+                <option value="Follow-up">Follow-up</option>
+                <option value="Assessment">Assessment</option>
+                <option value="Crisis">Crisis</option>
+                <option value="Support">Support</option>
+              </select>
+            )}
           </div>
+
+          <div
+            style={{
+              flex: 1,
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "16px",
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                position: "absolute",
+                left: "16px",
+                pointerEvents: "none",
+                zIndex: 1,
+              }}
+            >
+              <path
+                d="M19 19L14.65 14.65M17 9C17 13.4183 13.4183 17 9 17C4.58172 17 1 13.4183 1 9C1 4.58172 4.58172 1 9 1C13.4183 1 17 4.58172 17 9Z"
+                stroke="#9CA3AF"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by content"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%",
+                paddingLeft: "48px",
+                paddingRight: "16px",
+                paddingTop: "9px",
+                paddingBottom: "9px",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                backgroundColor: "#ffffff",
+                fontSize: "14px",
+                color: "#374151",
+                outline: "none",
+                fontFamily: "Poppins, sans-serif",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                transition: "border-color 0.15s, box-shadow 0.15s",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#D16B7C";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 3px rgba(209,107,124,0.12)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#E5E7EB";
+                e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.08)";
+              }}
+            />
+          </div>
+
           <PrimaryBtn
             onClick={handleAddNote}
             style={{ marginBottom: "16px", marginRight: "28px" }}
@@ -500,7 +757,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {loading && notes.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
@@ -533,9 +790,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                         fontWeight: 500,
                       }}
                     >
-                      {note.date
-                        ? new Date(note.date).toLocaleDateString()
-                        : "—"}
+                      {formatDateOnly(note.date)}
                     </td>
                     <td style={{ padding: "20px 24px" }}>
                       <span
@@ -586,6 +841,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
           </tbody>
         </table>
       </div>
+
       {editOpen && (
         <div
           onClick={() => setEditOpen(false)}
@@ -610,7 +866,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               position: "relative",
             }}
           >
-            {/* Header */}
             <button
               onClick={() => setEditOpen(false)}
               style={{
@@ -626,6 +881,7 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             >
               ✕
             </button>
+
             <h2
               style={{ fontSize: "18px", fontWeight: 700, marginBottom: "4px" }}
             >
@@ -645,7 +901,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
 
             {modalErrMsg && <ErrorBox>{modalErrMsg}</ErrorBox>}
 
-            {/* Date — only for new notes */}
             {!editNote && (
               <>
                 <p
@@ -660,6 +915,12 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 <input
                   type="date"
                   value={editForm.date}
+                  min={new Date(
+                    today.getFullYear(),
+                    today.getMonth() - 1,
+                    today.getDate(),
+                  ).toLocaleDateString("en-CA")}
+                  max={today.toLocaleDateString("en-CA")}
                   onChange={(e) =>
                     setEditForm((prev) => ({ ...prev, date: e.target.value }))
                   }
@@ -677,7 +938,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               </>
             )}
 
-            {/* Category */}
             <p
               style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}
             >
@@ -707,7 +967,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               <option value="Support">Support</option>
             </select>
 
-            {/* Program */}
             <p
               style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}
             >
@@ -738,7 +997,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               ))}
             </select>
 
-            {/* Author — read only, hide for new */}
             {editNote && (
               <>
                 <p
@@ -780,7 +1038,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               </>
             )}
 
-            {/* Content */}
             <p
               style={{ fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}
             >
@@ -806,7 +1063,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               }}
             />
 
-            {/* Buttons */}
             <div
               style={{
                 display: "flex",
@@ -865,257 +1121,3 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
 };
 
 export default CaseNotes;
-
-// type CaseNote = {
-//     content: string;
-//     date: string;
-//     goalid: string;
-// };
-
-// type CaseNotesProps = {
-//     personId: string;
-// };
-
-// const CaseNotes = ({ personId }: CaseNotesProps) => {
-//     const [caseNotes, setCaseNotes] = useState<CaseNote[]>([]);
-//     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-//     const [noteText, setNoteText] = useState("");
-//     const [loading, setLoading] = useState(true);
-//     const [saving, setSaving] = useState(false);
-//     const [errMsg, setErrMsg] = useState("");
-
-//     const dateKey = selectedDate?.format("YYYY-MM-DD");
-//     const selectedNote = caseNotes.find((n) => n.date === dateKey);
-
-//     useEffect(() => {
-//         setNoteText(selectedNote?.content ?? "");
-//     }, [selectedNote]);
-
-//     useEffect(() => {
-//         const loadNotes = async () => {
-//             try {
-//                 setLoading(true);
-//                 const res = await api.get(
-//                     `/casenotes?person=${personId}`);
-//                 setCaseNotes(res.data);
-//             } catch {
-//                 setErrMsg("Unable to load case notes");
-//             } finally {
-//                 setLoading(false);
-//             }
-//         };
-//         loadNotes();
-//     }, [personId]);
-
-//     const handleSave = async () => {
-//         try {
-//             setSaving(true);
-//             setErrMsg("");
-//             const payload = {
-//                 personid: personId,
-//                 date: selectedDate?.format("YYYY-MM-DD") ?? "",
-//                 content: noteText,
-//             };
-//             await api.post("/casenotes", payload);
-//             setCaseNotes((prev) => {
-//                 const dateStr = selectedDate?.format("YYYY-MM-DD");
-//                 const exists = prev.find((n) => n.date === dateStr);
-//                 if (exists) {
-//                     return prev.map((n) =>
-//                         n.date === dateStr ? { ...n, content: noteText } : n
-//                     );
-//                 }
-//                 return [...prev, { ...payload, goalid: "" }];
-//             });
-//             alert("Case Note saved successfully");
-//         } catch {
-//             setErrMsg("Failed to save note");
-//         } finally {
-//             setSaving(false);
-//         }
-//     };
-
-//     const recentNotes = [...caseNotes]
-//         //.filter((n) => n.date !== dateKey && n.content)
-//         .reduce((acc: CaseNote[], note) => {
-//             if (!acc.find((n) => n.date === note.date)) acc.push(note);
-//             return acc;
-//         }, [])
-//         .sort((a, b) => (a.date > b.date ? -1 : 1))
-//         .slice(0, 5);
-
-//     if (loading) {
-//         return (
-//             <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-//                 <CircularProgress size={28} />
-//             </Box>
-//         );
-//     }
-
-//     return (
-//         <LocalizationProvider dateAdapter={AdapterDayjs}>
-//             <Box
-//                 sx={{
-//                     display: "flex",
-//                     flexDirection: "column",
-//                     gap: 2.5,
-//                     padding: "20px 28px 28px",
-//                 }}
-//             >
-//                 {/* Select Date */}
-//                 <Box>
-//                     <Typography
-//                         variant="subtitle2"
-//                         sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}
-//                     >
-//                         Select Date
-//                     </Typography>
-//                     <Box
-//                         sx={{
-//                             backgroundColor: "#ffffff",
-//                             borderRadius: "12px",
-//                             border: "1px solid #e2e2e2",
-//                             "& .MuiOutlinedInput-root": {
-//                                 backgroundColor: "#ffffff !important",
-//                                 borderRadius: "12px",
-//                                 "& fieldset": { border: "none" },
-//                                 "&:hover fieldset": { border: "none" },
-//                                 "&.Mui-focused fieldset": { border: "none" },
-//                             },
-//                         }}
-//                     >
-//                         <DatePicker
-//                             value={selectedDate}
-//                             onChange={(val) => setSelectedDate(val)}
-//                             slotProps={{
-//                                 textField: {
-//                                     fullWidth: true,
-//                                     variant: "outlined",
-//                                     sx: {
-//                                         "& .MuiOutlinedInput-root": {
-//                                             backgroundColor: "transparent !important",
-//                                             borderRadius: "12px",
-//                                         },
-//                                     },
-//                                 },
-//                             }}
-//                         />
-//                     </Box>
-//                 </Box>
-
-//                 <Box>
-//                     <Typography
-//                         variant="subtitle2"
-//                         sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}
-//                     >
-//                         Note for {selectedDate?.format("MMMM D, YYYY")}
-//                     </Typography>
-//                     <TextField
-//                         multiline
-//                         rows={6}
-//                         fullWidth
-//                         value={noteText}
-//                         onChange={(e) => setNoteText(e.target.value)}
-//                         placeholder="Enter case note for this date..."
-//                         sx={{
-//                             "& .MuiOutlinedInput-root": {
-//                                 borderRadius: "12px",
-//                                 backgroundColor: palette.white,
-//                                 "& fieldset": { border: `1px solid #e2e2e2` },
-//                                 "&:hover fieldset": { borderColor: palette.seafoamGreen },
-//                                 "&.Mui-focused fieldset": {
-//                                     border: `2px solid ${palette.seafoamGreen}`,
-//                                 },
-//                             },
-//                         }}
-//                     />
-//                 </Box>
-
-//                 {errMsg && (
-//                     <Typography variant="caption" color="error">
-//                         {errMsg}
-//                     </Typography>
-//                 )}
-
-//                 <Button
-//                     variant="contained"
-//                     onClick={handleSave}
-//                     disabled={saving}
-//                     fullWidth
-//                     sx={{
-//                         bgcolor: palette.seafoamGreen,
-//                         color: palette.white,
-//                         borderRadius: "12px",
-//                         py: 1.5,
-//                         fontWeight: 600,
-//                         fontSize: "0.95rem",
-//                         textTransform: "none",
-//                         boxShadow: "none",
-//                         "&:hover": { bgcolor: palette.forestGreen, boxShadow: "none" },
-//                         "&.Mui-disabled": { bgcolor: "#9e9e9e", color: palette.white },
-//                     }}
-//                 >
-//                     {saving ? "Saving..." : "Save Case Note"}
-//                 </Button>
-
-//                 {/* Recent notes */}
-//                 {recentNotes.length > 0 && (
-//                     <Box>
-//                         <Typography
-//                             variant="subtitle2"
-//                             sx={{ fontWeight: 700, mb: 1, color: palette.deepRed }}
-//                         >
-//                             Recent Notes (Last 5)
-//                         </Typography>
-//                         <Box
-//                             sx={{
-//                                 border: `1.5px solid ${palette.mintGreen}`,
-//                                 borderRadius: "12px",
-//                                 overflow: "hidden",
-//                             }}
-//                         >
-//                             {recentNotes.map((note, i) => (
-//                                 <Box key={note.date}>
-//                                     <Box
-//                                         onClick={() => setSelectedDate(dayjs(note.date))}
-//                                         sx={{
-//                                             px: 2,
-//                                             py: 1.5,
-//                                             cursor: "pointer",
-//                                             "&:hover": { backgroundColor: palette.mintGreen },
-//                                         }}
-//                                     >
-//                                         <Typography
-//                                             variant="caption"
-//                                             sx={{
-//                                                 color: "text.secondary",
-//                                                 display: "block",
-//                                                 mb: 0.25,
-//                                             }}
-//                                         >
-//                                             {dayjs(note.date).format("MMMM D, YYYY")}
-//                                         </Typography>
-//                                         <Typography
-//                                             variant="body2"
-//                                             sx={{
-//                                                 overflow: "hidden",
-//                                                 display: "-webkit-box",
-//                                                 WebkitLineClamp: 2,
-//                                                 WebkitBoxOrient: "vertical",
-//                                             }}
-//                                         >
-//                                             {note.content}
-//                                         </Typography>
-//                                     </Box>
-//                                     {i < recentNotes.length - 1 && <Divider />}
-//                                 </Box>
-//                             ))}
-//                         </Box>
-//                     </Box>
-//                 )}
-//             </Box>
-//         </LocalizationProvider>
-//     );
-// };
-
-// export default CaseNotes;

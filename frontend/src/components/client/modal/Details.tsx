@@ -25,10 +25,18 @@ import {
   Label,
   PrimaryBtn,
   Select,
+  SuccessBox,
   TextArea,
 } from "./clientElement";
 
 const HOUSING_INTAKE_LAYOUT = "housing_intake_pdf";
+
+const DEFAULT_TEXT_MAX_LENGTH = 150;
+const DEFAULT_TEXTAREA_MAX_LENGTH = 600;
+const DEFAULT_DETAILS_MAX_LENGTH = 300;
+
+const limitByLength = (text: string, maxLength: number) =>
+  text.slice(0, maxLength);
 
 function renderHousingIntakeSection(
   section: FormSectionConfig,
@@ -82,6 +90,7 @@ const Details = ({
 }: DetailsProps) => {
   const navigate = useNavigate();
   const [localErr, setLocalErr] = useState("");
+  const [localSuccess, setLocalSuccess] = useState("");
 
   const {
     register,
@@ -98,7 +107,11 @@ const Details = ({
       const timer = setTimeout(() => setLocalErr(""), 3000);
       return () => clearTimeout(timer);
     }
-  }, [localErr]);
+    if (localSuccess) {
+      const timer = setTimeout(() => setLocalSuccess(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [localErr, localSuccess]);
 
   useEffect(() => {
     if (initialData) reset(initialData);
@@ -112,7 +125,6 @@ const Details = ({
       );
     }
 
-    // Add string checking and trimming here
     if (typeof obj === "string") {
       const trimmed = obj.trim();
       return trimmed === "" ? null : trimmed;
@@ -126,12 +138,12 @@ const Details = ({
     try {
       if (isNew) {
         const res = await api.post("/people", cleanData(data));
-        alert("Client added successfully");
+        setLocalSuccess("Client added successfully");
         navigate(`/client/${res.data._id}`);
       } else {
         const res = await api.put(`/people/${id}`, cleanData(data));
         onSave?.(res.data);
-        alert("Client saved successfully");
+        setLocalSuccess("Client saved successfully");
       }
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
@@ -194,14 +206,45 @@ const Details = ({
           </FormRow>
         );
 
-      case "date":
+      case "date": {
+        const today = new Date();
+        const isDob = field.key === "dob";
+        const minDate = new Date(
+          today.getFullYear() - 120,
+          today.getMonth(),
+          today.getDate(),
+        );
+        const maxDate = isDob
+          ? new Date(
+              today.getFullYear() - 18,
+              today.getMonth(),
+              today.getDate(),
+            )
+          : today;
         return (
           <FormRow key={path}>
             <Label>{label}</Label>
-            <Input type="date" {...register(path as any)} />
+            <Input
+              type="date"
+              min={minDate.toLocaleDateString("en-CA")}
+              max={maxDate.toLocaleDateString("en-CA")}
+              {...register(path as any, {
+                validate: (val) => {
+                  if (!val) return true;
+                  const date = new Date(val);
+                  if (date > today) return "Date cannot be in the future";
+                  if (date < minDate)
+                    return "Date cannot be more than 120 years ago";
+                  if (isDob && date > maxDate)
+                    return "Must be at least 18 years old";
+                  return true;
+                },
+              })}
+            />
             <FieldError msg={fieldError(path)} />
           </FormRow>
         );
+      }
 
       case "phone":
         return (
@@ -348,7 +391,24 @@ const Details = ({
           <FullRow key={path}>
             <FormRow>
               <Label>{label}</Label>
-              <TextArea {...register(path as any)} rows={4} />
+              <Controller
+                name={path as any}
+                control={control}
+                render={({ field: f }) => (
+                  <TextArea
+                    rows={4}
+                    value={f.value ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      f.onChange(
+                        limitByLength(
+                          e.target.value,
+                          DEFAULT_TEXTAREA_MAX_LENGTH,
+                        ),
+                      )
+                    }
+                  />
+                )}
+              />
               <FieldError msg={fieldError(path)} />
             </FormRow>
           </FullRow>
@@ -358,11 +418,26 @@ const Details = ({
         return (
           <FormRow key={path}>
             <Label>{label}</Label>
-            <Input
-              type="text"
-              {...register(path as any, {
+            <Controller
+              name={path as any}
+              control={control}
+              rules={{
                 required: field.required ? `${field.label} is required` : false,
-              })}
+              }}
+              render={({ field: f }) => (
+                <Input
+                  type="text"
+                  value={f.value ?? ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    f.onChange(
+                      limitByLength(
+                        e.target.value,
+                        field.maxLength ?? DEFAULT_TEXT_MAX_LENGTH,
+                      ),
+                    )
+                  }
+                />
+              )}
             />
             <FieldError msg={fieldError(path)} />
           </FormRow>
@@ -373,6 +448,7 @@ const Details = ({
   return (
     <div style={{ padding: "20px 28px 28px" }}>
       {localErr && <ErrorBox>{localErr}</ErrorBox>}
+      {localSuccess && <SuccessBox>{localSuccess}</SuccessBox>}
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormActions>
           <PrimaryBtn type="submit" disabled={isSubmitting}>
@@ -535,7 +611,10 @@ const MultiDropdownWithDetails = ({
             placeholder="Please specify..."
             value={list.find((s) => s.value === opt.value)?.details || ""}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateDetail(opt.value, e.target.value)
+              updateDetail(
+                opt.value,
+                limitByLength(e.target.value, DEFAULT_DETAILS_MAX_LENGTH),
+              )
             }
             style={{ flex: 1 }}
           />
