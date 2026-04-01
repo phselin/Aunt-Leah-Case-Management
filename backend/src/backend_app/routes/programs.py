@@ -22,10 +22,10 @@ def programs_structure():
 
 # trying golang error handling in python for fun :)
 # validation should be much stronger but this is ok for now
-def validate_milestone_tree(milestoneTree):
+def validate_milestone_tree(milestone_tree):
     keys = set()
     sanitized = {}
-    for k, val in milestoneTree.items():
+    for k, val in milestone_tree.items():
         k = k.lower()
         if k in keys:
             return None, f"Duplicate milestone category {k}"
@@ -66,12 +66,12 @@ def add_program():
     if db.programs.find_one({"name": name}):
         return jsonify({"detail": f"Prorgram {name} already exists"}), 409
 
-    milestoneTree = body.get("milestoneTree")
-    milestoneTree, err = validate_milestone_tree(milestoneTree)
+    milestone_tree = body.get("milestoneTree")
+    milestone_tree, err = validate_milestone_tree(milestone_tree)
     if err:
         return jsonify({"detail": err}), 400
 
-    program = {"name": name, "milestoneTree": milestoneTree}
+    program = {"name": name, "milestoneTree": milestone_tree}
 
     description = body.get("description")
     if "description" in body and description:
@@ -95,8 +95,8 @@ def edit_program():
 
     name = name.title()
 
-    milestoneTree = body.get("milestoneTree")
-    milestoneTree, err = validate_milestone_tree(milestoneTree)
+    milestone_tree = body.get("milestoneTree")
+    milestone_tree, err = validate_milestone_tree(milestone_tree)
     if err:
         return jsonify({"detail": err}), 400
 
@@ -104,29 +104,37 @@ def edit_program():
     if not program_in_db:
         return jsonify({"detail": f"Program {name} not found"}), 404
 
-    old_categories = set((program_in_db.get("milestoneTree") or {}).keys())
-    new_categories = set(milestoneTree.keys())
+    milestone_tree_in_db = program_in_db.get("milestoneTree") or {}
+    old_categories = set(milestone_tree_in_db.keys())
+    new_categories = set(milestone_tree.keys())
     deleted_categories = old_categories - new_categories
 
     if deleted_categories:
         db.people.update_many(
             {"programs": name},
-            {
-                "$unset": {
-                    f"programMilestones.{name}.{category}": "" for category in deleted_categories
-                }
-            },
+            {"$unset": {f"programMilestones.{name}.{dc}": "" for dc in deleted_categories}},
         )
 
-    query = {"$set": {"milestoneTree": milestoneTree}}
+    for category in new_categories:
+        removed = set(milestone_tree_in_db.get(category, [])) - set(
+            milestone_tree.get(category, [])
+        )
+        if removed:
+            field = f"programMilestones.{name}.{category}"
+            db.people.update_many(
+                {"programs": name, f"{field}.value": {"$in": list(removed)}},
+                {"$unset": {field: ""}},
+            )
+
+    set_fields = {"milestoneTree": milestone_tree}
 
     description = body.get("description")
-    if "description" in body and description:
-        query["$set"]["description"] = description
+    if "description" in body:
+        set_fields["description"] = description
 
     res = db.programs.find_one_and_update(
         {"name": name},
-        query,
+        {"$set": set_fields},
         return_document=ReturnDocument.AFTER,
     )
 
