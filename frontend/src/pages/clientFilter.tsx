@@ -50,15 +50,18 @@ const ClientFilter = ({
     <div
       ref={containerRef}
       style={{
-        position: "relative",
-        minWidth: 310,
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px 24px",
-        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
-        boxSizing: "border-box",
-      }}
+      position: "relative",
+      minWidth: 310,
+      height: 74.5,
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "0 24px",
+      display: "flex",
+      alignItems: "center",
+      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.03)",
+      boxSizing: "border-box",
+    }}
     >
       <button
         type="button"

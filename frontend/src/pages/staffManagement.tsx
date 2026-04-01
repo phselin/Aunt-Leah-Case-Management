@@ -7,6 +7,7 @@ import { type StaffMember } from "../components/staff/staff";
 import StaffModal from "../components/staff/staffModal";
 import StaffSearchBar from "../components/staff/staffSearchBar";
 import StaffTable from "../components/staff/staffTable";
+import ClientFilter from "../pages/clientFilter";
 
 const HeaderRow = styled.div`
   display: flex;
@@ -31,6 +32,8 @@ const StaffManagement = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isNew, setIsNew] = useState(false);
+  const [availablePrograms, setAvailablePrograms] = useState<string[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounceQuery(query), 300);
@@ -64,6 +67,47 @@ const StaffManagement = () => {
     };
     loadStaff();
   }, [debounceQuery]);
+
+  useEffect(() => {
+  const loadStaff = async () => {
+    const q = debounceQuery.trim().toLowerCase();
+
+    try {
+      const params = new URLSearchParams();
+
+      if (q) params.append("staff", q);
+
+      selectedPrograms.forEach((program) => {
+        params.append("program", program);
+      });
+
+      const queryString = params.toString();
+      const res = await api.get(`/staff${queryString ? `?${queryString}` : ""}`);
+      setStaff(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        setErrMsg(err.response.data?.detail || "Failed to load staff");
+      } else {
+        setErrMsg("Unable to connect to server");
+      }
+    }
+  };
+
+  loadStaff();
+}, [debounceQuery, selectedPrograms]);
+
+  useEffect(() => {
+  const loadPrograms = async () => {
+    try {
+      const res = await api.get("/programs/names");
+      setAvailablePrograms(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setErrMsg("Failed to load programs");
+    }
+  };
+
+  loadPrograms();
+  }, []);
 
   const handleToggleActive = async (id: string, active: boolean) => {
     try {
@@ -112,6 +156,24 @@ const StaffManagement = () => {
     handleModalClose();
   };
 
+  const filteredStaff = staff.filter((member) => {
+  if (selectedPrograms.length === 0) return true;
+
+  if (!member.programs || !Array.isArray(member.programs)) return false;
+
+    return member.programs.some((program: any) => {
+      if (typeof program === "string") {
+        return selectedPrograms.includes(program);
+      }
+
+      if (typeof program === "object" && program !== null) {
+        return selectedPrograms.includes(program.name);
+      }
+
+      return false;
+    });
+  });
+
   return (
     <>
       <HeaderRow>
@@ -121,9 +183,21 @@ const StaffManagement = () => {
       <TableSection>
         {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
         {successMsg && <SuccessBox>{successMsg}</SuccessBox>}
-        <StaffSearchBar query={query} setQuery={setQuery} />
+
+        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          <div style={{ flex: 1 }}>
+            <StaffSearchBar query={query} setQuery={setQuery} />
+          </div>
+
+          <ClientFilter
+            selectedPrograms={selectedPrograms}
+            setSelectedPrograms={setSelectedPrograms}
+            availablePrograms={availablePrograms}
+          />
+        </div>
+
         <StaffTable
-          staff={staff}
+          staff={filteredStaff}
           onClick={handleRowClick}
           onError={(msg) => setErrMsg(msg)}
           onToggleActive={handleToggleActive}
