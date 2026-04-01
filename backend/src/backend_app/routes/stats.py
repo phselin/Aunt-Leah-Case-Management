@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 
 from backend_app.db import db
+from backend_app.routes.kpi_metrics import compute_kpis
 from backend_app.routes.routes_utils import is_admin
 
 stats_bp = Blueprint("stats", __name__)
@@ -14,6 +15,7 @@ def get_stats():
         return jsonify({"detail": "Access denied"}), 403
     stats = {}
     stats["clients"] = {"total": db.people.count_documents({})}
+    stats["kpis"] = compute_kpis(db)
     for program in db.programs.find({}):
         program_name = program["name"]
         stats["clients"][program_name] = db.people.count_documents({"programs": program_name})

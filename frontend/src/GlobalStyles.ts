@@ -338,7 +338,74 @@ const GlobalStyle = createGlobalStyle`
     }
   }
 
-  /* Report page (Goal Progress) */
+  /* Report page (Impact & milestones) */
+  .reportSectionTitle{
+    margin: 0 0 14px 0;
+    font-size: 20px;
+    font-weight: 900;
+    color: #4d1e31;
+  }
+
+  .reportKpiSection{
+    margin: 0 0 28px 0;
+  }
+
+  .reportMilestoneSection{
+    margin: 0;
+  }
+
+  .reportKpiGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .reportKpiTile{
+    background: white;
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 14px 14px 12px 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reportKpiTileTitle{
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b6b6b;
+    line-height: 1.35;
+  }
+
+  .reportKpiTileValue{
+    margin-top: 10px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #222;
+    line-height: 1.2;
+  }
+
+  .reportKpiTileHint{
+    margin-top: 8px;
+    font-size: 11px;
+    color: #6b6b6b;
+    line-height: 1.4;
+  }
+
+  .reportKpiTileFoot{
+    margin-top: auto;
+    padding-top: 6px;
+    font-size: 10px;
+    color: #888;
+    line-height: 1.35;
+  }
+
+  .reportKpiAgeCard{
+    margin-top: 4px;
+  }
+
   .reportPage{
     padding: 24px;
     background: ${palette.offWhite};
@@ -351,8 +418,7 @@ const GlobalStyle = createGlobalStyle`
     align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
-    max-width: 1120px;
-    margin: 0 auto 16px auto;
+    margin: 0 0 16px 0;
   }
 
   @media (max-width: 720px) {
@@ -375,10 +441,34 @@ const GlobalStyle = createGlobalStyle`
     font-size: 14px;
   }
 
+  .reportControlsRow{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
   .reportControls{
     display: grid;
     gap: 6px;
-    min-width: 260px;
+    min-width: 220px;
+  }
+
+  .reportMilestoneCategoryBlock{
+    margin-top: 16px;
+  }
+
+  .reportMilestoneCategoryBlock:first-of-type{
+    margin-top: 0;
+  }
+
+  .reportMilestoneCategoryTitle{
+    font-size: 13px;
+    font-weight: 800;
+    color: #4d1e31;
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
   }
 
   .reportLabel{
@@ -398,8 +488,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .reportErrorBox{
-    max-width: 1120px;
-    margin: 0 auto 14px auto;
+    margin: 0 0 14px 0;
     background: #fff3f4;
     border: 1px solid #ffd0d6;
     color: #7a0b1e;
@@ -409,8 +498,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .reportStatsGrid{
-    max-width: 1120px;
-    margin: 0 auto 18px auto;
+    margin: 0 0 18px 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
@@ -429,8 +517,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .reportChartsGrid{
-    max-width: 1120px;
-    margin: 0 auto;
+    margin: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;

@@ -6,12 +6,14 @@ import api from "../api";
 
 type BarDatum = { label: string; value: number };
 
-// TODO provide report for all goalTypes and not just general
-// TODO preserve milestone ordering in bar graph but sort by count for line graph (currently sorting according to count for line graph as well as bar graph)
+const CATEGORY_BAR_COLORS = [
+  palette.forestGreen,
+  palette.deepRed,
+  palette.brightPeriwinkle,
+  palette.tangerineOrange,
+  palette.seafoamGreen,
+] as const;
 
-// We need >= max(milestones) colors otherwise it causes issues 
-// for programs with no. of pie colors + 1 = no of milestones in program
-// maybe there is a better way to do it (for later)
 const PIE_COLORS = [
   palette.bubblegumPink,
   palette.seafoamGreen,
@@ -84,7 +86,6 @@ function PieChart({
     y: cy + r * Math.sin(angleRad),
   });
 
-  // Start at 12 o'clock.
   const slices = data
     .reduce<{ angle: number; out: Array<BarDatum & { color: string; path: string }> }>(
       (acc, d, idx) => {
@@ -141,9 +142,35 @@ type MilestoneCountRow = { milestone: string; value: number };
 
 type ProgramGoalStats = Record<string, MilestoneCountRow[]>;
 
+type KpiPayload = {
+  totalParticipants?: number;
+  participantsHoused?: number;
+  housedWithin3MonthsPercent?: number | null;
+  housedWithin3MonthsDenominator?: number;
+  housedWithin12MonthsPercent?: number | null;
+  housedWithin12MonthsDenominator?: number;
+  mealsOrGroceriesProvided?: number | null;
+  mealsOrGroceriesAvailable?: boolean;
+  highSchoolGraduatePercent?: number | null;
+  highSchoolGraduateReportingCount?: number;
+  educationPlanPercent?: number | null;
+  educationPlanEligibleCount?: number;
+  employmentPlacements?: number;
+  averageAgeYears?: number | null;
+  ageDistribution?: { label: string; count: number }[];
+  participantsWithAgeCount?: number;
+  youthProgressPercent?: number | null;
+  youthProgressEligibleCount?: number;
+  giveBackPercent?: number | null;
+  belongPercent?: number | null;
+  recommendPercent?: number | null;
+  outcomesSurveyAvailable?: boolean;
+};
+
 type StatsResponse = {
   clients?: Record<string, number>;
-} & Record<string, ProgramGoalStats | Record<string, number> | undefined>;
+  kpis?: KpiPayload;
+} & Record<string, ProgramGoalStats | Record<string, number> | KpiPayload | undefined>;
 
 function formatMilestone(program: string, milestone: string): string {
   if (program === "Drug Rehabilitation" && /^\d+$/.test(milestone)) return `${milestone} days`;
@@ -157,25 +184,134 @@ function formatMilestone(program: string, milestone: string): string {
   return milestone;
 }
 
-function milestoneDataForProgram(stats: StatsResponse, program: string): BarDatum[] {
-  const raw = stats?.[program]?.general;
+function humanizeMilestoneTreeKey(treeType: string): string {
+  return treeType
+    .split(/[\s_-]+/g)
+    .filter(Boolean)
+    .map((p) => p.slice(0, 1).toUpperCase() + p.slice(1).toLowerCase())
+    .join(" ");
+}
 
+const ALL_MILESTONE_CATEGORIES = "__all__" as const;
+
+function getProgramGoalStats(stats: StatsResponse, program: string): ProgramGoalStats | null {
+  const p = stats[program];
+  if (!p || typeof p !== "object") return null;
+  return p as ProgramGoalStats;
+}
+
+function treeKeysForProgram(programStats: ProgramGoalStats | null): string[] {
+  if (!programStats) return [];
+  return Object.keys(programStats)
+    .filter((k) => Array.isArray(programStats[k]))
+    .sort((a, b) => {
+      if (a === "general") return -1;
+      if (b === "general") return 1;
+      return a.localeCompare(b);
+    });
+}
+
+function barsForCategory(
+  program: string,
+  raw: MilestoneCountRow[] | undefined
+): BarDatum[] {
   if (!Array.isArray(raw)) return [];
-
-  const entries = raw.map((item) => ({
-    label: String(item.milestone),
-    value: Number(item.value) || 0
-  }));
-
-  return entries
+  return raw
+    .map((item) => ({
+      label: formatMilestone(program, String(item.milestone)),
+      value: Number(item.value) || 0,
+    }))
     .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
-    .map((d) => ({ ...d, label: formatMilestone(program, d.label) }));
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
+type MilestoneCategorySection = { key: string; title: string; data: BarDatum[] };
+
+function groupedMilestoneSections(stats: StatsResponse, program: string): MilestoneCategorySection[] {
+  const programStats = getProgramGoalStats(stats, program);
+  if (!programStats) return [];
+  const sections: MilestoneCategorySection[] = [];
+  for (const key of treeKeysForProgram(programStats)) {
+    const raw = programStats[key] as MilestoneCountRow[];
+    const data = barsForCategory(program, raw);
+    if (data.length > 0) {
+      sections.push({ key, title: humanizeMilestoneTreeKey(key), data });
+    }
+  }
+  return sections;
+}
+
+function flatMilestonesForProgram(
+  stats: StatsResponse,
+  program: string,
+  category: typeof ALL_MILESTONE_CATEGORIES | string
+): BarDatum[] {
+  const programStats = getProgramGoalStats(stats, program);
+  if (!programStats) return [];
+
+  if (category !== ALL_MILESTONE_CATEGORIES) {
+    return barsForCategory(program, programStats[category] as MilestoneCountRow[]);
+  }
+
+  const sections = groupedMilestoneSections(stats, program);
+  if (sections.length === 0) return [];
+  if (sections.length === 1) return sections[0].data;
+
+  const merged: BarDatum[] = [];
+  for (const s of sections) {
+    for (const d of s.data) {
+      merged.push({ label: `${s.title}: ${d.label}`, value: d.value });
+    }
+  }
+  return merged.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
+function countMilestoneBuckets(
+  stats: StatsResponse,
+  program: string,
+  category: typeof ALL_MILESTONE_CATEGORIES | string
+): number {
+  if (category !== ALL_MILESTONE_CATEGORIES) {
+    return flatMilestonesForProgram(stats, program, category).length;
+  }
+  return groupedMilestoneSections(stats, program).reduce((sum, s) => sum + s.data.length, 0);
+}
+
+function formatPercent(value: number | null | undefined, empty = "—"): string {
+  if (value === null || value === undefined) return empty;
+  return `${value}%`;
+}
+
+function formatNumber(value: number | null | undefined, empty = "—"): string {
+  if (value === null || value === undefined) return empty;
+  return String(value);
+}
+
+function KpiTile({
+  title,
+  value,
+  hint,
+  foot,
+}: {
+  title: string;
+  value: string;
+  hint?: string;
+  foot?: string;
+}) {
+  return (
+    <div className="reportKpiTile">
+      <div className="reportKpiTileTitle">{title}</div>
+      <div className="reportKpiTileValue">{value}</div>
+      {hint ? <div className="reportKpiTileHint">{hint}</div> : null}
+      {foot ? <div className="reportKpiTileFoot">{foot}</div> : null}
+    </div>
+  );
 }
 
 const Report = () => {
   const [stats, setStats] = useState<StatsResponse>({});
   const [selectedProgram, setSelectedProgram] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_MILESTONE_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>("");
 
@@ -208,6 +344,28 @@ const Report = () => {
     };
   }, []);
 
+  useEffect(() => {
+    setSelectedCategory(ALL_MILESTONE_CATEGORIES);
+  }, [selectedProgram]);
+
+  const categoryKeys = useMemo(() => {
+    if (selectedProgram === "All") return [];
+    return treeKeysForProgram(getProgramGoalStats(stats, selectedProgram));
+  }, [stats, selectedProgram]);
+
+  useEffect(() => {
+    if (selectedProgram === "All") return;
+    if (
+      selectedCategory !== ALL_MILESTONE_CATEGORIES &&
+      categoryKeys.length > 0 &&
+      !categoryKeys.includes(selectedCategory)
+    ) {
+      setSelectedCategory(ALL_MILESTONE_CATEGORIES);
+    }
+  }, [selectedProgram, selectedCategory, categoryKeys]);
+
+  const kpis = stats.kpis;
+
   const totalClients = stats?.clients?.total || 0;
 
   const clientsPerProgramData = useMemo(() => {
@@ -220,7 +378,7 @@ const Report = () => {
   }, [stats]);
 
   const programOptions = useMemo(() => {
-    const fromStats = Object.keys(stats || {}).filter(k => k !== "clients");
+    const fromStats = Object.keys(stats || {}).filter((k) => k !== "clients" && k !== "kpis");
     return ["All", ...fromStats.sort((a, b) => a.localeCompare(b))];
   }, [stats]);
 
@@ -237,15 +395,26 @@ const Report = () => {
 
   const selectedMilestones = useMemo(() => {
     if (selectedProgram === "All") return [];
-    return milestoneDataForProgram(stats, selectedProgram);
-  }, [selectedProgram, stats]);
+    return flatMilestonesForProgram(stats, selectedProgram, selectedCategory);
+  }, [selectedProgram, selectedCategory, stats]);
 
-  const selectedMilestonesPie = useMemo(() => collapseToTopNWithOther(selectedMilestones, 7), [selectedMilestones]);
+  const selectedMilestonesPie = useMemo(
+    () => collapseToTopNWithOther(selectedMilestones, 7),
+    [selectedMilestones]
+  );
+
+  const singleProgramSections = useMemo(() => {
+    if (selectedProgram === "All") return [];
+    return groupedMilestoneSections(stats, selectedProgram);
+  }, [selectedProgram, stats]);
 
   const summary = useMemo(() => {
     if (selectedProgram === "All") {
       const programCount = visiblePrograms.length;
-      const milestoneBuckets = visiblePrograms.reduce((sum, p) => sum + milestoneDataForProgram(stats, p).length, 0);
+      const milestoneBuckets = visiblePrograms.reduce(
+        (sum, p) => sum + countMilestoneBuckets(stats, p, ALL_MILESTONE_CATEGORIES),
+        0
+      );
       return { label: "All programs", programCount, milestoneBuckets, topLabel: "" };
     }
     const ms = selectedMilestones;
@@ -253,35 +422,69 @@ const Report = () => {
     return {
       label: selectedProgram,
       programCount: 1,
-      milestoneBuckets: ms.length,
+      milestoneBuckets: countMilestoneBuckets(stats, selectedProgram, selectedCategory),
       topLabel: top ? `${top.label} (${top.value})` : "—",
     };
-  }, [selectedMilestones, selectedProgram, stats, visiblePrograms]);
+  }, [selectedMilestones, selectedProgram, selectedCategory, stats, visiblePrograms]);
+
+  const ageBarData: BarDatum[] = useMemo(() => {
+    const dist = kpis?.ageDistribution;
+    if (!dist?.length) return [];
+    return dist.map((d) => ({ label: d.label, value: d.count }));
+  }, [kpis?.ageDistribution]);
 
   return (
     <div className="reportPage">
       <div className="reportHeaderRow">
         <div>
-          <h1 className="reportTitle">Goal Progress</h1>
+          <h1 className="reportTitle">Impact report</h1>
+          <p className="reportSubTitle">
+            Organization KPIs derived from participant records. Milestone charts reflect program
+            progress in the system.
+          </p>
         </div>
 
-        <div className="reportControls">
-          <label className="reportLabel" htmlFor="program-filter">
-            Filter by program
-          </label>
-          <select
-            className="reportSelect"
-            id="program-filter"
-            value={selectedProgram}
-            onChange={(e) => setSelectedProgram(e.target.value)}
-            disabled={loading || programOptions.length <= 1}
-          >
-            {programOptions.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+        <div className="reportControlsRow">
+          <div className="reportControls">
+            <label className="reportLabel" htmlFor="program-filter">
+              Program
+            </label>
+            <select
+              className="reportSelect"
+              id="program-filter"
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+              disabled={loading || programOptions.length <= 1}
+            >
+              {programOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedProgram !== "All" ? (
+            <div className="reportControls">
+              <label className="reportLabel" htmlFor="milestone-category-filter">
+                Milestone category
+              </label>
+              <select
+                className="reportSelect"
+                id="milestone-category-filter"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                disabled={loading || categoryKeys.length === 0}
+              >
+                <option value={ALL_MILESTONE_CATEGORIES}>All categories</option>
+                {categoryKeys.map((key) => (
+                  <option key={key} value={key}>
+                    {humanizeMilestoneTreeKey(key)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -291,85 +494,245 @@ const Report = () => {
         </div>
       ) : null}
 
-      <div className="reportStatsGrid">
-        <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">Scope</div>
-          <div className="reportStatValue">{loading ? "…" : summary.label}</div>
-        </div>
-        <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">Total clients</div>
-          <div className="reportStatValue">{loading ? "…" : totalClients}</div>
-        </div>
-        <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">
-            {selectedProgram === "All" ? "Total programs" : "Program clients"}
-          </div>
-          <div className="reportStatValue">
-            {loading
-              ? "…"
-              : selectedProgram === "All"
-                ? summary.programCount
-                : clientsInScope}
-          </div>
-        </div>
-        <div className="reportCard reportStatCard">
-          <div className="reportStatLabel">Milestone buckets</div>
-          <div className="reportStatValue">{loading ? "…" : summary.milestoneBuckets}</div>
-        </div>
-      </div>
+      <section className="reportKpiSection" aria-labelledby="kpi-heading">
+        <h2 id="kpi-heading" className="reportSectionTitle">
+          Key performance indicators
+        </h2>
 
-      <div className="reportChartsGrid">
-        {selectedProgram === "All" ? (
-          <div className="reportCard reportChartCard">
-            <div className="reportCardTitle">Clients per program</div>
-            <div className="reportCardHint">Enrollment counts based on clients’ programs</div>
-            {loading ? (
-              <div className="reportEmptyState">Loading…</div>
-            ) : (
-              <BarList data={clientsPerProgramData} color={palette.bubblegumPink} emptyLabel="No client data" />
-            )}
-          </div>
-        ) : null}
+        <div className="reportKpiGrid">
+          <KpiTile
+            title="Total participants"
+            value={loading ? "…" : formatNumber(kpis?.totalParticipants, "0")}
+            hint="All client records in the system."
+          />
+          <KpiTile
+            title="Participants housed"
+            value={loading ? "…" : formatNumber(kpis?.participantsHoused)}
+            hint="Housing program milestone (transitional / permanent) or stable housing status on file."
+          />
+          <KpiTile
+            title="Housed within 3 months of program start"
+            value={loading ? "…" : formatPercent(kpis?.housedWithin3MonthsPercent)}
+            foot={
+              !loading && kpis?.housedWithin3MonthsDenominator != null
+                ? `Based on ${kpis.housedWithin3MonthsDenominator} Housing enrollments with start and update dates.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Housed within 12 months of program start"
+            value={loading ? "…" : formatPercent(kpis?.housedWithin12MonthsPercent)}
+            foot={
+              !loading && kpis?.housedWithin12MonthsDenominator != null
+                ? `Based on ${kpis.housedWithin12MonthsDenominator} Housing enrollments with start and update dates.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Meals / bags of groceries"
+            value={loading ? "…" : kpis?.mealsOrGroceriesAvailable ? formatNumber(kpis?.mealsOrGroceriesProvided) : "Not tracked"}
+            hint="Service counts are not stored in this database yet."
+          />
+          <KpiTile
+            title="High school completion (intake)"
+            value={loading ? "…" : formatPercent(kpis?.highSchoolGraduatePercent)}
+            foot={
+              !loading && kpis?.highSchoolGraduateReportingCount != null
+                ? `${kpis.highSchoolGraduateReportingCount} participants answered the high school question.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Education plan (proxy)"
+            value={loading ? "…" : formatPercent(kpis?.educationPlanPercent)}
+            hint="Enrolled in school, education referral, or Education program."
+            foot={
+              !loading && kpis?.educationPlanEligibleCount != null
+                ? `Eligible denominator: ${kpis.educationPlanEligibleCount} participants with intake or programs.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Employment placements"
+            value={loading ? "…" : formatNumber(kpis?.employmentPlacements)}
+            hint="Employment program milestone hired or stable."
+          />
+          <KpiTile
+            title="Average age"
+            value={loading ? "…" : kpis?.averageAgeYears != null ? `${kpis.averageAgeYears} yrs` : "—"}
+            foot={
+              !loading && kpis?.participantsWithAgeCount != null
+                ? `From ${kpis.participantsWithAgeCount} participants with a date of birth.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Youth (under 25) with program progress"
+            value={loading ? "…" : formatPercent(kpis?.youthProgressPercent)}
+            hint="At least one milestone past the starting step in an enrolled program."
+            foot={
+              !loading && kpis?.youthProgressEligibleCount != null
+                ? `${kpis.youthProgressEligibleCount} youth with program enrollment.`
+                : undefined
+            }
+          />
+          <KpiTile
+            title="Participants who “give back”"
+            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.giveBackPercent) : "Not tracked"}
+            hint="Requires outcome survey fields on client records."
+          />
+          <KpiTile
+            title="Feel they “belong” at Aunt Leah’s"
+            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.belongPercent) : "Not tracked"}
+            hint="Requires outcome survey fields on client records."
+          />
+          <KpiTile
+            title="Would recommend Aunt Leah’s"
+            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.recommendPercent) : "Not tracked"}
+            hint="Requires outcome survey fields on client records."
+          />
+        </div>
 
-        {selectedProgram === "All" ? (
-          visiblePrograms.map((program) => {
-            const data = milestoneDataForProgram(stats, program);
-            return (
-              <div key={program} className="reportCard reportChartCard">
-                <div className="reportCardTitle">{program}</div>
-                <div className="reportCardHint">Clients per milestone (distinct per milestone)</div>
+        <div className="reportCard reportChartCard reportKpiAgeCard">
+          <div className="reportCardTitle">Age distribution</div>
+          <div className="reportCardHint">Participants with a date of birth on file</div>
+          {loading ? (
+            <div className="reportEmptyState">Loading…</div>
+          ) : (
+            <BarList data={ageBarData} color={palette.forestGreen} emptyLabel="No age data" />
+          )}
+        </div>
+      </section>
+
+      <section className="reportMilestoneSection" aria-labelledby="milestone-heading">
+        <h2 id="milestone-heading" className="reportSectionTitle">
+          Program milestones
+        </h2>
+
+        <div className="reportStatsGrid">
+          <div className="reportCard reportStatCard">
+            <div className="reportStatLabel">Scope</div>
+            <div className="reportStatValue">{loading ? "…" : summary.label}</div>
+          </div>
+          <div className="reportCard reportStatCard">
+            <div className="reportStatLabel">Total clients</div>
+            <div className="reportStatValue">{loading ? "…" : totalClients}</div>
+          </div>
+          <div className="reportCard reportStatCard">
+            <div className="reportStatLabel">
+              {selectedProgram === "All" ? "Total programs" : "Program clients"}
+            </div>
+            <div className="reportStatValue">
+              {loading
+                ? "…"
+                : selectedProgram === "All"
+                  ? summary.programCount
+                  : clientsInScope}
+            </div>
+          </div>
+          <div className="reportCard reportStatCard">
+            <div className="reportStatLabel">Milestone buckets</div>
+            <div className="reportStatValue">{loading ? "…" : summary.milestoneBuckets}</div>
+          </div>
+        </div>
+
+        <div className="reportChartsGrid">
+          {selectedProgram === "All" ? (
+            <div className="reportCard reportChartCard">
+              <div className="reportCardTitle">Clients per program</div>
+              <div className="reportCardHint">Enrollment counts based on clients’ programs</div>
+              {loading ? (
+                <div className="reportEmptyState">Loading…</div>
+              ) : (
+                <BarList data={clientsPerProgramData} color={palette.bubblegumPink} emptyLabel="No client data" />
+              )}
+            </div>
+          ) : null}
+
+          {selectedProgram === "All" ? (
+            visiblePrograms.map((program) => {
+              const sections = groupedMilestoneSections(stats, program);
+              return (
+                <div key={program} className="reportCard reportChartCard">
+                  <div className="reportCardTitle">{program}</div>
+                  <div className="reportCardHint">Clients per milestone, grouped by category</div>
+                  {loading ? (
+                    <div className="reportEmptyState">Loading…</div>
+                  ) : sections.length === 0 ? (
+                    <div className="reportEmptyState">No milestone data</div>
+                  ) : (
+                    sections.map((sec, secIdx) => (
+                      <div key={sec.key} className="reportMilestoneCategoryBlock">
+                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
+                        <BarList data={sec.data} color={CATEGORY_BAR_COLORS[secIdx % CATEGORY_BAR_COLORS.length]} emptyLabel="No data in this category" />
+                      </div>
+                    ))
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <>
+              <div className="reportCard reportChartCard">
+                <div className="reportCardTitle">{selectedProgram} milestones</div>
+                <div className="reportCardHint">
+                  {selectedCategory === ALL_MILESTONE_CATEGORIES
+                    ? "Clients per milestone, grouped by category"
+                    : `Clients per milestone — ${humanizeMilestoneTreeKey(selectedCategory)}`}
+                </div>
                 {loading ? (
                   <div className="reportEmptyState">Loading…</div>
+                ) : selectedCategory === ALL_MILESTONE_CATEGORIES ? (
+                  singleProgramSections.length === 0 ? (
+                    <div className="reportEmptyState">No milestone data</div>
+                  ) : (
+                    singleProgramSections.map((sec, secIdx) => (
+                      <div key={sec.key} className="reportMilestoneCategoryBlock">
+                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
+                        <BarList data={sec.data} color={CATEGORY_BAR_COLORS[secIdx % CATEGORY_BAR_COLORS.length]} emptyLabel="No data in this category" />
+                      </div>
+                    ))
+                  )
                 ) : (
-                  <BarList data={data} color={palette.forestGreen} emptyLabel="No milestone data" />
+                  <BarList
+                    data={selectedMilestones}
+                    color={CATEGORY_BAR_COLORS[Math.max(0, categoryKeys.indexOf(selectedCategory)) % CATEGORY_BAR_COLORS.length]}
+                    emptyLabel="No milestone data"
+                  />
                 )}
               </div>
-            );
-          })
-        ) : (
-          <>
-            <div className="reportCard reportChartCard">
-              <div className="reportCardTitle">{selectedProgram} milestones</div>
-              <div className="reportCardHint">Clients per milestone (distinct per milestone)</div>
-              {loading ? (
-                <div className="reportEmptyState">Loading…</div>
-              ) : (
-                <BarList data={selectedMilestones} color={palette.forestGreen} emptyLabel="No milestone data" />
-              )}
-            </div>
 
-            <div className="reportCard reportChartCard">
-              <div className="reportCardTitle">{selectedProgram} distribution</div>
-              <div className="reportCardHint">Milestone share (collapsed to top slices)</div>
-              {loading ? (
-                <div className="reportEmptyState">Loading…</div>
-              ) : (
-                <PieChart data={selectedMilestonesPie} emptyLabel="No milestone data" />
-              )}
-            </div>
-          </>
-        )}
-      </div>
+              <div className="reportCard reportChartCard">
+                <div className="reportCardTitle">{selectedProgram} distribution</div>
+                <div className="reportCardHint">
+                  {selectedCategory === ALL_MILESTONE_CATEGORIES
+                    ? "Share across milestones per category"
+                    : `Share across milestones — ${humanizeMilestoneTreeKey(selectedCategory)}`}
+                </div>
+                {loading ? (
+                  <div className="reportEmptyState">Loading…</div>
+                ) : selectedCategory === ALL_MILESTONE_CATEGORIES ? (
+                  singleProgramSections.length === 0 ? (
+                    <div className="reportEmptyState">No milestone data</div>
+                  ) : (
+                    singleProgramSections.map((sec) => (
+                      <div key={`pie-${sec.key}`} className="reportMilestoneCategoryBlock">
+                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
+                        <PieChart
+                          data={collapseToTopNWithOther(sec.data, 7)}
+                          emptyLabel="No milestone data"
+                        />
+                      </div>
+                    ))
+                  )
+                ) : (
+                  <PieChart data={selectedMilestonesPie} emptyLabel="No milestone data" />
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

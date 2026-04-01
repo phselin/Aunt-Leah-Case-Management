@@ -10,16 +10,45 @@ from backend_app.intake_form import GENDER_OPTIONS
 NUM_PEOPLE = 500
 NOTES_PER_PERSON = 50
 PROGRAMS = ["Housing", "Employment", "Education", "Drug Rehabilitation"]
-# we can have multiple goal types but including general only for now for simplicity
-GENERAL_MILESTONES = {
-    "Housing": ["homeless", "shelter", "transitional", "permanent"],
-    "Employment": ["unemployed", "search", "interview", "hired", "stable"],
-    "Education": ["high school", "university", "masters", "doctorate"],
-    "Drug Rehabilitation": ["7", "30", "90", "180", "360"],
+
+PROGRAM_MILESTONE_TREES: dict[str, dict[str, list[str]]] = {
+    "Housing": {
+        "general": ["homeless", "shelter", "transitional", "permanent"],
+        "support": ["none", "referral made", "active case", "graduated"],
+        "placement": ["searching", "shortlist", "viewing", "lease signed"],
+    },
+    "Employment": {
+        "general": ["unemployed", "search", "interview", "hired", "stable"],
+        "readiness": ["needs assessment", "resume ready", "interview prep", "placement follow-up"],
+        "skills": ["foundational", "intermediate", "advanced", "certified"],
+    },
+    "Education": {
+        "general": ["high school", "university", "masters", "doctorate"],
+        "literacy": ["below grade", "at grade", "above grade", "honours"],
+        "planning": ["exploring", "enrolled", "in progress", "completed term"],
+    },
+    "Drug Rehabilitation": {
+        "general": ["7", "30", "90", "180", "360"],
+        "engagement": ["pre-contemplation", "contemplation", "action", "maintenance"],
+        "aftercare": ["none", "scheduled", "active", "alumni"],
+    },
 }
+
 NUM_STAFF = 25
 
 faker = Faker("en_CA")
+
+
+def _random_milestone_record(milestone_options: list[str]) -> dict[str, str]:
+    start = faker.date_between(start_date="-60d", end_date="-30d")
+    last = faker.date_between(start_date="-30d", end_date="now")
+    if last < start:
+        start, last = last, start
+    return {
+        "value": random.choice(milestone_options),
+        "lastUpdateDate": last.strftime("%Y-%m-%d"),
+        "startDate": start.strftime("%Y-%m-%d"),
+    }
 
 
 def seed_db():
@@ -43,7 +72,7 @@ def seed_db():
     for program_name in PROGRAMS:
         program = {
             "name": program_name,
-            "milestoneTree": {"general": GENERAL_MILESTONES.get(program_name, [])},
+            "milestoneTree": PROGRAM_MILESTONE_TREES.get(program_name, {}),
             "description": faker.sentence(nb_words=10),
         }
         db.programs.insert_one(program)
@@ -107,16 +136,11 @@ def seed_db():
         enrolled_programs = random.sample(PROGRAMS, k=random.randint(1, 3))
         programMilestones = {}
         for enrolled_program in enrolled_programs:
+            trees = PROGRAM_MILESTONE_TREES.get(enrolled_program, {})
             programMilestones[enrolled_program] = {
-                "general": {
-                    "value": random.choice(GENERAL_MILESTONES[enrolled_program]),
-                    "lastUpdateDate": faker.date_between(
-                        start_date="-30d", end_date="now"
-                    ).strftime("%Y-%m-%d"),
-                    "startDate": faker.date_between(start_date="-60d", end_date="-30d").strftime(
-                        "%Y-%m-%d"
-                    ),
-                }
+                category: _random_milestone_record(options)
+                for category, options in trees.items()
+                if options
             }
         person = {
             "firstname": faker.first_name(),
