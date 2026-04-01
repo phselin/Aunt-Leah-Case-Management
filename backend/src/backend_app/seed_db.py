@@ -9,11 +9,12 @@ from backend_app.intake_form import GENDER_OPTIONS
 
 NUM_PEOPLE = 500
 NOTES_PER_PERSON = 50
-PROGRAMS = ["Housing", "Employment", "Drug Rehabilitation"]
+PROGRAMS = ["Housing", "Employment", "Education", "Drug Rehabilitation"]
 # we can have multiple goal types but including general only for now for simplicity
 GENERAL_MILESTONES = {
     "Housing": ["homeless", "shelter", "transitional", "permanent"],
     "Employment": ["unemployed", "search", "interview", "hired", "stable"],
+    "Education": ["high school", "university", "masters", "doctorate"],
     "Drug Rehabilitation": ["7", "30", "90", "180", "360"],
 }
 NUM_STAFF = 25
@@ -46,17 +47,6 @@ def seed_db():
             "description": faker.sentence(nb_words=10),
         }
         db.programs.insert_one(program)
-
-    db.programs.insert_one(
-        {
-            "name": "Education",
-            "milestoneTree": {
-                "grades": ["F", "D", "C", "B", "A"],
-                "level": ["high school", "university", "masters", "doctorate"],
-            },
-            "description": faker.sentence(nb_words=10),
-        }
-    )
 
     db.staff.insert_one(
         {

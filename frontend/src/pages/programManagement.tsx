@@ -113,21 +113,63 @@ const CategoryName = styled.span`
   color: #111827;
 `;
 
-const MilestoneChip = styled.span`
-  display: inline-block;
-  font-size: 12.5px;
-  color: #374151;
-  background: #f3f4f6;
-  border-radius: 5px;
-  padding: 4px 10px;
-  margin: 0 6px 6px 0;
+const MilestoneRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 `;
 
-const OrderNum = styled.span`
-  font-size: 10px;
+const OrderBadge = styled.span`
+  font-size: 11px;
   font-weight: 600;
   color: #9ca3af;
-  margin-right: 2px;
+  min-width: 20px;
+  text-align: center;
+`;
+
+const MilestoneLabel = styled.span`
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  color: #374151;
+  padding: 7px 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+`;
+
+const ArrowBtn = styled.button`
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 12px;
+  padding: 0;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+`;
+
+const AddMilestoneRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
 `;
 
 /* ── Add category form ──── */
@@ -321,11 +363,19 @@ const ProgramManagement = () => {
   // Expanded program (view/edit categories)
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Local editable copy of the milestone tree
+  const [editTree, setEditTree] = useState<Record<string, string[]>>({});
+  const [saving, setSaving] = useState(false);
+
   // Add category form state (inline within expanded card)
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatMilestones, setNewCatMilestones] = useState<string[]>([""]);
-  const [catSaving, setCatSaving] = useState(false);
+
+  // Per-category "add milestone" input
+  const [newMilestoneInputs, setNewMilestoneInputs] = useState<
+    Record<string, string>
+  >({});
 
   // Delete category confirm
   const [deleteCatTarget, setDeleteCatTarget] = useState<{
@@ -430,7 +480,7 @@ const ProgramManagement = () => {
     setNewCatMilestones([""]);
   };
 
-  const handleAddCategory = async (program: Program) => {
+  const handleAddCategory = (program: Program) => {
     const catName = newCatName.trim().toLowerCase();
     if (!catName) {
       setErrMsg("Category name is required");
@@ -453,76 +503,67 @@ const ProgramManagement = () => {
       return;
     }
 
-    const existingTree = program.milestoneTree || {};
-    if (existingTree[catName]) {
+    if (editTree[catName]) {
       setErrMsg(`Category "${catName}" already exists`);
       return;
     }
 
-    const updatedTree = { ...existingTree, [catName]: milestones };
-
-    setCatSaving(true);
-    try {
-      const res = await api.put("/programs", {
-        name: program.name,
-        description: program.description || "",
-        milestoneTree: updatedTree,
-      });
-      setPrograms((prev) =>
-        prev.map((p) =>
-          p._id === program._id
-            ? { ...p, milestoneTree: res.data.milestoneTree }
-            : p,
-        ),
-      );
-      setSuccessMsg(`Category "${catName}" added`);
-      resetCategoryForm();
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        setErrMsg(err.response.data?.detail || "Failed to add category");
-      } else {
-        setErrMsg("Unable to connect to server");
-      }
-    } finally {
-      setCatSaving(false);
-    }
+    setEditTree((prev) => ({ ...prev, [catName]: milestones }));
+    resetCategoryForm();
   };
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteCategory = () => {
     if (!deleteCatTarget) return;
-    const { programName, category } = deleteCatTarget;
-    const program = programs.find((p) => p.name === programName);
-    if (!program) return;
-
-    const updatedTree = { ...program.milestoneTree };
-    delete updatedTree[category];
-
-    try {
-      const res = await api.put("/programs", {
-        name: programName,
-        description: program.description || "",
-        milestoneTree: updatedTree,
-      });
-      setPrograms((prev) =>
-        prev.map((p) =>
-          p._id === program._id
-            ? { ...p, milestoneTree: res.data.milestoneTree }
-            : p,
-        ),
-      );
-      setSuccessMsg(`Category "${category}" deleted`);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        setErrMsg(err.response.data?.detail || "Failed to delete category");
-      } else {
-        setErrMsg("Unable to connect to server");
-      }
-    } finally {
-      setDeleteCatTarget(null);
-    }
+    const { category } = deleteCatTarget;
+    setEditTree((prev) => {
+      const copy = { ...prev };
+      delete copy[category];
+      return copy;
+    });
+    setDeleteCatTarget(null);
   };
 
-  /* ── Milestone form helpers ────────────────────────────────────── */
+  /* ── Milestone mutations (local state) ─────────────────────────── */
+
+  const deleteMilestone = (cat: string, idx: number) => {
+    setEditTree((prev) => ({
+      ...prev,
+      [cat]: prev[cat].filter((_, i) => i !== idx),
+    }));
+  };
+
+  const moveMilestone = (
+    cat: string,
+    idx: number,
+    direction: "up" | "down",
+  ) => {
+    setEditTree((prev) => {
+      const arr = [...prev[cat]];
+      const target = direction === "up" ? idx - 1 : idx + 1;
+      if (target < 0 || target >= arr.length) return prev;
+      [arr[idx], arr[target]] = [arr[target], arr[idx]];
+      return { ...prev, [cat]: arr };
+    });
+  };
+
+  const handleAddMilestone = (cat: string) => {
+    const value = (newMilestoneInputs[cat] || "").trim().toLowerCase();
+    if (!value) return;
+
+    const existing = editTree[cat] || [];
+    if (existing.some((m) => m.toLowerCase() === value)) {
+      setErrMsg(`Milestone "${value}" already exists in this category`);
+      return;
+    }
+
+    setEditTree((prev) => ({
+      ...prev,
+      [cat]: [...(prev[cat] || []), value],
+    }));
+    setNewMilestoneInputs((prev) => ({ ...prev, [cat]: "" }));
+  };
+
+  /* ── New category milestone form helpers ────────────────────────── */
 
   const updateNewMilestone = (idx: number, value: string) => {
     setNewCatMilestones((prev) => prev.map((m, i) => (i === idx ? value : m)));
@@ -536,22 +577,71 @@ const ProgramManagement = () => {
     setNewCatMilestones((prev) => [...prev, ""]);
   };
 
-  /* ── Toggle expand ─────────────────────────────────────────────── */
+  /* ── Toggle expand / Save ──────────────────────────────────────── */
 
   const toggleExpand = (program: Program) => {
     if (expandedId === program._id) {
       setExpandedId(null);
+      setEditTree({});
+      setNewMilestoneInputs({});
       resetCategoryForm();
     } else {
       setExpandedId(program._id);
+      setEditTree(JSON.parse(JSON.stringify(program.milestoneTree || {})));
+      setNewMilestoneInputs({});
       resetCategoryForm();
+    }
+  };
+
+  const hasChanges = (program: Program) => {
+    return (
+      JSON.stringify(program.milestoneTree || {}) !== JSON.stringify(editTree)
+    );
+  };
+
+  const handleSave = async (program: Program) => {
+    // Validate no empty categories
+    for (const [cat, milestones] of Object.entries(editTree)) {
+      if (milestones.length === 0) {
+        setErrMsg(`Category "${cat}" has no milestones`);
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const res = await api.put("/programs", {
+        name: program.name,
+        description: program.description || "",
+        milestoneTree: editTree,
+      });
+      setPrograms((prev) =>
+        prev.map((p) =>
+          p._id === program._id
+            ? { ...p, milestoneTree: res.data.milestoneTree }
+            : p,
+        ),
+      );
+      setSuccessMsg(`"${program.name}" updated`);
+      setExpandedId(null);
+      setEditTree({});
+      setNewMilestoneInputs({});
+      resetCategoryForm();
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        setErrMsg(err.response.data?.detail || "Failed to save changes");
+      } else {
+        setErrMsg("Unable to connect to server");
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   /* ── Render: expanded program editor ───────────────────────────── */
 
   const renderEditor = (program: Program) => {
-    const categories = Object.entries(program.milestoneTree || {});
+    const categories = Object.entries(editTree);
 
     return (
       <EditorArea>
@@ -585,13 +675,58 @@ const ProgramManagement = () => {
                 ✕ Delete
               </IconBtn>
             </CategoryHeader>
-            <div>
-              {milestones.map((ms, i) => (
-                <MilestoneChip key={i}>
-                  <OrderNum>{i + 1}.</OrderNum> {ms}
-                </MilestoneChip>
-              ))}
-            </div>
+
+            {milestones.map((ms, i) => (
+              <MilestoneRow key={`${catName}-${i}`}>
+                <OrderBadge>{i + 1}</OrderBadge>
+                <MilestoneLabel>{ms}</MilestoneLabel>
+                <ArrowBtn
+                  onClick={() => moveMilestone(catName, i, "up")}
+                  disabled={i === 0}
+                  title="Move up"
+                >
+                  ▲
+                </ArrowBtn>
+                <ArrowBtn
+                  onClick={() => moveMilestone(catName, i, "down")}
+                  disabled={i === milestones.length - 1}
+                  title="Move down"
+                >
+                  ▼
+                </ArrowBtn>
+                <IconBtn
+                  $danger
+                  onClick={() => deleteMilestone(catName, i)}
+                  title="Remove milestone"
+                >
+                  ✕
+                </IconBtn>
+              </MilestoneRow>
+            ))}
+
+            <AddMilestoneRow>
+              <FormInput
+                value={newMilestoneInputs[catName] || ""}
+                onChange={(e) =>
+                  setNewMilestoneInputs((prev) => ({
+                    ...prev,
+                    [catName]: e.target.value,
+                  }))
+                }
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleAddMilestone(catName)
+                }
+                placeholder="New milestone name"
+                style={{ flex: 1 }}
+              />
+              <SaveBtn
+                onClick={() => handleAddMilestone(catName)}
+                disabled={!(newMilestoneInputs[catName] || "").trim()}
+                style={{ padding: "8px 14px", fontSize: 13 }}
+              >
+                + Add
+              </SaveBtn>
+            </AddMilestoneRow>
           </CategoryBlock>
         ))}
 
@@ -653,11 +788,8 @@ const ProgramManagement = () => {
 
             <FormBtnRow>
               <SecondaryBtn onClick={resetCategoryForm}>Cancel</SecondaryBtn>
-              <SaveBtn
-                onClick={() => handleAddCategory(program)}
-                disabled={catSaving}
-              >
-                {catSaving ? "Saving…" : "Save Category"}
+              <SaveBtn onClick={() => handleAddCategory(program)}>
+                Add Category
               </SaveBtn>
             </FormBtnRow>
           </AddCategoryForm>
@@ -665,6 +797,24 @@ const ProgramManagement = () => {
           <AddBtn onClick={() => setAddingCategory(true)}>
             + Add Category
           </AddBtn>
+        )}
+
+        {/* Save / Cancel footer */}
+        {hasChanges(program) && (
+          <FormBtnRow
+            style={{
+              marginTop: 16,
+              paddingTop: 16,
+              borderTop: "1px solid #f3f4f6",
+            }}
+          >
+            <SecondaryBtn onClick={() => toggleExpand(program)}>
+              Cancel
+            </SecondaryBtn>
+            <SaveBtn onClick={() => handleSave(program)} disabled={saving}>
+              {saving ? "Saving…" : "Save Changes"}
+            </SaveBtn>
+          </FormBtnRow>
         )}
       </EditorArea>
     );
@@ -832,9 +982,9 @@ const ProgramManagement = () => {
           <Dialog onClick={(e) => e.stopPropagation()}>
             <DialogTitle>Delete Category</DialogTitle>
             <DialogSubtitle>
-              Delete <strong>{deleteCatTarget.category}</strong> from{" "}
-              <strong>{deleteCatTarget.programName}</strong>? This will remove
-              all milestone progress for this category from enrolled clients.
+              Remove <strong>{deleteCatTarget.category}</strong> from{" "}
+              <strong>{deleteCatTarget.programName}</strong>? Client milestone
+              progress for this category will be cleared when you save.
             </DialogSubtitle>
             <DialogActions>
               <SecondaryBtn onClick={() => setDeleteCatTarget(null)}>
