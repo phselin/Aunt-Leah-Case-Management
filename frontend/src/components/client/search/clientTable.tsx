@@ -50,6 +50,9 @@ const TableData = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 `;
 
 const StatusChip = styled.span<{ active?: boolean }>`
@@ -69,20 +72,16 @@ const ActionButton = styled.button<{ $clientActive?: boolean }>`
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 6px;
-  border: 1px solid
-    ${(props) => (props.$clientActive ? "#FCA5A5" : "#6EE7B7")};
+  border: 1px solid ${(props) => (props.$clientActive ? "#FCA5A5" : "#6EE7B7")};
   cursor: pointer;
-  width: 110px;            
-  text-align: center;     
-  color: ${(props) =>
-    props.$clientActive ? "#991B1B" : "#14532D"};
-  background: ${(props) =>
-    props.$clientActive ? "#FEE2E2" : "#E1FCEF"};
+  width: 110px;
+  text-align: center;
+  color: ${(props) => (props.$clientActive ? "#991B1B" : "#14532D")};
+  background: ${(props) => (props.$clientActive ? "#FEE2E2" : "#E1FCEF")};
   transition: background 0.2s ease;
 
   &:hover {
-    background: ${(props) =>
-      props.$clientActive ? "#FECACA" : "#D1FAE5"};
+    background: ${(props) => (props.$clientActive ? "#FECACA" : "#D1FAE5")};
   }
 `;
 
@@ -96,13 +95,19 @@ const EmptyRow = styled.div`
 
 type Props = {
   people: Person[];
-  auth: { user?: { role?: string } }; 
+  auth: { user?: { role?: string } };
   onClick: (id: string) => void;
   onError: (msg: string) => void;
-  onToggleActive: (id: string, active: boolean) => void; 
+  onToggleActive: (id: string, active: boolean) => void;
 };
 
-const ClientTable = ({ people, auth, onClick, onError, onToggleActive }: Props) => {
+const ClientTable = ({
+  people,
+  auth,
+  onClick,
+  onError,
+  onToggleActive,
+}: Props) => {
   const isSuperAdmin = auth?.user?.role === "super-admin";
 
   const nameOf = (p: Person) =>
@@ -139,43 +144,43 @@ const ClientTable = ({ people, auth, onClick, onError, onToggleActive }: Props) 
         <EmptyRow>No clients found</EmptyRow>
       ) : (
         people.map((p) => (
-        <TableRow
-          key={p._id}
-          $hasActions={isSuperAdmin}
-          onClick={(e) => {
-            if (!p._id) {
-              return onError("No such client exists");
-            }
-            if (e.ctrlKey || e.metaKey) {
-              window.open(`/client/${p._id}`, "_blank");
-            } else {
-              onClick(p._id);
-            }
-          }}
-        >
-          <ClientName>{nameOf(p)}</ClientName>
-          <TableData>{p.email || missing}</TableData>
-          <TableData>{p.phone || missing}</TableData>
-          <TableData>{getLocation(p)}</TableData>
-          <TableData>{p.referral?.referralDate || missing}</TableData>
-          <StatusChip active={p.active}>
-            {p.active ? "Active" : "InActive"}
-          </StatusChip>
-          
-          {isSuperAdmin && (
-            <ActionButton
-              $clientActive={p.active}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!p._id) return onError("No such client exists");
-                onToggleActive?.(p._id, !p.active); 
-              }}
-            >
-              {p.active ? "Deactivate" : "Activate"}
-            </ActionButton>
-          )}
-        </TableRow>
-      ))
+          <TableRow
+            key={p._id}
+            $hasActions={isSuperAdmin}
+            onClick={(e) => {
+              if (!p._id) {
+                return onError("No such client exists");
+              }
+              if (e.ctrlKey || e.metaKey) {
+                window.open(`/client/${p._id}`, "_blank");
+              } else {
+                onClick(p._id);
+              }
+            }}
+          >
+            <ClientName>{nameOf(p)}</ClientName>
+            <TableData>{p.email || missing}</TableData>
+            <TableData>{p.phone || missing}</TableData>
+            <TableData>{getLocation(p)}</TableData>
+            <TableData>{p.referral?.referralDate || missing}</TableData>
+            <StatusChip active={p.active}>
+              {p.active ? "Active" : "InActive"}
+            </StatusChip>
+
+            {isSuperAdmin && (
+              <ActionButton
+                $clientActive={p.active}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!p._id) return onError("No such client exists");
+                  onToggleActive?.(p._id, !p.active);
+                }}
+              >
+                {p.active ? "Deactivate" : "Activate"}
+              </ActionButton>
+            )}
+          </TableRow>
+        ))
       )}
     </TableContainer>
   );

@@ -7,7 +7,7 @@ def validate_name_util(value: str) -> str:
     value = value.strip().title()
     if not value:
         raise ValueError("name cannot be empty")
-    if len(value) > 100:
+    if len(value) > 20:
         raise ValueError("name is too long")
     # special char ai-gen, i don't know which characters to allow
     if not re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿ\s']+", value):

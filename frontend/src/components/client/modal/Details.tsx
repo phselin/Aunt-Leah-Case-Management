@@ -31,7 +31,7 @@ import {
 
 const HOUSING_INTAKE_LAYOUT = "housing_intake_pdf";
 
-const DEFAULT_TEXT_MAX_LENGTH = 150;
+const DEFAULT_TEXT_MAX_LENGTH = 100;
 const DEFAULT_TEXTAREA_MAX_LENGTH = 600;
 const DEFAULT_DETAILS_MAX_LENGTH = 300;
 
@@ -201,7 +201,7 @@ const Details = ({
         return (
           <FormRow key={path}>
             <Label>{label}</Label>
-            <Input type="email" {...register(path as any)} />
+            <Input type="email" maxLength={50} {...register(path as any)} />
             <FieldError msg={fieldError(path)} />
           </FormRow>
         );

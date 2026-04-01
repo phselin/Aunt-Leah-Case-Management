@@ -61,8 +61,8 @@ address_and_housing_info = {
             "label": "Current Address & Postal Code (if applicable)",
             "fields": [
                 {"key": "street", "label": "Street address", "type": "text"},
-                {"key": "city", "label": "City", "type": "text", "maxLength": 50},
-                {"key": "province", "label": "Province", "type": "text", "maxLength": 50},
+                {"key": "city", "label": "City", "type": "text", "maxLength": 30},
+                {"key": "province", "label": "Province", "type": "text", "maxLength": 30},
                 {"key": "postalCode", "label": "Postal Code", "type": "text", "maxLength": 20},
             ],
         },
