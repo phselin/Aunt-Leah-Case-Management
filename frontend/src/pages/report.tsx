@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useEffect, useMemo, useState } from "react";
 
-import { palette } from "../theme/palette";
 import api from "../api";
+import { palette } from "../theme/palette";
 
 type BarDatum = { label: string; value: number };
 
@@ -22,12 +22,19 @@ const PIE_COLORS = [
   palette.mintGreen,
 ] as const;
 
-function collapseToTopNWithOther(data: BarDatum[], maxSlices: number): BarDatum[] {
+function collapseToTopNWithOther(
+  data: BarDatum[],
+  maxSlices: number,
+): BarDatum[] {
   if (maxSlices < 2) return data;
-  const sorted = [...data].sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+  const sorted = [...data].sort(
+    (a, b) => b.value - a.value || a.label.localeCompare(b.label),
+  );
   if (sorted.length <= maxSlices) return sorted;
   const keep = sorted.slice(0, maxSlices - 1);
-  const other = sorted.slice(maxSlices - 1).reduce((sum, d) => sum + d.value, 0);
+  const other = sorted
+    .slice(maxSlices - 1)
+    .reduce((sum, d) => sum + d.value, 0);
   return [...keep, { label: "Other", value: other }];
 }
 
@@ -41,7 +48,8 @@ function BarList({
   emptyLabel?: string;
 }) {
   const max = data.reduce((m, d) => Math.max(m, d.value), 0);
-  if (data.length === 0) return <div className="reportEmptyState">{emptyLabel}</div>;
+  if (data.length === 0)
+    return <div className="reportEmptyState">{emptyLabel}</div>;
 
   return (
     <div className="reportBarList">
@@ -74,7 +82,8 @@ function PieChart({
   emptyLabel?: string;
 }) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  if (!data.length || total <= 0) return <div className="reportEmptyState">{emptyLabel}</div>;
+  if (!data.length || total <= 0)
+    return <div className="reportEmptyState">{emptyLabel}</div>;
 
   const size = 172;
   const r = 70;
@@ -86,34 +95,54 @@ function PieChart({
     y: cy + r * Math.sin(angleRad),
   });
 
-  const slices = data
-    .reduce<{ angle: number; out: Array<BarDatum & { color: string; path: string }> }>(
-      (acc, d, idx) => {
-        const a0 = acc.angle;
-        const frac = d.value / total;
-        const a1 = a0 + frac * Math.PI * 2;
-        const p0 = toPoint(a0);
-        const p1 = toPoint(a1);
-        const large = a1 - a0 > Math.PI ? 1 : 0;
-        const color = PIE_COLORS[idx % PIE_COLORS.length];
-        const path = `M ${cx} ${cy} L ${p0.x} ${p0.y} A ${r} ${r} 0 ${large} 1 ${p1.x} ${p1.y} Z`;
-        return { angle: a1, out: [...acc.out, { ...d, color, path }] };
-      },
-      { angle: -Math.PI / 2, out: [] }
-    )
-    .out;
+  const slices = data.reduce<{
+    angle: number;
+    out: Array<BarDatum & { color: string; path: string }>;
+  }>(
+    (acc, d, idx) => {
+      const a0 = acc.angle;
+      const frac = d.value / total;
+      const a1 = a0 + frac * Math.PI * 2;
+      const p0 = toPoint(a0);
+      const p1 = toPoint(a1);
+      const large = a1 - a0 > Math.PI ? 1 : 0;
+      const color = PIE_COLORS[idx % PIE_COLORS.length];
+      const path = `M ${cx} ${cy} L ${p0.x} ${p0.y} A ${r} ${r} 0 ${large} 1 ${p1.x} ${p1.y} Z`;
+      return { angle: a1, out: [...acc.out, { ...d, color, path }] };
+    },
+    { angle: -Math.PI / 2, out: [] },
+  ).out;
 
   return (
     <div className="reportPieLayout">
-      <svg className="reportPieSvg" viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Pie chart">
+      <svg
+        className="reportPieSvg"
+        viewBox={`0 0 ${size} ${size}`}
+        role="img"
+        aria-label="Pie chart"
+      >
         {slices.map((s) => (
           <path key={s.label} d={s.path} fill={s.color} />
         ))}
         <circle cx={cx} cy={cy} r={38} fill="white" />
-        <text x={cx} y={cy - 2} textAnchor="middle" fontSize="12" fontWeight="900" fill="#222">
+        <text
+          x={cx}
+          y={cy - 2}
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="900"
+          fill="#222"
+        >
           {total}
         </text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="10" fontWeight="700" fill="#6b6b6b">
+        <text
+          x={cx}
+          y={cy + 14}
+          textAnchor="middle"
+          fontSize="10"
+          fontWeight="700"
+          fill="#6b6b6b"
+        >
           counts
         </text>
       </svg>
@@ -123,7 +152,11 @@ function PieChart({
           const pct = Math.round((s.value / total) * 100);
           return (
             <div key={s.label} className="reportLegendRow">
-              <span className="reportLegendSwatch" aria-hidden="true" style={{ background: s.color }} />
+              <span
+                className="reportLegendSwatch"
+                aria-hidden="true"
+                style={{ background: s.color }}
+              />
               <div className="reportLegendText" title={s.label}>
                 {s.label}
               </div>
@@ -170,10 +203,14 @@ type KpiPayload = {
 type StatsResponse = {
   clients?: Record<string, number>;
   kpis?: KpiPayload;
-} & Record<string, ProgramGoalStats | Record<string, number> | KpiPayload | undefined>;
+} & Record<
+  string,
+  ProgramGoalStats | Record<string, number> | KpiPayload | undefined
+>;
 
 function formatMilestone(program: string, milestone: string): string {
-  if (program === "Drug Rehabilitation" && /^\d+$/.test(milestone)) return `${milestone} days`;
+  if (program === "Drug Rehabilitation" && /^\d+$/.test(milestone))
+    return `${milestone} days`;
   if (program === "Housing" || program === "Employment") {
     return milestone
       .split(/[\s_-]+/g)
@@ -194,7 +231,10 @@ function humanizeMilestoneTreeKey(treeType: string): string {
 
 const ALL_MILESTONE_CATEGORIES = "__all__" as const;
 
-function getProgramGoalStats(stats: StatsResponse, program: string): ProgramGoalStats | null {
+function getProgramGoalStats(
+  stats: StatsResponse,
+  program: string,
+): ProgramGoalStats | null {
   const p = stats[program];
   if (!p || typeof p !== "object") return null;
   return p as ProgramGoalStats;
@@ -213,7 +253,7 @@ function treeKeysForProgram(programStats: ProgramGoalStats | null): string[] {
 
 function barsForCategory(
   program: string,
-  raw: MilestoneCountRow[] | undefined
+  raw: MilestoneCountRow[] | undefined,
 ): BarDatum[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -225,9 +265,16 @@ function barsForCategory(
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 }
 
-type MilestoneCategorySection = { key: string; title: string; data: BarDatum[] };
+type MilestoneCategorySection = {
+  key: string;
+  title: string;
+  data: BarDatum[];
+};
 
-function groupedMilestoneSections(stats: StatsResponse, program: string): MilestoneCategorySection[] {
+function groupedMilestoneSections(
+  stats: StatsResponse,
+  program: string,
+): MilestoneCategorySection[] {
   const programStats = getProgramGoalStats(stats, program);
   if (!programStats) return [];
   const sections: MilestoneCategorySection[] = [];
@@ -244,13 +291,16 @@ function groupedMilestoneSections(stats: StatsResponse, program: string): Milest
 function flatMilestonesForProgram(
   stats: StatsResponse,
   program: string,
-  category: typeof ALL_MILESTONE_CATEGORIES | string
+  category: typeof ALL_MILESTONE_CATEGORIES | string,
 ): BarDatum[] {
   const programStats = getProgramGoalStats(stats, program);
   if (!programStats) return [];
 
   if (category !== ALL_MILESTONE_CATEGORIES) {
-    return barsForCategory(program, programStats[category] as MilestoneCountRow[]);
+    return barsForCategory(
+      program,
+      programStats[category] as MilestoneCountRow[],
+    );
   }
 
   const sections = groupedMilestoneSections(stats, program);
@@ -263,18 +313,23 @@ function flatMilestonesForProgram(
       merged.push({ label: `${s.title}: ${d.label}`, value: d.value });
     }
   }
-  return merged.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+  return merged.sort(
+    (a, b) => b.value - a.value || a.label.localeCompare(b.label),
+  );
 }
 
 function countMilestoneBuckets(
   stats: StatsResponse,
   program: string,
-  category: typeof ALL_MILESTONE_CATEGORIES | string
+  category: typeof ALL_MILESTONE_CATEGORIES | string,
 ): number {
   if (category !== ALL_MILESTONE_CATEGORIES) {
     return flatMilestonesForProgram(stats, program, category).length;
   }
-  return groupedMilestoneSections(stats, program).reduce((sum, s) => sum + s.data.length, 0);
+  return groupedMilestoneSections(stats, program).reduce(
+    (sum, s) => sum + s.data.length,
+    0,
+  );
 }
 
 function formatPercent(value: number | null | undefined, empty = "—"): string {
@@ -311,7 +366,9 @@ function KpiTile({
 const Report = () => {
   const [stats, setStats] = useState<StatsResponse>({});
   const [selectedProgram, setSelectedProgram] = useState<string>("All");
-  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_MILESTONE_CATEGORIES);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    ALL_MILESTONE_CATEGORIES,
+  );
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string>("");
 
@@ -324,7 +381,11 @@ const Report = () => {
         const statsRes = await api.get(`/stats`);
 
         if (!cancelled) {
-          setStats(statsRes.data && typeof statsRes.data === "object" ? (statsRes.data as StatsResponse) : {});
+          setStats(
+            statsRes.data && typeof statsRes.data === "object"
+              ? (statsRes.data as StatsResponse)
+              : {},
+          );
         }
       } catch (err) {
         if (cancelled) return;
@@ -378,7 +439,9 @@ const Report = () => {
   }, [stats]);
 
   const programOptions = useMemo(() => {
-    const fromStats = Object.keys(stats || {}).filter((k) => k !== "clients" && k !== "kpis");
+    const fromStats = Object.keys(stats || {}).filter(
+      (k) => k !== "clients" && k !== "kpis",
+    );
     return ["All", ...fromStats.sort((a, b) => a.localeCompare(b))];
   }, [stats]);
 
@@ -400,7 +463,7 @@ const Report = () => {
 
   const selectedMilestonesPie = useMemo(
     () => collapseToTopNWithOther(selectedMilestones, 7),
-    [selectedMilestones]
+    [selectedMilestones],
   );
 
   const singleProgramSections = useMemo(() => {
@@ -412,20 +475,38 @@ const Report = () => {
     if (selectedProgram === "All") {
       const programCount = visiblePrograms.length;
       const milestoneBuckets = visiblePrograms.reduce(
-        (sum, p) => sum + countMilestoneBuckets(stats, p, ALL_MILESTONE_CATEGORIES),
-        0
+        (sum, p) =>
+          sum + countMilestoneBuckets(stats, p, ALL_MILESTONE_CATEGORIES),
+        0,
       );
-      return { label: "All programs", programCount, milestoneBuckets, topLabel: "" };
+      return {
+        label: "All programs",
+        programCount,
+        milestoneBuckets,
+        topLabel: "",
+      };
     }
     const ms = selectedMilestones;
-    const top = [...ms].sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))[0];
+    const top = [...ms].sort(
+      (a, b) => b.value - a.value || a.label.localeCompare(b.label),
+    )[0];
     return {
       label: selectedProgram,
       programCount: 1,
-      milestoneBuckets: countMilestoneBuckets(stats, selectedProgram, selectedCategory),
+      milestoneBuckets: countMilestoneBuckets(
+        stats,
+        selectedProgram,
+        selectedCategory,
+      ),
       topLabel: top ? `${top.label} (${top.value})` : "—",
     };
-  }, [selectedMilestones, selectedProgram, selectedCategory, stats, visiblePrograms]);
+  }, [
+    selectedMilestones,
+    selectedProgram,
+    selectedCategory,
+    stats,
+    visiblePrograms,
+  ]);
 
   const ageBarData: BarDatum[] = useMemo(() => {
     const dist = kpis?.ageDistribution;
@@ -439,8 +520,8 @@ const Report = () => {
         <div>
           <h1 className="reportTitle">Impact report</h1>
           <p className="reportSubTitle">
-            Organization KPIs derived from participant records. Milestone charts reflect program
-            progress in the system.
+            Organization KPIs derived from participant records. Milestone charts
+            reflect program progress in the system.
           </p>
         </div>
 
@@ -466,7 +547,10 @@ const Report = () => {
 
           {selectedProgram !== "All" ? (
             <div className="reportControls">
-              <label className="reportLabel" htmlFor="milestone-category-filter">
+              <label
+                className="reportLabel"
+                htmlFor="milestone-category-filter"
+              >
                 Milestone category
               </label>
               <select
@@ -512,7 +596,9 @@ const Report = () => {
           />
           <KpiTile
             title="Housed within 3 months of program start"
-            value={loading ? "…" : formatPercent(kpis?.housedWithin3MonthsPercent)}
+            value={
+              loading ? "…" : formatPercent(kpis?.housedWithin3MonthsPercent)
+            }
             foot={
               !loading && kpis?.housedWithin3MonthsDenominator != null
                 ? `Based on ${kpis.housedWithin3MonthsDenominator} Housing enrollments with start and update dates.`
@@ -521,7 +607,9 @@ const Report = () => {
           />
           <KpiTile
             title="Housed within 12 months of program start"
-            value={loading ? "…" : formatPercent(kpis?.housedWithin12MonthsPercent)}
+            value={
+              loading ? "…" : formatPercent(kpis?.housedWithin12MonthsPercent)
+            }
             foot={
               !loading && kpis?.housedWithin12MonthsDenominator != null
                 ? `Based on ${kpis.housedWithin12MonthsDenominator} Housing enrollments with start and update dates.`
@@ -530,12 +618,20 @@ const Report = () => {
           />
           <KpiTile
             title="Meals / bags of groceries"
-            value={loading ? "…" : kpis?.mealsOrGroceriesAvailable ? formatNumber(kpis?.mealsOrGroceriesProvided) : "Not tracked"}
+            value={
+              loading
+                ? "…"
+                : kpis?.mealsOrGroceriesAvailable
+                  ? formatNumber(kpis?.mealsOrGroceriesProvided)
+                  : "Not tracked"
+            }
             hint="Service counts are not stored in this database yet."
           />
           <KpiTile
             title="High school completion (intake)"
-            value={loading ? "…" : formatPercent(kpis?.highSchoolGraduatePercent)}
+            value={
+              loading ? "…" : formatPercent(kpis?.highSchoolGraduatePercent)
+            }
             foot={
               !loading && kpis?.highSchoolGraduateReportingCount != null
                 ? `${kpis.highSchoolGraduateReportingCount} participants answered the high school question.`
@@ -559,7 +655,13 @@ const Report = () => {
           />
           <KpiTile
             title="Average age"
-            value={loading ? "…" : kpis?.averageAgeYears != null ? `${kpis.averageAgeYears} yrs` : "—"}
+            value={
+              loading
+                ? "…"
+                : kpis?.averageAgeYears != null
+                  ? `${kpis.averageAgeYears} yrs`
+                  : "—"
+            }
             foot={
               !loading && kpis?.participantsWithAgeCount != null
                 ? `From ${kpis.participantsWithAgeCount} participants with a date of birth.`
@@ -578,33 +680,60 @@ const Report = () => {
           />
           <KpiTile
             title="Participants who “give back”"
-            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.giveBackPercent) : "Not tracked"}
+            value={
+              loading
+                ? "…"
+                : kpis?.outcomesSurveyAvailable
+                  ? formatPercent(kpis?.giveBackPercent)
+                  : "Not tracked"
+            }
             hint="Requires outcome survey fields on client records."
           />
           <KpiTile
             title="Feel they “belong” at Aunt Leah’s"
-            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.belongPercent) : "Not tracked"}
+            value={
+              loading
+                ? "…"
+                : kpis?.outcomesSurveyAvailable
+                  ? formatPercent(kpis?.belongPercent)
+                  : "Not tracked"
+            }
             hint="Requires outcome survey fields on client records."
           />
           <KpiTile
             title="Would recommend Aunt Leah’s"
-            value={loading ? "…" : kpis?.outcomesSurveyAvailable ? formatPercent(kpis?.recommendPercent) : "Not tracked"}
+            value={
+              loading
+                ? "…"
+                : kpis?.outcomesSurveyAvailable
+                  ? formatPercent(kpis?.recommendPercent)
+                  : "Not tracked"
+            }
             hint="Requires outcome survey fields on client records."
           />
         </div>
 
         <div className="reportCard reportChartCard reportKpiAgeCard">
           <div className="reportCardTitle">Age distribution</div>
-          <div className="reportCardHint">Participants with a date of birth on file</div>
+          <div className="reportCardHint">
+            Participants with a date of birth on file
+          </div>
           {loading ? (
             <div className="reportEmptyState">Loading…</div>
           ) : (
-            <BarList data={ageBarData} color={palette.forestGreen} emptyLabel="No age data" />
+            <BarList
+              data={ageBarData}
+              color={palette.forestGreen}
+              emptyLabel="No age data"
+            />
           )}
         </div>
       </section>
 
-      <section className="reportMilestoneSection" aria-labelledby="milestone-heading">
+      <section
+        className="reportMilestoneSection"
+        aria-labelledby="milestone-heading"
+      >
         <h2 id="milestone-heading" className="reportSectionTitle">
           Program milestones
         </h2>
@@ -612,11 +741,15 @@ const Report = () => {
         <div className="reportStatsGrid">
           <div className="reportCard reportStatCard">
             <div className="reportStatLabel">Scope</div>
-            <div className="reportStatValue">{loading ? "…" : summary.label}</div>
+            <div className="reportStatValue">
+              {loading ? "…" : summary.label}
+            </div>
           </div>
           <div className="reportCard reportStatCard">
             <div className="reportStatLabel">Total clients</div>
-            <div className="reportStatValue">{loading ? "…" : totalClients}</div>
+            <div className="reportStatValue">
+              {loading ? "…" : totalClients}
+            </div>
           </div>
           <div className="reportCard reportStatCard">
             <div className="reportStatLabel">
@@ -632,39 +765,60 @@ const Report = () => {
           </div>
           <div className="reportCard reportStatCard">
             <div className="reportStatLabel">Milestone buckets</div>
-            <div className="reportStatValue">{loading ? "…" : summary.milestoneBuckets}</div>
+            <div className="reportStatValue">
+              {loading ? "…" : summary.milestoneBuckets}
+            </div>
           </div>
         </div>
-
-        <div className="reportChartsGrid">
-          {selectedProgram === "All" ? (
-            <div className="reportCard reportChartCard">
-              <div className="reportCardTitle">Clients per program</div>
-              <div className="reportCardHint">Enrollment counts based on clients’ programs</div>
-              {loading ? (
-                <div className="reportEmptyState">Loading…</div>
-              ) : (
-                <BarList data={clientsPerProgramData} color={palette.bubblegumPink} emptyLabel="No client data" />
-              )}
+        {selectedProgram === "All" ? (
+          <div className="reportCard reportChartCard reportClientPerProgram">
+            <div className="reportCardTitle">Clients per program</div>
+            <div className="reportCardHint">
+              Enrollment counts based on clients’ programs
             </div>
-          ) : null}
-
+            {loading ? (
+              <div className="reportEmptyState">Loading…</div>
+            ) : (
+              <BarList
+                data={clientsPerProgramData}
+                color={palette.bubblegumPink}
+                emptyLabel="No client data"
+              />
+            )}
+          </div>
+        ) : null}
+        <div className="reportChartsGrid">
           {selectedProgram === "All" ? (
             visiblePrograms.map((program) => {
               const sections = groupedMilestoneSections(stats, program);
               return (
                 <div key={program} className="reportCard reportChartCard">
                   <div className="reportCardTitle">{program}</div>
-                  <div className="reportCardHint">Clients per milestone, grouped by category</div>
+                  <div className="reportCardHint">
+                    Clients per milestone, grouped by category
+                  </div>
                   {loading ? (
                     <div className="reportEmptyState">Loading…</div>
                   ) : sections.length === 0 ? (
                     <div className="reportEmptyState">No milestone data</div>
                   ) : (
                     sections.map((sec, secIdx) => (
-                      <div key={sec.key} className="reportMilestoneCategoryBlock">
-                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
-                        <BarList data={sec.data} color={CATEGORY_BAR_COLORS[secIdx % CATEGORY_BAR_COLORS.length]} emptyLabel="No data in this category" />
+                      <div
+                        key={sec.key}
+                        className="reportMilestoneCategoryBlock"
+                      >
+                        <div className="reportMilestoneCategoryTitle">
+                          {sec.title}
+                        </div>
+                        <BarList
+                          data={sec.data}
+                          color={
+                            CATEGORY_BAR_COLORS[
+                              secIdx % CATEGORY_BAR_COLORS.length
+                            ]
+                          }
+                          emptyLabel="No data in this category"
+                        />
                       </div>
                     ))
                   )}
@@ -674,7 +828,9 @@ const Report = () => {
           ) : (
             <>
               <div className="reportCard reportChartCard">
-                <div className="reportCardTitle">{selectedProgram} milestones</div>
+                <div className="reportCardTitle">
+                  {selectedProgram} milestones
+                </div>
                 <div className="reportCardHint">
                   {selectedCategory === ALL_MILESTONE_CATEGORIES
                     ? "Clients per milestone, grouped by category"
@@ -687,23 +843,43 @@ const Report = () => {
                     <div className="reportEmptyState">No milestone data</div>
                   ) : (
                     singleProgramSections.map((sec, secIdx) => (
-                      <div key={sec.key} className="reportMilestoneCategoryBlock">
-                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
-                        <BarList data={sec.data} color={CATEGORY_BAR_COLORS[secIdx % CATEGORY_BAR_COLORS.length]} emptyLabel="No data in this category" />
+                      <div
+                        key={sec.key}
+                        className="reportMilestoneCategoryBlock"
+                      >
+                        <div className="reportMilestoneCategoryTitle">
+                          {sec.title}
+                        </div>
+                        <BarList
+                          data={sec.data}
+                          color={
+                            CATEGORY_BAR_COLORS[
+                              secIdx % CATEGORY_BAR_COLORS.length
+                            ]
+                          }
+                          emptyLabel="No data in this category"
+                        />
                       </div>
                     ))
                   )
                 ) : (
                   <BarList
                     data={selectedMilestones}
-                    color={CATEGORY_BAR_COLORS[Math.max(0, categoryKeys.indexOf(selectedCategory)) % CATEGORY_BAR_COLORS.length]}
+                    color={
+                      CATEGORY_BAR_COLORS[
+                        Math.max(0, categoryKeys.indexOf(selectedCategory)) %
+                          CATEGORY_BAR_COLORS.length
+                      ]
+                    }
                     emptyLabel="No milestone data"
                   />
                 )}
               </div>
 
               <div className="reportCard reportChartCard">
-                <div className="reportCardTitle">{selectedProgram} distribution</div>
+                <div className="reportCardTitle">
+                  {selectedProgram} distribution
+                </div>
                 <div className="reportCardHint">
                   {selectedCategory === ALL_MILESTONE_CATEGORIES
                     ? "Share across milestones per category"
@@ -716,8 +892,13 @@ const Report = () => {
                     <div className="reportEmptyState">No milestone data</div>
                   ) : (
                     singleProgramSections.map((sec) => (
-                      <div key={`pie-${sec.key}`} className="reportMilestoneCategoryBlock">
-                        <div className="reportMilestoneCategoryTitle">{sec.title}</div>
+                      <div
+                        key={`pie-${sec.key}`}
+                        className="reportMilestoneCategoryBlock"
+                      >
+                        <div className="reportMilestoneCategoryTitle">
+                          {sec.title}
+                        </div>
                         <PieChart
                           data={collapseToTopNWithOther(sec.data, 7)}
                           emptyLabel="No milestone data"
@@ -726,7 +907,10 @@ const Report = () => {
                     ))
                   )
                 ) : (
-                  <PieChart data={selectedMilestonesPie} emptyLabel="No milestone data" />
+                  <PieChart
+                    data={selectedMilestonesPie}
+                    emptyLabel="No milestone data"
+                  />
                 )}
               </div>
             </>

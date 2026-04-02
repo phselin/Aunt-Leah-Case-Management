@@ -407,8 +407,8 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .reportPage{
-    padding: 24px;
-    background: ${palette.offWhite};
+    padding: 40px 80px;
+    background: #F9FAFB;
     min-height: calc(100vh - 70px);
     font-family: 'Poppins', sans-serif;
   }
@@ -535,6 +535,10 @@ const GlobalStyle = createGlobalStyle`
     border-radius: 14px;
     padding: 14px 14px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .reportClientPerProgram {
+    margin-bottom: 10px;
   }
 
   .reportChartCard{
