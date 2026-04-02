@@ -35,11 +35,16 @@ def get_casenote_dates(id):
 
     query = {"personid": person_oid}
 
+    person = db.people.find_one({"_id": person_oid})
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+    
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        query["program"] = {"$in": current_user_programs}
-        if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
+        programs_in_db = person.get("programs")
+        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
+        query["$or"] = [{"program": {"$in": current_user_programs}}, {"program": None}] 
 
     dates = sorted(db.casenotes.distinct("date", query), reverse=True)
     return jsonify(dates), 200
@@ -60,12 +65,18 @@ def get_casenotes(id):
 
     query = {"personid": person_oid}
 
+    person = db.people.find_one({"_id": person_oid})
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+    
+    
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        query["program"] = {"$in": current_user_programs}
-        if not db.people.find_one({"_id": person_oid, "programs": {"$in": current_user_programs}}):
+        programs_in_db = person.get("programs")
+        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
-
+        query["$or"] = [{"program": {"$in": current_user_programs}}, {"program": None}] 
+    
     if search:
         query["content"] = {"$regex": search, "$options": "i"}
 
@@ -113,11 +124,14 @@ def save_casenote(id):
 
     category = body.get("category")
 
+    person = db.people.find_one({"_id": person_oid})
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+        
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        if not db.people.find_one(
-            {"_id": person_oid, "programs": {"$in": current_user_programs}}
-        ) or (program and program not in current_user_programs):
+        programs_in_db = person.get("programs")
+        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
     author = f"{current_user.get('firstname')} {current_user.get('lastname')}"
@@ -153,11 +167,14 @@ def edit_casenote(id, casenoteid):
 
     program = body.get("program")
 
+    person = db.people.find_one({"_id": person_oid})
+    if not person:
+        return jsonify({"detail": "Client not found"}), 404
+        
     if not is_admin():
         current_user_programs = get_current_user_programs()
-        if not db.people.find_one(
-            {"_id": person_oid, "programs": {"$in": current_user_programs}}
-        ) or (program and program not in current_user_programs):
+        programs_in_db = person.get("programs")
+        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
     update_fields = {}
