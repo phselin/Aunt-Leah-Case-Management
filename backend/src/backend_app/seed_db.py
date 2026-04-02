@@ -52,7 +52,7 @@ def _random_milestone_record(milestone_options: list[str]) -> dict[str, str]:
 
 
 def seed_db():
-    if db.people.count_documents({}) > 0:
+    if db.people.count_documents({}) > 1:
         return
 
     app = Flask(__name__)
