@@ -28,7 +28,7 @@ npm install
 npm run dev
 ```
 
-Your application will be ready to use and require login. Please have an authenticator app (Google Authenticator). Log in using any one of the following accounts (each has a different role)
+Your application will be ready to use and require login. Please have an authenticator app (Google Authenticator) ready. Log in using any one of the following accounts (each has a different role)
 
 ### Super-admin
 
@@ -45,7 +45,7 @@ password: trustTheNaturalRecursion
 email: caseworker@auntleah.org \
 password: 12345
 
-Once you are logged in, you will be required to scan a QR code and enter a new password and an OTP code from your authenticator app of choice. Remember the next password if you log out and log in next time!
+Once you are logged in, you will be required to scan a QR code and enter a new password and an OTP code from your authenticator app of choice. Remember the new password if you log out and log in next time!
 
 ## Backend tests, endpoints and database
 
