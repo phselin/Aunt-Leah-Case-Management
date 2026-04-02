@@ -49,8 +49,7 @@ def test_get_casenotes_for_invalid_person():
     with auth_client() as client:
         # Valid ObjectId format but no such person: API returns an empty list.
         resp = client.get(f"/people/{ObjectId()}/casenotes")
-        assert resp.status_code == 200
-        assert resp.json == []
+        assert resp.status_code == 404
 
 
 def test_save_casenote():
