@@ -4,7 +4,7 @@ Aunt Leah Group A's project repository
 
 Deployed link: https://aunt-leah-content-management-system.vercel.app/
 
-A case management system for [Aunt Leah's](https://auntleahs.org/) that solves problems with their existing OTIS system. The case system system includes features such as client management, intake form, case notes, progress tracker, program-wide reports, staff and program management
+A case management system for [Aunt Leah's](https://auntleahs.org/) that solves problems with their existing OTIS system. The case management system includes features such as client management, intake form, case notes, progress tracker, program-wide reports, staff and program management
 
 ## To run the application
 
