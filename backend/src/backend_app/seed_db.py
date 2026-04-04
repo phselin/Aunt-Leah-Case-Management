@@ -35,6 +35,7 @@ PROGRAM_MILESTONE_TREES: dict[str, dict[str, list[str]]] = {
 }
 
 NUM_STAFF = 25
+NUM_AUDIT_ENTRIES = 20
 
 faker = Faker("en_CA")
 
@@ -69,6 +70,7 @@ def seed_db():
     db.goals.delete_many({})
     db.casenotes.delete_many({})
     db.calendar_events.delete_many({})
+    db.audit.delete_many({})
 
     for program_name in PROGRAMS:
         program = {
@@ -133,6 +135,28 @@ def seed_db():
 
     db.staff.create_index("email", unique=True)  # 404 :)
 
+
+    # --- Audit Log ----------------------------------------------- #
+    staff_list = list(p["firstname"] + " " + p["lastname"] for p in db.staff.find())
+    for _ in range(NUM_AUDIT_ENTRIES//2):
+        audit_entry = {
+            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"), #TODO: Make times in increasing order
+            "action": faker.sentence(), # TODO: seed with actual possible actions
+            "user": random.choice(staff_list),
+            "details": faker.sentence(),
+        }
+        db.audit.insert_one(audit_entry)
+    for _ in range(NUM_AUDIT_ENTRIES//2):
+        audit_entry = {
+            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"), #TODO: Make times in increasing order
+            "action": faker.sentence(), # TODO: seed with actual possible actions
+            "user": random.choice(staff_list)
+            # no details
+        }
+        db.audit.insert_one(audit_entry)
+
+
+    # --- Clients ------------------------------------------------- #
     for _ in range(NUM_PEOPLE):
         enrolled_programs = random.sample(PROGRAMS, k=random.randint(1, 3))
         programMilestones = {}
