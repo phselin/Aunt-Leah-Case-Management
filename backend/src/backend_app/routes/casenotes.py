@@ -92,7 +92,7 @@ def get_casenotes(id):
     else:
         casenotes = list(
             casenote_to_string(cn)
-            for cn in db.casenotes.find(query).sort("date", -1).sort("_id", -1).limit(20)
+            for cn in db.casenotes.find(query).sort([("date", -1), ("_id", -1)]).limit(20)
         )
     return jsonify(casenotes), 200
 

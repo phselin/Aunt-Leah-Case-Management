@@ -2,12 +2,7 @@ import axios from "axios";
 import { Calendar, Filter, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../api";
-import {
-  ErrorBox,
-  FormActions,
-  PrimaryBtn,
-  SuccessBox,
-} from "../modal/clientElement";
+import { ErrorBox, FormActions, SuccessBox } from "../modal/clientElement";
 
 interface CaseNote {
   _id: string;
@@ -307,10 +302,16 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(e.target as Node)
+      ) {
         setCalendarOpen(false);
       }
-      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node)) {
+      if (
+        filterPanelRef.current &&
+        !filterPanelRef.current.contains(e.target as Node)
+      ) {
         setFilterPanelOpen(false);
       }
     };
@@ -563,7 +564,9 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   gap: 6,
                   padding: "8px 14px",
                   borderRadius: 8,
-                  border: selectedDate ? "1px solid #D16B7C" : "1px solid #E5E7EB",
+                  border: selectedDate
+                    ? "1px solid #D16B7C"
+                    : "1px solid #E5E7EB",
                   backgroundColor: selectedDate ? "#FDF2F4" : "white",
                   cursor: "pointer",
                   fontSize: 14,
@@ -573,7 +576,10 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   transition: "all 0.15s",
                 }}
               >
-                <Calendar size={15} color={selectedDate ? "#D16B7C" : "#9CA3AF"} />
+                <Calendar
+                  size={15}
+                  color={selectedDate ? "#D16B7C" : "#9CA3AF"}
+                />
                 {selectedDate
                   ? new Date(selectedDate + "T00:00:00").toLocaleDateString()
                   : "Filter by date"}
@@ -583,7 +589,11 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                       e.stopPropagation();
                       setSelectedDate(null);
                     }}
-                    style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}
+                    style={{
+                      marginLeft: "auto",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
                   >
                     <X size={13} color="#D16B7C" />
                   </span>
@@ -627,7 +637,9 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   gap: 6,
                   padding: "8px 14px",
                   borderRadius: 8,
-                  border: andFilterActive ? "1px solid #D16B7C" : "1px solid #E5E7EB",
+                  border: andFilterActive
+                    ? "1px solid #D16B7C"
+                    : "1px solid #E5E7EB",
                   backgroundColor: andFilterActive ? "#FDF2F4" : "white",
                   cursor: "pointer",
                   fontSize: 14,
@@ -637,7 +649,10 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                   position: "relative",
                 }}
               >
-                <Filter size={15} color={andFilterActive ? "#D16B7C" : "#9CA3AF"} />
+                <Filter
+                  size={15}
+                  color={andFilterActive ? "#D16B7C" : "#9CA3AF"}
+                />
                 Filter
                 {andFilterActive && (
                   <span
@@ -883,8 +898,8 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 width: "100%",
                 paddingLeft: "48px",
                 paddingRight: "16px",
-                paddingTop: "9px",
-                paddingBottom: "9px",
+                paddingTop: "8px",
+                paddingBottom: "8px",
                 borderRadius: "12px",
                 border: "1px solid #E5E7EB",
                 backgroundColor: "#ffffff",
@@ -907,12 +922,27 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
             />
           </div>
 
-          <PrimaryBtn
+          <button
             onClick={handleAddNote}
-            style={{ marginBottom: "16px", marginRight: "28px" }}
+            style={{
+              marginBottom: "16px",
+              marginRight: "28px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "9px 18px",
+              borderRadius: "8px",
+              backgroundColor: "#10B981",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
           >
-            <Plus size={18} /> Add New Case Note
-          </PrimaryBtn>
+            <Plus size={16} /> Add New Case Note
+          </button>
         </FormActions>
       </div>
 
@@ -1302,16 +1332,22 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
-                  backgroundColor: (saving || !isEditFormDirty) ? "#D16B7C" : saveBtnHover ? "#b95a6a" : "#D16B7C",
+                  backgroundColor:
+                    saving || !isEditFormDirty
+                      ? "#D16B7C"
+                      : saveBtnHover
+                        ? "#b95a6a"
+                        : "#D16B7C",
                   color: "white",
                   border: "none",
-                  cursor: (saving || !isEditFormDirty) ? "not-allowed" : "pointer",
+                  cursor:
+                    saving || !isEditFormDirty ? "not-allowed" : "pointer",
                   fontSize: "14px",
                   fontWeight: 600,
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  opacity: (saving || !isEditFormDirty) ? 0.45 : 1,
+                  opacity: saving || !isEditFormDirty ? 0.45 : 1,
                   transition: "background-color 0.2s, opacity 0.2s",
                 }}
               >
