@@ -179,7 +179,7 @@ def seed_db():
     staff_list = list(p["firstname"] + " " + p["lastname"] for p in db.staff.find())
     for _ in range(NUM_AUDIT_ENTRIES//2):
         audit_entry = {
-            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"), #TODO: Make times in increasing order
+            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"),
             "action": faker.sentence(), # TODO: seed with actual possible actions
             "user": random.choice(staff_list),
             "details": faker.sentence(),
@@ -187,7 +187,7 @@ def seed_db():
         db.audit.insert_one(audit_entry)
     for _ in range(NUM_AUDIT_ENTRIES//2):
         audit_entry = {
-            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"), #TODO: Make times in increasing order
+            "timestamp": faker.date_time_between(start_date="-1y", end_date="now"),
             "action": faker.sentence(), # TODO: seed with actual possible actions
             "user": random.choice(staff_list)
             # no details

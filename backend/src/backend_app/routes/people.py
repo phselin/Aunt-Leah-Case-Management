@@ -176,7 +176,8 @@ def get_person(id):
 
 @people_bp.put("/people/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated client {db.people.find_one(ObjectId(id))['firstname']} {db.people.find_one(ObjectId(id))['lastname']}",
+@audit_log(action=lambda id, **_: f"updated client {db.people.find_one(ObjectId(id))['firstname']} "
+                                  f"{db.people.find_one(ObjectId(id))['lastname']}",
            audit_tools=True)
 #TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_person(id, _audit_ctx):
@@ -294,7 +295,8 @@ def create_person(_audit_ctx):
         ):
             return jsonify({"detail": "Access denied"}), 403
 
-    _audit_ctx["action"] += f" with name {person_json.get('firstname')} {person_json.get('lastname')}"
+    _audit_ctx["action"] += (f" with name {person_json.get('firstname')} "
+                             f"{person_json.get('lastname')}")
 
 
     res = db.people.insert_one(person_json)
@@ -305,7 +307,8 @@ def create_person(_audit_ctx):
 
 @people_bp.delete("/people/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"deleted client {db.people.find_one(ObjectId(id))["firstname"]} {db.people.find_one(ObjectId(id))["lastname"]}")
+@audit_log(action=lambda id, **_: f"deleted client {db.people.find_one(ObjectId(id))["firstname"]} "
+                                  f"{db.people.find_one(ObjectId(id))["lastname"]}")
 def delete_person(id):
     try:
         oid = ObjectId(id)
@@ -324,7 +327,9 @@ def delete_person(id):
 
 @people_bp.put("/people/<id>/milestones")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated milestone for client {db.people.find_one(ObjectId(id))['firstname']} {db.people.find_one(ObjectId(id))['lastname']}",
+@audit_log(action=lambda id, **_: f"updated milestone for client "
+                                  f"{db.people.find_one(ObjectId(id))['firstname']} "
+                                  f"{db.people.find_one(ObjectId(id))['lastname']}",
            audit_tools=True)
 def update_milestones(id, _audit_ctx):
     try:
@@ -418,7 +423,8 @@ def update_person_active(id, _audit_ctx):
     if not res:
         return jsonify({"detail": "Client not found"}), 404
 
-    _audit_ctx["action"] = f"activated client \"{person['firstname']} {person['lastname']}\"" if body["active"] \
+    _audit_ctx["action"] = f"activated client \"{person['firstname']} {person['lastname']}\"" \
+        if body["active"] \
         else f"deactivated client \"{person['firstname']} {person['lastname']}\""
     _audit_ctx["details"] = f"Client id: {res['_id']}"
     res["_id"] = str(res["_id"])

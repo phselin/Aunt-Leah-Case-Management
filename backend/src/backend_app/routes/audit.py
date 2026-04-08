@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, current_user
+from flask_jwt_extended import current_user, jwt_required
 
 from backend_app.db import db
 
@@ -16,7 +16,7 @@ def list_audit_events():
         JSON response containing a list of audit events or
         403 if the user is not a super-admin.
     """
-    body = request.get_json(silent=True) or {}
+    request.get_json(silent=True)
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
@@ -27,6 +27,7 @@ def list_audit_events():
     entries = db.audit.find({}).sort("timestamp", -1).skip(skip).limit(page_size)
 
     return jsonify(
-        [{"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}} for entry in entries]
+        [{"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}}
+                                    for entry in entries]
     ), 200
 

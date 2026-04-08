@@ -163,7 +163,7 @@ def save_casenote(id, _audit_ctx):
 
 @casenotes_bp.put("/people/<id>/casenotes/<casenoteid>")
 @jwt_required()
-@audit_log(action=f"edited a case note for client",
+@audit_log(action="edited a case note for client",
            audit_tools=True)
 def edit_casenote(id, casenoteid, _audit_ctx):
     body = request.get_json(silent=True) or {}
@@ -193,19 +193,22 @@ def edit_casenote(id, casenoteid, _audit_ctx):
 
     if program:
         if old_note.get("program") != program:
-            _audit_ctx["details"] += f"Changed program from {old_note.get('program', '')} to {program}\n"
+            _audit_ctx["details"] += (f"Changed program from {old_note.get('program', '')} "
+                                      f"to {program}\n")
         update_fields["program"] = program
 
     content = body.get("content")
     if content:
         if old_note.get("content") != content:
-            _audit_ctx["details"] += f"Changed content from \"{old_note.get('content', '')}\" to \"{content}\"\n"
+            _audit_ctx["details"] += (f"Changed content from \"{old_note.get('content', '')}\" "
+                                      f"to \"{content}\"\n")
         update_fields["content"] = content
 
     category = body.get("category")
     if category:
         if old_note.get("category") != category:
-            _audit_ctx["details"] += f"Changed category from {old_note.get('category', '')} to {category}\n"
+            _audit_ctx["details"] += (f"Changed category from {old_note.get('category', '')} "
+                                      f"to {category}\n")
         update_fields["category"] = category
 
     update_fields["lastUpdatedBy"] = (
