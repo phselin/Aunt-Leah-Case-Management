@@ -10,6 +10,7 @@ from backend_app.intake_form_options import (
     GENDER_OPTIONS,
     HOUSING_STATUS_OPTIONS,
     LOCATION_OPTIONS,
+    PRONOUNS_OPTIONS,
     REFERRAL_CONNECTION_OPTIONS,
     YES_NO_DROPDOWN,
 )
@@ -30,7 +31,12 @@ def get_participant_info():
                 "type": "dropdown",
                 "options": GENDER_OPTIONS,
             },
-            {"key": "pronouns", "label": "Pronouns", "type": "text", "maxLength": 20},
+            {
+                "key": "pronouns",
+                "label": "Pronouns",
+                "type": "dropdown",
+                "options": PRONOUNS_OPTIONS,
+            },
             {"key": "phone", "label": "Phone Number", "type": "phone"},
             {"key": "email", "label": "Email Address", "type": "email"},
             {

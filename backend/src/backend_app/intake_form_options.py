@@ -80,6 +80,16 @@ YES_NO_DROPDOWN = [
 
 GENDER_OPTIONS = ["Male", "Female", "Non Binary", "Prefer not to say"]
 
+PRONOUNS_OPTIONS = [
+    "He/Him",
+    "She/Her",
+    "They/Them",
+    "He/They",
+    "She/They",
+    "Other",
+    "Prefer not to say",
+]
+
 CONTACT_METHOD_OPTIONS = ["Phone", "Email", "Text"]
 
 LOCATION_OPTIONS = ["New Westminster", "Seymour", "Flexible"]

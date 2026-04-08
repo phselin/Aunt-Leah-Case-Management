@@ -14,6 +14,7 @@ from backend_app.intake_form_options import (
     GENDER_OPTIONS,
     HOUSING_STATUS_OPTIONS,
     LOCATION_OPTIONS,
+    PRONOUNS_OPTIONS,
     REFERRAL_CONNECTION_OPTIONS,
 )
 from backend_app.schemas.utils import (
@@ -223,6 +224,13 @@ class Person(BaseModel):
     def validate_gender(cls, value: str | None) -> str | None:
         if value is not None and value not in GENDER_OPTIONS:
             raise ValueError(f"'{value}' is not a valid gender")
+        return value
+
+    @field_validator("pronouns")
+    @classmethod
+    def validate_pronouns(cls, value: str | None) -> str | None:
+        if value is not None and value not in PRONOUNS_OPTIONS:
+            raise ValueError(f"'{value}' is not a valid pronoun option")
         return value
 
     @field_validator("preferredContactMethod")
