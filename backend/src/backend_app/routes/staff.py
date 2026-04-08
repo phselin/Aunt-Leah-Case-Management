@@ -107,9 +107,9 @@ def insert_staff_mem(_audit_ctx):
     res = db.staff.insert_one(staff_mem_json)
     staff_mem_json["_id"] = str(res.inserted_id)
 
-    _audit_ctx["action"] += f" \"{staff_mem_json['firstname']} {staff_mem_json['lastname']}\""
+    _audit_ctx["action"] += f' "{staff_mem_json["firstname"]} {staff_mem_json["lastname"]}"'
 
-    _audit_ctx["details"] =  f"ID: {staff_mem_json['_id']}\n"
+    _audit_ctx["details"] = f"ID: {staff_mem_json['_id']}\n"
     _audit_ctx["details"] += f"Email: {staff_mem_json['email']}\n"
     _audit_ctx["details"] += f"Role:  {staff_mem_json['role']}\n"
 
@@ -118,11 +118,15 @@ def insert_staff_mem(_audit_ctx):
 
 @staff_bp.put("/staff/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated staff member "
-                                  f"{db.staff.find_one(ObjectId(id))['firstname']} "
-                                  f"{db.staff.find_one(ObjectId(id))['lastname']}",
-           audit_tools=True)
-#TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
+@audit_log(
+    action=lambda id, **_: (
+        f"updated staff member "
+        f"{db.staff.find_one(ObjectId(id))['firstname']} "
+        f"{db.staff.find_one(ObjectId(id))['lastname']}"
+    ),
+    audit_tools=True,
+)
+# TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_staff_mem(id):
     body = request.get_json(silent=True) or {}
 
@@ -182,7 +186,7 @@ def update_staff_mem(id):
 
 @staff_bp.patch("/staff/<id>/active")
 @jwt_required()
-@audit_log(action= "", audit_tools=True)
+@audit_log(action="", audit_tools=True)
 def update_staff_active(id, _audit_ctx):
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
@@ -207,9 +211,11 @@ def update_staff_active(id, _audit_ctx):
     if not res:
         return jsonify({"detail": "Staff member not found"}), 404
 
-    _audit_ctx["action"] = (f"activated staff member \"{person['firstname']} "
-                            f"{person['lastname']}\"") if body["active"] \
-        else f"deactivated staff member \"{person['firstname']} {person['lastname']}\""
+    _audit_ctx["action"] = (
+        (f'activated staff member "{person["firstname"]} {person["lastname"]}"')
+        if body["active"]
+        else f'deactivated staff member "{person["firstname"]} {person["lastname"]}"'
+    )
     _audit_ctx["details"] = f"ID: {res['_id']}"
 
     res["_id"] = str(res["_id"])

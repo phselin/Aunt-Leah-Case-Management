@@ -99,8 +99,7 @@ def get_casenotes(id):
 
 @casenotes_bp.post("/people/<id>/casenotes")
 @jwt_required()
-@audit_log(action="saved a case note for",
-           audit_tools=True)
+@audit_log(action="saved a case note for", audit_tools=True)
 def save_casenote(id, _audit_ctx):
     body = request.get_json(silent=True) or {}
 
@@ -153,18 +152,17 @@ def save_casenote(id, _audit_ctx):
     res = db.casenotes.insert_one(casenote_doc)
     casenote_doc["_id"] = res.inserted_id
 
-    _audit_ctx["action"] += f" \"{person.get('firstname')} {person.get('lastname')}\""
+    _audit_ctx["action"] += f' "{person.get("firstname")} {person.get("lastname")}"'
 
     _audit_ctx["details"] = f"ID: {casenote_doc['_id']}\nPerson ID: {person_oid}\n"
-    _audit_ctx["details"] = f"Date: {date_val.isoformat()}\nContent: \"{content}\"\n\n"
+    _audit_ctx["details"] = f'Date: {date_val.isoformat()}\nContent: "{content}"\n\n'
     _audit_ctx["details"] += f"Program: {program}\nCategory: {category}\n"
     return jsonify(casenote_to_string(casenote_doc)), 201
 
 
 @casenotes_bp.put("/people/<id>/casenotes/<casenoteid>")
 @jwt_required()
-@audit_log(action="edited a case note for client",
-           audit_tools=True)
+@audit_log(action="edited a case note for client", audit_tools=True)
 def edit_casenote(id, casenoteid, _audit_ctx):
     body = request.get_json(silent=True) or {}
 
@@ -186,29 +184,32 @@ def edit_casenote(id, casenoteid, _audit_ctx):
         if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
-    _audit_ctx["action"] += f" \"{person.get('firstname')} {person.get('lastname')}\""
+    _audit_ctx["action"] += f' "{person.get("firstname")} {person.get("lastname")}"'
     _audit_ctx["details"] = f"Case-note ID: {casenote_oid}\nPerson ID: {person_oid}\n\n"
     update_fields = {}
     old_note = db.casenotes.find_one({"_id": casenote_oid})
 
     if program:
         if old_note.get("program") != program:
-            _audit_ctx["details"] += (f"Changed program from {old_note.get('program', '')} "
-                                      f"to {program}\n")
+            _audit_ctx["details"] += (
+                f"Changed program from {old_note.get('program', '')} to {program}\n"
+            )
         update_fields["program"] = program
 
     content = body.get("content")
     if content:
         if old_note.get("content") != content:
-            _audit_ctx["details"] += (f"Changed content from \"{old_note.get('content', '')}\" "
-                                      f"to \"{content}\"\n")
+            _audit_ctx["details"] += (
+                f'Changed content from "{old_note.get("content", "")}" to "{content}"\n'
+            )
         update_fields["content"] = content
 
     category = body.get("category")
     if category:
         if old_note.get("category") != category:
-            _audit_ctx["details"] += (f"Changed category from {old_note.get('category', '')} "
-                                      f"to {category}\n")
+            _audit_ctx["details"] += (
+                f"Changed category from {old_note.get('category', '')} to {category}\n"
+            )
         update_fields["category"] = category
 
     update_fields["lastUpdatedBy"] = (

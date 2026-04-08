@@ -174,26 +174,24 @@ def seed_db():
 
     db.staff.create_index("email", unique=True)  # 404 :)
 
-
     # --- Audit Log ----------------------------------------------- #
     staff_list = list(p["firstname"] + " " + p["lastname"] for p in db.staff.find())
-    for _ in range(NUM_AUDIT_ENTRIES//2):
+    for _ in range(NUM_AUDIT_ENTRIES // 2):
         audit_entry = {
             "timestamp": faker.date_time_between(start_date="-1y", end_date="now"),
-            "action": faker.sentence(), # TODO: seed with actual possible actions
+            "action": faker.sentence(),  # TODO: seed with actual possible actions
             "user": random.choice(staff_list),
             "details": faker.sentence(),
         }
         db.audit.insert_one(audit_entry)
-    for _ in range(NUM_AUDIT_ENTRIES//2):
+    for _ in range(NUM_AUDIT_ENTRIES // 2):
         audit_entry = {
             "timestamp": faker.date_time_between(start_date="-1y", end_date="now"),
-            "action": faker.sentence(), # TODO: seed with actual possible actions
-            "user": random.choice(staff_list)
+            "action": faker.sentence(),  # TODO: seed with actual possible actions
+            "user": random.choice(staff_list),
             # no details
         }
         db.audit.insert_one(audit_entry)
-
 
     # --- Clients ------------------------------------------------- #
     for _ in range(NUM_PEOPLE):

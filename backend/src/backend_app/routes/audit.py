@@ -27,7 +27,8 @@ def list_audit_events():
     entries = db.audit.find({}).sort("timestamp", -1).skip(skip).limit(page_size)
 
     return jsonify(
-        [{"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}}
-                                    for entry in entries]
+        [
+            {"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}}
+            for entry in entries
+        ]
     ), 200
-

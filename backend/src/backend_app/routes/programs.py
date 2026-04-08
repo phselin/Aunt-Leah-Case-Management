@@ -102,8 +102,8 @@ def add_program(_audit_ctx):
     if "description" in body and description:
         program["description"] = description
 
-    _audit_ctx["action"] += f" \"{name}\""
-    _audit_ctx["details"] = f"Description: \"{description}\"\n"
+    _audit_ctx["action"] += f' "{name}"'
+    _audit_ctx["details"] = f'Description: "{description}"\n'
     res = db.programs.insert_one(program)
     program["_id"] = str(res.inserted_id)
     return jsonify(program), 201
@@ -167,17 +167,18 @@ def edit_program(_audit_ctx):
         return_document=ReturnDocument.AFTER,
     )
 
-    _audit_ctx["action"] += f" \"{name}\""
-
+    _audit_ctx["action"] += f' "{name}"'
 
     if description and description != old_program.get("description"):
-        _audit_ctx["details"] += (f"Changed description from "
-                                  f"\"{old_program.get('description')}\""
-                                  f" to\"{description}\"\n")
+        _audit_ctx["details"] += (
+            f'Changed description from "{old_program.get("description")}" to"{description}"\n'
+        )
     if milestone_tree and milestone_tree != old_program.get("milestoneTree"):
-        _audit_ctx["details"] += (f"Changed milestone tree from "
-                                  f"\"{old_program.get('milestoneTree')}\" "
-                                  f"to\"{milestone_tree}\"\n")
+        _audit_ctx["details"] += (
+            f"Changed milestone tree from "
+            f'"{old_program.get("milestoneTree")}" '
+            f'to"{milestone_tree}"\n'
+        )
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
 
@@ -203,5 +204,5 @@ def delete_program(_audit_ctx):
     )
     db.staff.update_many({"programs": name}, {"$pull": {"programs": name}})
 
-    _audit_ctx["action"] += f" \"{name}\""
+    _audit_ctx["action"] += f' "{name}"'
     return jsonify({"detail": f"Successfully deleted program {name}"}), 200

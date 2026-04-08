@@ -176,11 +176,15 @@ def get_person(id):
 
 @people_bp.put("/people/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated client "
-                                  f"\"{db.people.find_one(ObjectId(id))['firstname']} "
-                                  f"{db.people.find_one(ObjectId(id))['lastname']}\"",
-           audit_tools=True)
-#TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
+@audit_log(
+    action=lambda id, **_: (
+        f"updated client "
+        f'"{db.people.find_one(ObjectId(id))["firstname"]} '
+        f'{db.people.find_one(ObjectId(id))["lastname"]}"'
+    ),
+    audit_tools=True,
+)
+# TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_person(id, _audit_ctx):
     try:
         oid = ObjectId(id)
@@ -296,21 +300,25 @@ def create_person(_audit_ctx):
         ):
             return jsonify({"detail": "Access denied"}), 403
 
-    _audit_ctx["action"] += (f" with name \"{person_json.get('firstname')} "
-                             f"{person_json.get('lastname')}\"")
-
+    _audit_ctx["action"] += (
+        f' with name "{person_json.get("firstname")} {person_json.get("lastname")}"'
+    )
 
     res = db.people.insert_one(person_json)
     person_json["_id"] = str(res.inserted_id)
-    _audit_ctx["details"] = f"Person id: {person_json["_id"]}"
+    _audit_ctx["details"] = f"Person id: {person_json['_id']}"
     return jsonify(person_json), 201
 
 
 @people_bp.delete("/people/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"deleted client "
-                                  f"\"{db.people.find_one(ObjectId(id))["firstname"]} "
-                                  f"{db.people.find_one(ObjectId(id))["lastname"]}\"")
+@audit_log(
+    action=lambda id, **_: (
+        f"deleted client "
+        f'"{db.people.find_one(ObjectId(id))["firstname"]} '
+        f'{db.people.find_one(ObjectId(id))["lastname"]}"'
+    )
+)
 def delete_person(id):
     try:
         oid = ObjectId(id)
@@ -329,10 +337,14 @@ def delete_person(id):
 
 @people_bp.put("/people/<id>/milestones")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated milestone for client "
-                                  f"\"{db.people.find_one(ObjectId(id))['firstname']} "
-                                  f"{db.people.find_one(ObjectId(id))['lastname']}\"",
-           audit_tools=True)
+@audit_log(
+    action=lambda id, **_: (
+        f"updated milestone for client "
+        f'"{db.people.find_one(ObjectId(id))["firstname"]} '
+        f'{db.people.find_one(ObjectId(id))["lastname"]}"'
+    ),
+    audit_tools=True,
+)
 def update_milestones(id, _audit_ctx):
     try:
         oid = ObjectId(id)
@@ -385,8 +397,10 @@ def update_milestones(id, _audit_ctx):
         }
     }
 
-    _audit_ctx["details"] = (f"Updated {program} ({type}) to {milestone} from "
-                             f"{milestone_in_db['value'] if milestone_in_db else 'N/A'}")
+    _audit_ctx["details"] = (
+        f"Updated {program} ({type}) to {milestone} from "
+        f"{milestone_in_db['value'] if milestone_in_db else 'N/A'}"
+    )
     res = db.people.find_one_and_update(
         {"_id": oid},
         {"$set": milestone_update},
@@ -399,7 +413,7 @@ def update_milestones(id, _audit_ctx):
 
 @people_bp.patch("/people/<id>/active")
 @jwt_required()
-@audit_log(action= "", audit_tools=True)
+@audit_log(action="", audit_tools=True)
 def update_person_active(id, _audit_ctx):
     try:
         oid = ObjectId(id)
@@ -425,9 +439,11 @@ def update_person_active(id, _audit_ctx):
     if not res:
         return jsonify({"detail": "Client not found"}), 404
 
-    _audit_ctx["action"] = f"activated client \"{person['firstname']} {person['lastname']}\"" \
-        if body["active"] \
-        else f"deactivated client \"{person['firstname']} {person['lastname']}\""
+    _audit_ctx["action"] = (
+        f'activated client "{person["firstname"]} {person["lastname"]}"'
+        if body["active"]
+        else f'deactivated client "{person["firstname"]} {person["lastname"]}"'
+    )
     _audit_ctx["details"] = f"Client id: {res['_id']}"
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
