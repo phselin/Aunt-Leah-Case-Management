@@ -418,8 +418,8 @@ def update_person_active(id, _audit_ctx):
     if not res:
         return jsonify({"detail": "Client not found"}), 404
 
-    _audit_ctx["action"] = f"activated client {person['firstname']} {person['lastname']}" if body["active"] \
-        else f"deactivated client {person['firstname']} {person['lastname']}"
+    _audit_ctx["action"] = f"activated client \"{person['firstname']} {person['lastname']}\"" if body["active"] \
+        else f"deactivated client \"{person['firstname']} {person['lastname']}\""
     _audit_ctx["details"] = f"Client id: {res['_id']}"
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
