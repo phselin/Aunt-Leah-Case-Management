@@ -99,8 +99,9 @@ def get_casenotes(id):
 
 @casenotes_bp.post("/people/<id>/casenotes")
 @jwt_required()
-@audit_log(action="saved a case note", details=lambda id, **_: f"Saved for client {ObjectId(id)}")
-def save_casenote(id):
+@audit_log(action="saved a case note for",
+           audit_tools=True)
+def save_casenote(id, _audit_ctx):
     body = request.get_json(silent=True) or {}
 
     try:
@@ -152,12 +153,17 @@ def save_casenote(id):
     res = db.casenotes.insert_one(casenote_doc)
     casenote_doc["_id"] = res.inserted_id
 
+    _audit_ctx["action"] += f" \"{person.get('firstname')} {person.get('lastname')}\""
+
+    _audit_ctx["details"] = f"ID: {casenote_doc['_id']}\nPerson ID: {person_oid}\n"
+    _audit_ctx["details"] = f"Date: {date_val.isoformat()}\nContent: \"{content}\"\n\n"
+    _audit_ctx["details"] += f"Program: {program}\nCategory: {category}\n"
     return jsonify(casenote_to_string(casenote_doc)), 201
 
 
 @casenotes_bp.put("/people/<id>/casenotes/<casenoteid>")
 @jwt_required()
-@audit_log(action=lambda id, casenoteid, **_: f"edited case note {ObjectId(casenoteid)} for client {ObjectId(id)}",
+@audit_log(action=f"edited a case note for client",
            audit_tools=True)
 def edit_casenote(id, casenoteid, _audit_ctx):
     body = request.get_json(silent=True) or {}
@@ -180,6 +186,8 @@ def edit_casenote(id, casenoteid, _audit_ctx):
         if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
             return jsonify({"detail": "Access denied"}), 403
 
+    _audit_ctx["action"] += f" \"{person.get('firstname')} {person.get('lastname')}\""
+    _audit_ctx["details"] = f"Case-note ID: {casenote_oid}\nPerson ID: {person_oid}\n\n"
     update_fields = {}
     old_note = db.casenotes.find_one({"_id": casenote_oid})
 
