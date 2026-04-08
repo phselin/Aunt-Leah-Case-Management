@@ -208,9 +208,6 @@ const Client = () => {
     );
   }
   const filteredPeople = filterByPrograms(people, selectedPrograms);
-  console.log(people, filteredPeople);
-
-  // If we are on the main list page
 
   return (
     <PageContainer>

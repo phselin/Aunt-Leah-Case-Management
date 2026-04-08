@@ -161,7 +161,6 @@ const Details = ({
       } else {
         setLocalErr(`Failed to ${isNew ? "add" : "update"} client`);
         const backend_errors = err.response?.data?.errors;
-        console.log(err.response?.data);
         if (backend_errors && Array.isArray(backend_errors)) {
           backend_errors.forEach((item) => {
             Object.entries(item).forEach(([field, msg]) => {

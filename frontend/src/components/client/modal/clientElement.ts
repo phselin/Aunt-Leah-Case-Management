@@ -135,6 +135,7 @@ export const ClientGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  align-items: start;
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -148,6 +149,7 @@ export const FullRow = styled.div`
 export const FormRow = styled.div`
   display: grid;
   gap: 6px;
+  align-content: start;
 `;
 
 export const Select = styled.select`

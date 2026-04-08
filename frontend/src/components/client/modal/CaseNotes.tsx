@@ -342,9 +342,6 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
       console.error("Failed to load notes", err);
 
       if (axios.isAxiosError(err)) {
-        console.log("status:", err.response?.status);
-        console.log("data:", err.response?.data);
-
         setErrMsg(
           err.response?.data?.detail ||
             `Failed to load case notes (${err.response?.status || "unknown error"})`,

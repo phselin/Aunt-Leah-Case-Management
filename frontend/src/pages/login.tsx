@@ -172,7 +172,6 @@ const Login = () => {
         const res = await api.post("/login", { email: email, password: pwd });
         const session = res.data.mfaSession;
         setMfaSession(session);
-        console.log(mfaSession);
         if (res.data.setupRequired) {
           const setupRes = await api.post("/mfa/setup", {
             mfaSession: session,
