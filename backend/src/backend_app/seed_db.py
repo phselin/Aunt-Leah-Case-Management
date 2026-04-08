@@ -118,6 +118,45 @@ def seed_db():
         }
     )
 
+    for n in ["lin", "angelina", "ericson", "dylan", "pranav"]:
+        db.staff.insert_one(
+            {
+                "firstname": "faker.first_name()",
+                "lastname": faker.last_name(),
+                "role": "super-admin",
+                "phone": faker.numerify(text="+1$#########"),
+                "email": f"{n}@auntleah.org",
+                "passwordHash": hash_pwd("password"),
+                "mfaEnabled": False,
+                "active": True,
+            }
+        )
+        db.staff.insert_one(
+            {
+                "firstname": faker.first_name(),
+                "lastname": faker.last_name(),
+                "role": "admin",
+                "phone": faker.numerify(text="+1$#########"),
+                "email": f"{n}-admin@auntleah.org",
+                "passwordHash": hash_pwd("password"),
+                "mfaEnabled": False,
+                "active": True,
+            }
+        )
+
+        db.staff.insert_one(
+            {
+                "firstname": faker.first_name(),
+                "lastname": faker.last_name(),
+                "role": "staff",
+                "phone": faker.numerify(text="+1$#########"),
+                "email": f"{n}-caseworker@auntleah.org",
+                "passwordHash": hash_pwd("password"),
+                "mfaEnabled": False,
+                "active": True,
+            }
+        )
+
     for _ in range(NUM_STAFF):
         staff_member = {
             "firstname": faker.first_name(),
