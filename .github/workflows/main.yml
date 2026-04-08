@@ -111,7 +111,7 @@ jobs:
   deploy_backend:
     name: Deploy Backend to VM
     runs-on: ubuntu-latest
-    needs: [frontend, backend]
+    needs: [backend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
