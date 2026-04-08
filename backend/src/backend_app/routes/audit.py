@@ -20,7 +20,13 @@ def list_audit_events():
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
+    page = request.args.get("page", 1, type=int)
+    page_size = 20
+    skip = (page - 1) * page_size
+
+    entries = db.audit.find({}).sort("timestamp", -1).skip(skip).limit(page_size)
+
     return jsonify(
-        [{"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}} for entry in db.audit.find({})]
+        [{"id": str(entry["_id"]), **{k: v for k, v in entry.items() if k != "_id"}} for entry in entries]
     ), 200
 
