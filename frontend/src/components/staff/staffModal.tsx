@@ -174,10 +174,11 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
     register,
     handleSubmit,
     reset,
+    getValues,
     setError,
     control,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<StaffFormData>();
 
   const mfaEnabled = watch("mfaEnabled");
@@ -245,8 +246,12 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
       }
       setLocalErr("");
       setShowPassword(false);
+      const frame = requestAnimationFrame(() => {
+        reset(getValues());
+      });
+      return () => cancelAnimationFrame(frame);
     }
-  }, [open, staffData, reset]);
+  }, [open, staffData, reset, getValues]);
 
   useEffect(() => {
     if (localErr) {
@@ -557,7 +562,7 @@ const StaffModal = ({ open, isNew, staffData, onClose, onSave }: Props) => {
           <SecondaryBtn type="button" onClick={onClose}>
             Cancel
           </SecondaryBtn>
-          <PrimaryBtn type="submit" disabled={isSubmitting}>
+          <PrimaryBtn type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
             {isSubmitting
               ? "Saving..."
               : isNew

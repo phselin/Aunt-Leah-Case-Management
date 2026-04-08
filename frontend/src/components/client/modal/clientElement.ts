@@ -54,8 +54,12 @@ export const PrimaryBtn = styled.button`
   color: white;
   font-weight: 600;
   font-size: 14px;
-  transition: background 0.2s;
-  &:hover { background: ${colors.primaryGreenHover}; }
+  transition: background 0.2s, opacity 0.2s;
+  &:hover:not(:disabled) { background: ${colors.primaryGreenHover}; }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 `;
 
 export const SecondaryBtn = styled.button`

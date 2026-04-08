@@ -242,6 +242,14 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
   const [modalErrMsg, setModalErrMsg] = useState("");
   const [saveBtnHover, setSaveBtnHover] = useState(false);
 
+  const isEditFormDirty = (() => {
+    if (!editNote) return true;
+    return (
+      editForm.category !== (editNote.category || "") ||
+      editForm.program !== (editNote.program || "") ||
+      editForm.content !== (editNote.content || "")
+    );
+  })();
   // Refs for closing dropdowns when clicking outside
   const calendarRef = useRef<HTMLDivElement>(null);
   const filterPanelRef = useRef<HTMLDivElement>(null);
@@ -1291,23 +1299,23 @@ const CaseNotes: React.FC<CaseNotesProps> = ({ personId, onUpdate }) => {
               </button>
               <button
                 onClick={handleSaveChanges}
-                disabled={saving}
+                disabled={saving || !isEditFormDirty}
                 onMouseEnter={() => setSaveBtnHover(true)}
                 onMouseLeave={() => setSaveBtnHover(false)}
                 style={{
                   padding: "10px 24px",
                   borderRadius: "8px",
-                  backgroundColor: saveBtnHover ? "#b95a6a" : "#D16B7C",
+                  backgroundColor: (saving || !isEditFormDirty) ? "#D16B7C" : saveBtnHover ? "#b95a6a" : "#D16B7C",
                   color: "white",
                   border: "none",
-                  cursor: "pointer",
+                  cursor: (saving || !isEditFormDirty) ? "not-allowed" : "pointer",
                   fontSize: "14px",
                   fontWeight: 600,
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  opacity: saving ? 0.7 : 1,
-                  transition: "background-color 0.2s",
+                  opacity: (saving || !isEditFormDirty) ? 0.45 : 1,
+                  transition: "background-color 0.2s, opacity 0.2s",
                 }}
               >
                 {saving

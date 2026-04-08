@@ -96,10 +96,11 @@ const Details = ({
     register,
     handleSubmit,
     reset,
+    getValues,
     setError,
     setValue,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<Person>();
 
   useEffect(() => {
@@ -114,8 +115,14 @@ const Details = ({
   }, [localErr, localSuccess]);
 
   useEffect(() => {
-    if (initialData) reset(initialData);
-  }, [initialData, reset]);
+    if (initialData) {
+      reset(initialData);
+      const frame = requestAnimationFrame(() => {
+        reset(getValues());
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [initialData, reset, getValues]);
 
   const cleanData = (obj: any): any => {
     if (Array.isArray(obj)) return obj.map(cleanData);
@@ -451,7 +458,7 @@ const Details = ({
       {localSuccess && <SuccessBox>{localSuccess}</SuccessBox>}
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormActions>
-          <PrimaryBtn type="submit" disabled={isSubmitting}>
+          <PrimaryBtn type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
             {isSubmitting
               ? "Saving..."
               : isNew
