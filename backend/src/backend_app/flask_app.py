@@ -9,6 +9,7 @@ from flask_cors import CORS
 from backend_app.auth import auth_bp
 from backend_app.auth_init import bcrypt, jwt, limiter
 from backend_app.config import settings
+from backend_app.routes.audit import audit_bp
 from backend_app.routes.calendar_events import calendar_events_bp
 from backend_app.routes.casenotes import casenotes_bp
 from backend_app.routes.example import example_bp
@@ -58,6 +59,7 @@ def create_flask_app() -> Flask:
     app.register_blueprint(programs_bp)
     app.register_blueprint(staff_bp)
     app.register_blueprint(stats_bp)
+    app.register_blueprint(audit_bp)
 
     return app
 

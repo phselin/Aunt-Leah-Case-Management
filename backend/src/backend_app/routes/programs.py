@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
 from pymongo import ReturnDocument
 
+from backend_app.audit_logging import audit_log
 from backend_app.db import db
 from backend_app.routes.routes_utils import get_program_names, get_programs_structure
 
@@ -72,7 +73,8 @@ def get_programs():
 
 @programs_bp.post("/programs")
 @jwt_required()
-def add_program():
+@audit_log(action="created program", audit_tools=True)
+def add_program(_audit_ctx):
     body = request.get_json(silent=True) or {}
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
@@ -100,6 +102,8 @@ def add_program():
     if "description" in body and description:
         program["description"] = description
 
+    _audit_ctx["action"] += f' "{name}"'
+    _audit_ctx["details"] = f'Description: "{description}"\n'
     res = db.programs.insert_one(program)
     program["_id"] = str(res.inserted_id)
     return jsonify(program), 201
@@ -107,7 +111,8 @@ def add_program():
 
 @programs_bp.put("/programs")
 @jwt_required()
-def edit_program():
+@audit_log(action="updated program", audit_tools=True)
+def edit_program(_audit_ctx):
     body = request.get_json(silent=True) or {}
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
@@ -155,19 +160,33 @@ def edit_program():
     if "description" in body:
         set_fields["description"] = description
 
+    old_program = db.programs.find_one({"name": name})
     res = db.programs.find_one_and_update(
         {"name": name},
         {"$set": set_fields},
         return_document=ReturnDocument.AFTER,
     )
 
+    _audit_ctx["action"] += f' "{name}"'
+
+    if description and description != old_program.get("description"):
+        _audit_ctx["details"] += (
+            f'Changed description from "{old_program.get("description")}" to"{description}"\n'
+        )
+    if milestone_tree and milestone_tree != old_program.get("milestoneTree"):
+        _audit_ctx["details"] += (
+            f"Changed milestone tree from "
+            f'"{old_program.get("milestoneTree")}" '
+            f'to"{milestone_tree}"\n'
+        )
     res["_id"] = str(res["_id"])
     return jsonify(res), 200
 
 
 @programs_bp.delete("/programs")
 @jwt_required()
-def delete_program():
+@audit_log(action="deleted program", audit_tools=True)
+def delete_program(_audit_ctx):
     name = request.args.get("name", "").strip().title()
     if not name:
         return jsonify({"detail": "Missing name"}), 400
@@ -184,4 +203,6 @@ def delete_program():
         {"$pull": {"programs": name}, "$unset": {f"programMilestones.{name}": ""}},
     )
     db.staff.update_many({"programs": name}, {"$pull": {"programs": name}})
+
+    _audit_ctx["action"] += f' "{name}"'
     return jsonify({"detail": f"Successfully deleted program {name}"}), 200

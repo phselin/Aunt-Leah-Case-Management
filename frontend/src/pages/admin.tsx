@@ -7,10 +7,12 @@ import styled from "styled-components";
 import { palette } from "../theme/palette";
 import ProgramManagement from "./programManagement";
 import StaffManagement from "./staffManagement";
+import AuditLog from "./auditLog";
 
 const AdminViews = {
   Staff: "Staff Management",
   Programs: "Program Management",
+  Audit: "Audit Log",
 } as const;
 
 type AdminViewType = (typeof AdminViews)[keyof typeof AdminViews];
@@ -103,6 +105,7 @@ const Admin = () => {
             >
               <Tab label={AdminViews.Staff} value={AdminViews.Staff} />
               <Tab label={AdminViews.Programs} value={AdminViews.Programs} />
+              <Tab label={AdminViews.Audit} value={AdminViews.Audit} />
             </TabList>
           </div>
 
@@ -113,6 +116,11 @@ const Admin = () => {
           <TabPanel value={AdminViews.Programs} sx={{ p: 0, pt: 3 }}>
             <ProgramManagement />
           </TabPanel>
+
+          <TabPanel value={AdminViews.Audit} sx={{ p: 0, pt: 3 }}>
+            <AuditLog />
+          </TabPanel>
+
         </TabContext>
       </ContentArea>
     </PageContainer>
