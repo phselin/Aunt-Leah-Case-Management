@@ -124,7 +124,7 @@ def insert_staff_mem(_audit_ctx):
         f"{db.staff.find_one(ObjectId(id))['firstname']} "
         f"{db.staff.find_one(ObjectId(id))['lastname']}"
     ),
-    audit_tools=True,
+    audit_tools=False,  # change to true on adding _audit_cts["details"]
 )
 # TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_staff_mem(id):
