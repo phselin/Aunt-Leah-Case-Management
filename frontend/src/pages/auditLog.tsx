@@ -100,6 +100,37 @@ const EmptyState = styled.div`
   line-height: 1.6;
 `;
 
+const PaginationRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+`;
+
+const PageBtn = styled.button<{ $active?: boolean }>`
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid ${({ $active }) => ($active ? "#e94b6a" : "#e5e7eb")};
+  background: ${({ $active }) => ($active ? "#e94b6a" : "#fff")};
+  color: ${({ $active }) => ($active ? "#fff" : "#374151")};
+  font-size: 13.5px;
+  font-weight: ${({ $active }) => ($active ? 600 : 400)};
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: ${({ $active }) => ($active ? "#4f46e5" : "#f3f4f6")};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+`;
+
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
 const formatTimestamp = (timestamp: Date): string => {
@@ -118,14 +149,19 @@ const formatTimestamp = (timestamp: Date): string => {
 const AuditLog = () => {
     const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
     const [errMsg, setErrMsg] = useState("");
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
     /* ── Fetch Audit Events ────────────────────────────────────────── */
 
-    const loadAuditEvents = async () => {
+    const loadAuditEvents = async (pageNum: number) => {
         try {
-            const res = await api.get(`/audit`);
-            setAuditEvents(Array.isArray(res.data) ? res.data : []);
+            const res = await api.get(`/audit`, { params: { page: pageNum } });
+            const data: AuditEvent[] = Array.isArray(res.data) ? res.data : [];
+            setAuditEvents(data);
+            setHasMore(data.length === 20);
+            setExpandedIds(new Set());
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
                 setErrMsg(err.response.data?.detail || "Failed to load audit events");
@@ -136,8 +172,8 @@ const AuditLog = () => {
     };
 
     useEffect(() => {
-        loadAuditEvents();
-    }, []);
+        loadAuditEvents(page);
+    }, [page]);
 
     const toggleExpand = (id: string) => {
         setExpandedIds((prev) => {
@@ -191,6 +227,20 @@ const AuditLog = () => {
                     );
                 })}
             </EntryList>
+
+            <PaginationRow>
+                <PageBtn onClick={() => setPage(1)} disabled={page === 1}>«</PageBtn>
+                <PageBtn onClick={() => setPage((p) => p - 1)} disabled={page === 1}>‹</PageBtn>
+                {page > 1 && (
+                    <PageBtn onClick={() => setPage(page - 1)}>{page - 1}</PageBtn>
+                )}
+                <PageBtn $active>{page}</PageBtn>
+                {hasMore && (
+                    <PageBtn onClick={() => setPage(page + 1)}>{page + 1}</PageBtn>
+                )}
+                <PageBtn onClick={() => setPage((p) => p + 1)} disabled={!hasMore}>›</PageBtn>
+            </PaginationRow>
+            <div style={{height: "40px"}}/>
         </>
     );
 };
