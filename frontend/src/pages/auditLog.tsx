@@ -1,15 +1,15 @@
 import axios from "axios";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "../api";
-import { useEffect, useState } from "react";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 interface AuditEvent {
-    id: string;
-    timestamp: Date;
-    action: string;
-    user: string;
-    details?: string;
+  id: string;
+  timestamp: Date;
+  action: string;
+  user: string;
+  details?: string;
 }
 
 /* ── Styled Components ─────────────────────────────────────────────── */
@@ -68,8 +68,11 @@ const ChevronBtn = styled.div<{ $expanded: boolean }>`
   justify-content: center;
   border-radius: 6px;
   flex-shrink: 0;
-  transition: transform 0.2s, color 0.15s;
-  transform: ${({ $expanded }) => ($expanded ? "rotate(90deg)" : "rotate(0deg)")};
+  transition:
+    transform 0.2s,
+    color 0.15s;
+  transform: ${({ $expanded }) =>
+    $expanded ? "rotate(90deg)" : "rotate(0deg)"};
 `;
 
 const DetailsArea = styled.div`
@@ -119,7 +122,10 @@ const PageBtn = styled.button<{ $active?: boolean }>`
   font-size: 13.5px;
   font-weight: ${({ $active }) => ($active ? 600 : 400)};
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 
   &:hover:not(:disabled) {
     background: ${({ $active }) => ($active ? "#4f46e5" : "#f3f4f6")};
@@ -134,115 +140,122 @@ const PageBtn = styled.button<{ $active?: boolean }>`
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
 const formatTimestamp = (timestamp: Date): string => {
-    const d = new Date(timestamp);
-    return d.toLocaleString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+  const d = new Date(timestamp);
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 /* ── Component ─────────────────────────────────────────────────────── */
 
 const AuditLog = () => {
-    const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
-    const [errMsg, setErrMsg] = useState("");
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [errMsg, setErrMsg] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-    /* ── Fetch Audit Events ────────────────────────────────────────── */
+  /* ── Fetch Audit Events ────────────────────────────────────────── */
 
-    const loadAuditEvents = async (pageNum: number) => {
-        try {
-            const res = await api.get(`/audit`, { params: { page: pageNum } });
-            const data: AuditEvent[] = Array.isArray(res.data) ? res.data : [];
-            setAuditEvents(data);
-            setHasMore(data.length === 20);
-            setExpandedIds(new Set());
-        } catch (err) {
-            if (axios.isAxiosError(err) && err.response) {
-                setErrMsg(err.response.data?.detail || "Failed to load audit events");
-            } else {
-                setErrMsg("Unable to connect to server");
-            }
+  useEffect(() => {
+    const loadAuditEvents = async () => {
+      try {
+        setErrMsg("");
+        const res = await api.get(`/audit`, { params: { page } });
+        const data: AuditEvent[] = Array.isArray(res.data) ? res.data : [];
+        setAuditEvents(data);
+        setHasMore(data.length === 20);
+        setExpandedIds(new Set());
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response) {
+          setErrMsg(err.response.data?.detail || "Failed to load audit events");
+        } else {
+          setErrMsg("Unable to connect to server");
         }
+      }
     };
 
-    useEffect(() => {
-        loadAuditEvents(page);
-    }, [page]);
+    loadAuditEvents();
+  }, [page]);
 
-    const toggleExpand = (id: string) => {
-        setExpandedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
-    /* ── Main render ───────────────────────────────────────────────── */
+  /* ── Main render ───────────────────────────────────────────────── */
 
-    return (
-        <>
-            {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
+  return (
+    <>
+      {errMsg && <ErrorBox>{errMsg}</ErrorBox>}
 
-            {auditEvents.length === 0 && !errMsg && (
-                <EmptyState>No audit events to display.</EmptyState>
-            )}
+      {auditEvents.length === 0 && !errMsg && (
+        <EmptyState>No audit events to display.</EmptyState>
+      )}
 
-            <EntryList>
-                {auditEvents.map((event) => {
-                    const hasDetails = Boolean(event.details);
-                    const isExpanded = expandedIds.has(event.id);
+      <EntryList>
+        {auditEvents.map((event) => {
+          const hasDetails = Boolean(event.details);
+          const isExpanded = expandedIds.has(event.id);
 
-                    return (
-                        <EntryCard key={event.id}>
-                            <EntryMain
-                                $clickable={hasDetails}
-                                onClick={() => hasDetails && toggleExpand(event.id)}
-                            >
-                                <EntryText>
-                                    <ActionLabel>
-                                        {event.user} {event.action}
-                                    </ActionLabel>
-                                    <Timestamp>{formatTimestamp(event.timestamp)}</Timestamp>
-                                </EntryText>
+          return (
+            <EntryCard key={event.id}>
+              <EntryMain
+                $clickable={hasDetails}
+                onClick={() => hasDetails && toggleExpand(event.id)}
+              >
+                <EntryText>
+                  <ActionLabel>
+                    {event.user} {event.action}
+                  </ActionLabel>
+                  <Timestamp>{formatTimestamp(event.timestamp)}</Timestamp>
+                </EntryText>
 
-                                {hasDetails && (
-                                    <ChevronBtn $expanded={isExpanded}>›</ChevronBtn>
-                                )}
-                            </EntryMain>
-
-                            {hasDetails && isExpanded && (
-                                <DetailsArea>{event.details}</DetailsArea>
-                            )}
-                        </EntryCard>
-                    );
-                })}
-            </EntryList>
-
-            <PaginationRow>
-                <PageBtn onClick={() => setPage(1)} disabled={page === 1}>«</PageBtn>
-                <PageBtn onClick={() => setPage((p) => p - 1)} disabled={page === 1}>‹</PageBtn>
-                {page > 1 && (
-                    <PageBtn onClick={() => setPage(page - 1)}>{page - 1}</PageBtn>
+                {hasDetails && (
+                  <ChevronBtn $expanded={isExpanded}>›</ChevronBtn>
                 )}
-                <PageBtn $active>{page}</PageBtn>
-                {hasMore && (
-                    <PageBtn onClick={() => setPage(page + 1)}>{page + 1}</PageBtn>
-                )}
-                <PageBtn onClick={() => setPage((p) => p + 1)} disabled={!hasMore}>›</PageBtn>
-            </PaginationRow>
-            <div style={{height: "40px"}}/>
-        </>
-    );
+              </EntryMain>
+
+              {hasDetails && isExpanded && (
+                <DetailsArea>{event.details}</DetailsArea>
+              )}
+            </EntryCard>
+          );
+        })}
+      </EntryList>
+
+      <PaginationRow>
+        <PageBtn onClick={() => setPage(1)} disabled={page === 1}>
+          «
+        </PageBtn>
+        <PageBtn onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+          ‹
+        </PageBtn>
+        {page > 1 && (
+          <PageBtn onClick={() => setPage(page - 1)}>{page - 1}</PageBtn>
+        )}
+        <PageBtn $active>{page}</PageBtn>
+        {hasMore && (
+          <PageBtn onClick={() => setPage(page + 1)}>{page + 1}</PageBtn>
+        )}
+        <PageBtn onClick={() => setPage((p) => p + 1)} disabled={!hasMore}>
+          ›
+        </PageBtn>
+      </PaginationRow>
+      <div style={{ height: "40px" }} />
+    </>
+  );
 };
 
 export default AuditLog;
