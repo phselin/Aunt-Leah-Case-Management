@@ -118,7 +118,9 @@ def insert_staff_mem(_audit_ctx):
 
 @staff_bp.put("/staff/<id>")
 @jwt_required()
-@audit_log(action=lambda id, **_: f"updated staff member {db.staff.find_one(ObjectId(id))['firstname']} {db.staff.find_one(ObjectId(id))['lastname']}",
+@audit_log(action=lambda id, **_: f"updated staff member "
+                                  f"{db.staff.find_one(ObjectId(id))['firstname']} "
+                                  f"{db.staff.find_one(ObjectId(id))['lastname']}",
            audit_tools=True)
 #TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_staff_mem(id):
@@ -205,7 +207,8 @@ def update_staff_active(id, _audit_ctx):
     if not res:
         return jsonify({"detail": "Staff member not found"}), 404
 
-    _audit_ctx["action"] = f"activated staff member \"{person['firstname']} {person['lastname']}\"" if body["active"] \
+    _audit_ctx["action"] = (f"activated staff member \"{person['firstname']} "
+                            f"{person['lastname']}\"") if body["active"] \
         else f"deactivated staff member \"{person['firstname']} {person['lastname']}\""
     _audit_ctx["details"] = f"ID: {res['_id']}"
 
