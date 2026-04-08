@@ -7,6 +7,7 @@ from flask_jwt_extended.utils import current_user
 from pydantic import ValidationError
 from pymongo import ReturnDocument
 
+from backend_app.audit_logging import audit_log
 from backend_app.auth_init import bcrypt
 from backend_app.db import db
 from backend_app.routes.routes_utils import (
@@ -80,7 +81,8 @@ def get_staff_mem(id):
 
 @staff_bp.post("/staff")
 @jwt_required()
-def insert_staff_mem():
+@audit_log(action="added a new staff member", audit_tools=True)
+def insert_staff_mem(_audit_ctx):
     body = request.get_json(silent=True) or {}
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
@@ -104,11 +106,21 @@ def insert_staff_mem():
 
     res = db.staff.insert_one(staff_mem_json)
     staff_mem_json["_id"] = str(res.inserted_id)
+
+    _audit_ctx["action"] += f" \"{staff_mem_json['firstname']} {staff_mem_json['lastname']}\""
+
+    _audit_ctx["details"] =  f"ID: {staff_mem_json['_id']}\n"
+    _audit_ctx["details"] += f"Email: {staff_mem_json['email']}\n"
+    _audit_ctx["details"] += f"Role:  {staff_mem_json['role']}\n"
+
     return jsonify(sanitize_staff_mem(staff_mem_json)), 201
 
 
 @staff_bp.put("/staff/<id>")
 @jwt_required()
+@audit_log(action=lambda id, **_: f"updated staff member {db.staff.find_one(ObjectId(id))['firstname']} {db.staff.find_one(ObjectId(id))['lastname']}",
+           audit_tools=True)
+#TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_staff_mem(id):
     body = request.get_json(silent=True) or {}
 
@@ -168,7 +180,8 @@ def update_staff_mem(id):
 
 @staff_bp.patch("/staff/<id>/active")
 @jwt_required()
-def update_staff_active(id):
+@audit_log(action= "", audit_tools=True)
+def update_staff_active(id, _audit_ctx):
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
@@ -182,6 +195,7 @@ def update_staff_active(id):
     if "active" not in body or not isinstance(body["active"], bool):
         return jsonify({"detail": "Active should be boolean"}), 400
 
+    person = db.staff.find_one({"_id": oid})
     res = db.staff.find_one_and_update(
         {"_id": oid},
         {"$set": {"active": body["active"]}},
@@ -190,6 +204,10 @@ def update_staff_active(id):
 
     if not res:
         return jsonify({"detail": "Staff member not found"}), 404
+
+    _audit_ctx["action"] = f"activated staff member \"{person['firstname']} {person['lastname']}\"" if body["active"] \
+        else f"deactivated staff member \"{person['firstname']} {person['lastname']}\""
+    _audit_ctx["details"] = f"ID: {res['_id']}"
 
     res["_id"] = str(res["_id"])
     return jsonify(sanitize_staff_mem(res)), 200
