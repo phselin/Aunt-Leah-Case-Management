@@ -154,6 +154,7 @@ def seed_db():
                 "phone": faker.numerify(text="+1$#########"),
                 "email": f"{n}-caseworker@auntleah.org",
                 "passwordHash": hash_pwd("password"),
+                "programs": random.choices(PROGRAMS, k=2),
                 "mfaEnabled": False,
                 "active": True,
             }
