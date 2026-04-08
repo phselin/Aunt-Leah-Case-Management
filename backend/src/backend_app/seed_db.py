@@ -123,7 +123,7 @@ def seed_db():
     for n in ["lin", "angelina", "ericson", "dylan", "pranav"]:
         db.staff.insert_one(
             {
-                "firstname": "faker.first_name()",
+                "firstname": faker.first_name(),
                 "lastname": faker.last_name(),
                 "role": "super-admin",
                 "phone": faker.numerify(text="+1$#########"),
