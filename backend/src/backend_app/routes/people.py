@@ -312,14 +312,8 @@ def create_person(_audit_ctx):
 
 @people_bp.delete("/people/<id>")
 @jwt_required()
-@audit_log(
-    action=lambda id, **_: (
-        f"deleted client "
-        f'"{db.people.find_one(ObjectId(id))["firstname"]} '
-        f'{db.people.find_one(ObjectId(id))["lastname"]}"'
-    )
-)
-def delete_person(id):
+@audit_log(action="", audit_tools=True)
+def delete_person(id, _audit_ctx):
     try:
         oid = ObjectId(id)
     except InvalidId:
@@ -328,9 +322,12 @@ def delete_person(id):
     if current_user.get("role") != "super-admin":
         return jsonify({"detail": "Access denied"}), 403
 
+    person = db.people.find_one({"_id": oid})
     result = db.people.delete_one({"_id": oid})
     if result.deleted_count == 0:
         return jsonify({"detail": "Client not found"}), 404
+
+    _audit_ctx["action"] = f'deleted client "{person["firstname"]} {person["lastname"]}"'
 
     return jsonify({"detail": "Client deleted successfully"}), 200
 
