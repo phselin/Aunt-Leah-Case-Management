@@ -123,7 +123,7 @@ def seed_db():
     for n in ["lin", "angelina", "ericson", "dylan", "pranav"]:
         db.staff.insert_one(
             {
-                "firstname": faker.first_name(),
+                "firstname": n.title(),
                 "lastname": faker.last_name(),
                 "role": "super-admin",
                 "phone": faker.numerify(text="+1$#########"),
@@ -135,7 +135,7 @@ def seed_db():
         )
         db.staff.insert_one(
             {
-                "firstname": faker.first_name(),
+                "firstname": n.title(),
                 "lastname": faker.last_name(),
                 "role": "admin",
                 "phone": faker.numerify(text="+1$#########"),
@@ -148,7 +148,7 @@ def seed_db():
 
         db.staff.insert_one(
             {
-                "firstname": faker.first_name(),
+                "firstname": n.title(),
                 "lastname": faker.last_name(),
                 "role": "staff",
                 "phone": faker.numerify(text="+1$#########"),
