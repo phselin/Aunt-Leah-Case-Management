@@ -132,7 +132,9 @@ def save_casenote(id, _audit_ctx):
     if not is_admin():
         current_user_programs = get_current_user_programs()
         programs_in_db = person.get("programs")
-        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
+        if (programs_in_db and not any(p in programs_in_db for p in current_user_programs)) or (
+            program and program not in current_user_programs
+        ):
             return jsonify({"detail": "Access denied"}), 403
 
     author = f"{current_user.get('firstname')} {current_user.get('lastname')}"
@@ -181,7 +183,9 @@ def edit_casenote(id, casenoteid, _audit_ctx):
     if not is_admin():
         current_user_programs = get_current_user_programs()
         programs_in_db = person.get("programs")
-        if programs_in_db and not any(p in programs_in_db for p in current_user_programs):
+        if (programs_in_db and not any(p in programs_in_db for p in current_user_programs)) or (
+            program and program not in current_user_programs
+        ):
             return jsonify({"detail": "Access denied"}), 403
 
     _audit_ctx["action"] += f' "{person.get("firstname")} {person.get("lastname")}"'
