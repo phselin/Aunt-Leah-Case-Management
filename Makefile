@@ -1,4 +1,4 @@
-.PHONY: build test lint up down logs clean install
+.PHONY: build test lint up down logs clean install all
 
 install:
 	$(MAKE) -C backend install
@@ -14,6 +14,9 @@ lint:
 
 up:
 	$(MAKE) -C backend up
+
+all: up
+	cd frontend && npm run dev
 
 down:
 	$(MAKE) -C backend down
