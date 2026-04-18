@@ -16,7 +16,7 @@ up:
 	$(MAKE) -C backend up
 
 all: up
-	cd frontend && npm run dev
+	cd frontend && npm install && npm run dev && cd ..
 
 down:
 	$(MAKE) -C backend down
