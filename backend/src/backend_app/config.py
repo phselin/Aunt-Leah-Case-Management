@@ -12,8 +12,6 @@ class Settings(BaseSettings):
 
     gotenberg_url: str = "http://gotenberg:3000"
 
-    # zitadel_url: str = "http://zitadel:8080"
-
     output_dir: str = "/outputs"
 
     JWT_SECRET_KEY: str = (
