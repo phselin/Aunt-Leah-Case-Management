@@ -40,7 +40,7 @@ def create_flask_app() -> Flask:
     if production:
         app.config["JWT_COOKIE_SAMESITE"] = "None"
     app.config["JWT_COOKIE_CSRF_PROTECT"] = (
-        False  # true in production (i tried to do this but couldn't make it work, maybe later)
+        False  # true in production (i tried to do this but couldn't make it work)
     )
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
