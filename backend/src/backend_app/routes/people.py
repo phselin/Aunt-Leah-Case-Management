@@ -184,7 +184,6 @@ def get_person(id):
     ),
     audit_tools=True,
 )
-# TODO if time permits: add specific notes about what was updated to _audit_ctx["details"]
 def update_person(id, _audit_ctx):
     try:
         oid = ObjectId(id)
