@@ -149,6 +149,51 @@ def auth_client():
     reset_db()
 
 
+def insert_staff(role, programs=None, email=None, password="Password1!", mfa=True):
+    """Insert a staff member with the given role; returns (id, email, password)."""
+    email = email or f"{role}.user@test.com"
+    doc = {
+        "email": email,
+        "active": True,
+        "passwordHash": bcrypt.generate_password_hash(password).decode("utf-8"),
+        "firstname": "Test",
+        "lastname": role.replace("-", " ").title().replace(" ", ""),
+        "role": role,
+        "programs": programs or [],
+        "mfaEnabled": mfa,
+    }
+    if mfa:
+        doc["mfaSecret"] = ADMIN_MFA_SECRET
+    return db.staff.insert_one(doc).inserted_id, email, password
+
+
+def login_as(client, email, password):
+    resp = client.post("/login", json={"email": email, "password": password})
+    assert resp.status_code == 200, resp.get_json()
+    resp = client.post(
+        "/login/mfa",
+        json={"mfaSession": resp.json["mfaSession"], "otp": pyotp.TOTP(ADMIN_MFA_SECRET).now()},
+    )
+    assert resp.status_code == 200, resp.get_json()
+    return resp
+
+
+@contextmanager
+def role_client(role, programs=None):
+    """Client logged in as a staff member with the given role (super-admin also exists)."""
+    reset_db()
+    app = create_flask_app()
+    insert_admin(app)
+    seed_programs()
+    with app.app_context():
+        insert_staff(role, programs)
+    client = app.test_client()
+    login_as(client, f"{role}.user@test.com", "Password1!")
+    yield client
+    client.post("/logout")
+    reset_db()
+
+
 @contextmanager
 def seeded_client(num_people=10):
     reset_db()
